@@ -1,223 +1,847 @@
 "use client";
-import { useState } from "react";
-import { Building2, CalendarClock, Database, Download, FlaskConical, ShieldCheck, Stethoscope, Users } from "lucide-react";
+import { useState, useMemo } from "react";
+import {
+  Activity,
+  AlertTriangle,
+  Building2,
+  Calendar,
+  CalendarClock,
+  CheckCircle2,
+  Database,
+  Download,
+  FileCheck,
+  FileSearch,
+  FileText,
+  Filter,
+  FlaskConical,
+  History,
+  Layers,
+  Lock,
+  RefreshCw,
+  Search,
+  Settings,
+  ShieldAlert,
+  ShieldCheck,
+  Stethoscope,
+  Trash2,
+  UserCheck,
+  Users,
+  XCircle,
+} from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  CartesianGrid,
+  Cell,
+} from "recharts";
 import { api, getRole, getToken } from "@/lib/api";
 import { useApi } from "@/lib/useApi";
 import { useGuard } from "@/lib/useGuard";
 import { useI18n } from "@/lib/i18n";
-import { Async, Button, Card, Chip, EmptyState, fmtDateTime, GlassCard, Input, PageHeader, SkeletonTable, StatTile, TabGroup, useToast } from "@/components/ui";
+import {
+  Async,
+  Badge,
+  Button,
+  Card,
+  Chip,
+  Dialog,
+  EmptyState,
+  fmtDate,
+  fmtDateTime,
+  GlassCard,
+  Input,
+  PageHeader,
+  ProgressBar,
+  SearchInput,
+  Select,
+  StatTile,
+  TabGroup,
+  Table,
+  Tooltip,
+  useToast,
+} from "@/components/ui";
 import Link from "next/link";
 
-type Tab = "queue" | "users" | "audit" | "quality";
+type AdminTab = "overview" | "queue" | "users" | "audit" | "quality" | "settings";
 
-export default function Admin() {
+export default function AdminDashboardPage() {
   useGuard(["super_admin", "reviewer"]);
   const { t } = useI18n();
   const { addToast } = useToast();
-  const isSuper = getRole() === "super_admin";
-  const [tab, setTab] = useState<Tab>("queue");
-  const ov = useApi("/admin/overview");
-  const sys = useApi("/admin/system");
-  const q = useApi("/admin/verification-queue");
-  const dq = useApi("/admin/directory-quality");
-  const au = useApi(tab === "audit" && isSuper ? "/admin/audit-logs" : null);
-  const us = useApi(tab === "users" && isSuper ? "/admin/users" : null);
-  const [reason, setReason] = useState("");
-  const [evidence, setEvidence] = useState("");
+  const isSuperAdmin = getRole() === "super_admin";
 
-  const decide = async (kind: "doctors" | "facilities", id: string, decision: string) => {
+  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+
+  // Core API Hooks (Real endpoints only)
+  const overview = useApi("/admin/overview");
+  const system = useApi("/admin/system");
+  const queue = useApi("/admin/verification-queue");
+  const directoryQuality = useApi("/admin/directory-quality");
+  const usersList = useApi(activeTab === "users" && isSuperAdmin ? "/admin/users" : null);
+  const auditLogs = useApi(activeTab === "audit" && isSuperAdmin ? "/admin/audit-logs?page_size=50" : null);
+  const systemSettings = useApi(activeTab === "settings" && isSuperAdmin ? "/admin/settings" : null);
+
+  // Verification decision form state
+  const [decisionReason, setDecisionReason] = useState("");
+  const [evidenceReference, setEvidenceReference] = useState("");
+  const [actingEntityId, setActingEntityId] = useState<string | null>(null);
+
+  // User management state
+  const [userSearch, setUserSearch] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("all");
+  const [userStatusReason, setUserStatusReason] = useState("");
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+
+  // Audit filter state
+  const [auditActionFilter, setAuditActionFilter] = useState("");
+  const [auditResultFilter, setAuditResultFilter] = useState("all");
+
+  // Settings modification state
+  const [settingsReason, setSettingsReason] = useState("");
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  // Verification Decision Handler
+  const handleVerify = async (
+    kind: "doctors" | "facilities",
+    entityId: string,
+    decision: "approve" | "reject" | "need_more_evidence"
+  ) => {
+    if (!decisionReason.trim()) {
+      addToast("error", "Reason Mandatory", "Please provide a clinical audit reason.");
+      return;
+    }
+    if (decision === "approve" && !evidenceReference.trim()) {
+      addToast("error", "Evidence Reference Mandatory", "Attach medical council registration or gazette reference.");
+      return;
+    }
+
+    setActingEntityId(entityId);
     try {
-      await api(`/admin/${kind}/${id}/verify`, { method: "PATCH", body: { decision, reason, evidence: evidence ? [evidence] : [] } });
-      q.reload(); ov.reload();
-      addToast("success", `${decision === "approve" ? "Approved" : "Rejected"} successfully`);
+      await api(`/admin/${kind}/${entityId}/verify`, {
+        method: "PATCH",
+        body: {
+          decision,
+          reason: decisionReason.trim(),
+          evidence: evidenceReference.trim() ? [evidenceReference.trim()] : [],
+        },
+      });
+      queue.reload();
+      overview.reload();
+      addToast("success", "Decision Logged", `Entity marked as ${decision}. Audit record saved.`);
+      setDecisionReason("");
+      setEvidenceReference("");
     } catch (e: any) {
-      addToast("error", "Action failed", e.message);
+      addToast("error", "Verification Decision Failed", e.message);
+    } finally {
+      setActingEntityId(null);
     }
   };
 
-  const setStatus = async (id: string, status: string) => {
+  // User Status Toggle (Suspend / Reactivate)
+  const handleSetUserStatus = async (userId: string, newStatus: "active" | "suspended") => {
+    if (!userStatusReason.trim()) {
+      addToast("error", "Reason Required", "State the governance reason for user status update.");
+      return;
+    }
+
+    setStatusUpdatingId(userId);
     try {
-      await api(`/admin/users/${id}/status`, { method: "PATCH", body: { status, reason: reason || "admin action" } });
-      us.reload();
-      addToast("success", `User ${status === "active" ? "reactivated" : "suspended"}`);
+      await api(`/admin/users/${userId}/status`, {
+        method: "PATCH",
+        body: { status: newStatus, reason: userStatusReason.trim() },
+      });
+      usersList.reload();
+      addToast("success", `User ${newStatus === "active" ? "Reactivated" : "Suspended"}`, "Immediate token invalidation enforced.");
+      setUserStatusReason("");
     } catch (e: any) {
-      addToast("error", "Failed to update user", e.message);
+      addToast("error", "User Update Failed", e.message);
+    } finally {
+      setStatusUpdatingId(null);
     }
   };
 
-  const exportCsv = async () => {
+  // Audit CSV Export
+  const handleExportCsv = async () => {
     try {
       const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-      const r = await fetch(base + "/admin/audit-logs/export", { headers: { Authorization: `Bearer ${getToken()}` } });
-      if (!r.ok) throw new Error("Export failed");
-      const url = URL.createObjectURL(await r.blob());
-      const a = document.createElement("a"); a.href = url; a.download = "audit_logs.csv"; a.click();
+      const res = await fetch(`${base}/admin/audit-logs/export`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (!res.ok) throw new Error("CSV generation failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `medibridge_audit_export_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
       URL.revokeObjectURL(url);
-      addToast("success", "Export downloaded");
+      addToast("success", "Audit CSV Exported", "Downloaded complete immutable log.");
     } catch (e: any) {
-      addToast("error", "Export failed", e.message);
+      addToast("error", "Export Failed", e.message);
     }
   };
 
-  const tabItems: { key: Tab; label: string }[] = [
-    { key: "queue", label: t("adm.queue") },
-    ...(isSuper ? ([{ key: "users" as Tab, label: t("adm.users") }, { key: "audit" as Tab, label: t("adm.audit") }]) : []),
-    { key: "quality", label: t("adm.quality") },
-  ];
+  // Toggle Feature Flag
+  const handleToggleFlag = async (flagKey: string, currentEnabled: boolean) => {
+    if (!settingsReason.trim()) {
+      addToast("error", "Reason Required", "Provide a reason for feature flag toggle.");
+      return;
+    }
+    setSavingSettings(true);
+    try {
+      await api("/admin/settings", {
+        method: "PUT",
+        body: {
+          flags: { [flagKey]: !currentEnabled },
+          reason: settingsReason.trim(),
+        },
+      });
+      systemSettings.reload();
+      addToast("success", "Feature Flag Updated", `${flagKey} set to ${!currentEnabled}.`);
+      setSettingsReason("");
+    } catch (e: any) {
+      addToast("error", "Flag Update Failed", e.message);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  // Chart data from real overview metrics
+  const overviewChartData = useMemo(() => {
+    if (!overview.data) return [];
+    return [
+      { name: "Users", count: overview.data.users || 0, color: "var(--accent)" },
+      { name: "Doctors", count: overview.data.doctors || 0, color: "#5BC0FF" },
+      { name: "Facilities", count: overview.data.facilities || 0, color: "#A78BFA" },
+      { name: "Documents", count: overview.data.documents || 0, color: "#F59E0B" },
+      { name: "Observations", count: overview.data.observations || 0, color: "#10B981" },
+      { name: "Appointments", count: overview.data.appointments || 0, color: "#EC4899" },
+    ];
+  }, [overview.data]);
+
+  // Filtered Users List
+  const filteredUsers = useMemo(() => {
+    const items = usersList.data?.items || [];
+    return items.filter((u: any) => {
+      const q = userSearch.toLowerCase();
+      const matchesSearch = !userSearch || (u.email || "").toLowerCase().includes(q) || (u.id || "").includes(q);
+      const matchesRole = userRoleFilter === "all" || u.role === userRoleFilter;
+      return matchesSearch && matchesRole;
+    });
+  }, [usersList.data, userSearch, userRoleFilter]);
+
+  // Filtered Audit Logs
+  const filteredAudit = useMemo(() => {
+    const items = auditLogs.data?.items || [];
+    return items.filter((l: any) => {
+      const matchesAction = !auditActionFilter || (l.action || "").toLowerCase().includes(auditActionFilter.toLowerCase());
+      const matchesResult = auditResultFilter === "all" || l.result === auditResultFilter;
+      return matchesAction && matchesResult;
+    });
+  }, [auditLogs.data, auditActionFilter, auditResultFilter]);
+
+  // Tabs structure
+  const tabsList = useMemo(() => {
+    const base: { key: AdminTab; label: string; count?: number; icon?: any }[] = [
+      { key: "overview", label: "Overview & Health", icon: Activity },
+      {
+        key: "queue",
+        label: "Verification Queue",
+        count: (queue.data?.doctors?.length || 0) + (queue.data?.facilities?.length || 0) + (queue.data?.applications?.length || 0),
+        icon: ShieldCheck,
+      },
+    ];
+    if (isSuperAdmin) {
+      base.push({ key: "users", label: "User Directory", count: usersList.data?.items?.length, icon: Users });
+      base.push({ key: "audit", label: "Audit Logs", icon: History });
+    }
+    base.push({ key: "quality", label: "Directory Quality", icon: Layers });
+    if (isSuperAdmin) {
+      base.push({ key: "settings", label: "System & Flags", icon: Settings });
+    }
+    return base;
+  }, [isSuperAdmin, queue.data, usersList.data]);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <PageHeader title={t("adm.title")} />
-        <Link href="/ml-lab">
-          <Button variant="secondary" size="sm">
-            <FlaskConical className="h-4 w-4" aria-hidden />{t("nav.mllab")}
-          </Button>
-        </Link>
-      </div>
-
-      {/* Overview stats */}
-      <Async loading={ov.loading} error={ov.error} onRetry={ov.reload}>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <StatTile icon={Users} label={t("adm.users")} value={ov.data?.users ?? "—"} />
-          <StatTile icon={Stethoscope} label="Doctors" value={ov.data?.doctors ?? "—"} />
-          <StatTile icon={Building2} label="Facilities" value={ov.data?.facilities ?? "—"} />
-          <StatTile icon={CalendarClock} label={t("nav.appointments")} value={ov.data?.appointments ?? "—"} />
-        </div>
-      </Async>
-
-      {/* System health */}
-      <GlassCard className="flex flex-wrap items-center gap-4 text-sm">
-        <span className="flex items-center gap-2 font-medium"><Database className="h-4 w-4 text-ptext" aria-hidden />{t("adm.health")}</span>
-        <span className="flex items-center gap-2">
-          {t("adm.database")}:
-          {sys.loading ? <div className="skeleton h-4 w-12 rounded" /> : <Chip kind={sys.data?.database === "ok" ? "verified" : "failed"}>{sys.data?.database ?? "…"}</Chip>}
-        </span>
-        <span className="flex items-center gap-2 text-muted">
-          {t("adm.ai")}: <b className="text-ink">{sys.data?.ai_provider ?? "…"}</b>
-        </span>
-        <span className="ml-auto text-xs text-muted">env: {sys.data?.env}</span>
-      </GlassCard>
-
-      {/* Tabs */}
-      <TabGroup tabs={tabItems} active={tab} onChange={setTab} />
-
-      {/* Verification Queue */}
-      {tab === "queue" && (
-        <div className="space-y-4">
-          <Card className="grid gap-3 md:grid-cols-2">
-            <Input label={t("adm.reason")} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="State the reason for this decision…" />
-            <Input label={t("adm.evidence")} value={evidence} onChange={(e) => setEvidence(e.target.value)} placeholder="Medical council reference, website URL…" />
-          </Card>
-          <Async loading={q.loading} error={q.error} onRetry={q.reload}
-            empty={!q.data?.doctors?.length && !q.data?.facilities?.length}
-            emptyNode={<EmptyState icon={ShieldCheck} title={t("adm.noQueue")} body="All verification requests have been processed." />}>
-            {(["doctors", "facilities"] as const).map((kind) => (
-              <div key={kind} className="space-y-2">
-                {(q.data?.[kind] || []).slice(0, 25).map((x: any) => (
-                  <Card key={x.id} className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex flex-wrap items-center gap-2 min-w-0">
-                      <span className="font-medium">{x.name}</span>
-                      <Chip kind={x.verification === "pending" ? "pending" : "unverified"} />
-                      {x.is_sample && <Chip kind="info">Sample</Chip>}
-                      {x.specialty && <span className="text-sm text-muted">{x.specialty}</span>}
-                    </div>
-                    <span className="flex gap-2">
-                      <Button size="sm" disabled={!reason || !evidence} onClick={() => decide(kind, x.id, "approve")}>{t("adm.approve")}</Button>
-                      <Button size="sm" variant="secondary" disabled={!reason} onClick={() => decide(kind, x.id, "reject")}>{t("adm.reject")}</Button>
-                    </span>
-                  </Card>
-                ))}
-              </div>
-            ))}
-          </Async>
-        </div>
-      )}
-
-      {/* Users */}
-      {tab === "users" && (
-        <div className="space-y-4">
-          <Card className="grid gap-3 md:grid-cols-2">
-            <Input label={t("adm.reason")} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason for status change…" />
-          </Card>
-          <Async loading={us.loading} error={us.error} onRetry={us.reload} empty={us.data?.items?.length === 0} skeleton="table">
-            <Card className="overflow-x-auto p-0">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th className="text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {us.data?.items?.map((u: any) => (
-                    <tr key={u.id}>
-                      <td className="font-medium">{u.email}</td>
-                      <td className="text-muted capitalize">{u.role}</td>
-                      <td><Chip kind={u.status === "active" ? "verified" : "failed"}>{u.status}</Chip></td>
-                      <td className="text-right">
-                        {u.status === "suspended"
-                          ? <Button size="sm" variant="secondary" onClick={() => setStatus(u.id, "active")}>{t("adm.reactivate")}</Button>
-                          : <Button size="sm" variant="secondary" disabled={!reason} onClick={() => setStatus(u.id, "suspended")}>{t("adm.suspend")}</Button>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-          </Async>
-        </div>
-      )}
-
-      {/* Audit Logs */}
-      {tab === "audit" && (
-        <div className="space-y-3">
-          <div className="flex justify-end">
-            <Button variant="secondary" size="sm" onClick={exportCsv}>
-              <Download className="h-4 w-4" aria-hidden />{t("adm.export")}
+      {/* Page Header */}
+      <PageHeader
+        title={t("adm.title") || "Administrator Governance Center"}
+        subtitle={`Role: ${getRole()?.replace("_", " ")?.toUpperCase()} · Bangladesh Clinical Data Protection & Verification Harness`}
+        breadcrumbs={[
+          { label: "Home", href: "/" },
+          { label: "Admin Center", href: "/admin" },
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            <Link href="/ml-lab">
+              <Button size="sm" variant="outline" icon={FlaskConical}>
+                ML & Data Science Lab
+              </Button>
+            </Link>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={RefreshCw}
+              onClick={() => {
+                overview.reload();
+                system.reload();
+                queue.reload();
+                addToast("info", "Refreshed", "Governance data updated.");
+              }}
+            >
+              Refresh
             </Button>
           </div>
-          <Async loading={au.loading} error={au.error} onRetry={au.reload} empty={au.data?.items?.length === 0} skeleton="table">
-            <Card className="overflow-x-auto p-0">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Time</th>
-                    <th>Role</th>
-                    <th>Action</th>
-                    <th>Result</th>
-                    <th>Reason</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {au.data?.items?.map((l: any) => (
-                    <tr key={l.id}>
-                      <td className="num text-xs text-muted whitespace-nowrap">{fmtDateTime(l.at)}</td>
-                      <td className="capitalize text-muted">{l.actor_role}</td>
-                      <td className="font-medium">{l.action}</td>
-                      <td><span className={l.result === "deny" ? "text-warn font-medium" : "text-muted"}>{l.result}</span></td>
-                      <td className="text-muted text-xs max-w-[200px] truncate">{l.reason}</td>
-                    </tr>
+        }
+      />
+
+      {/* System Diagnostics Strip */}
+      <GlassCard className="flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="flex items-center gap-1.5 font-bold text-ink">
+            <Database className="h-4 w-4 text-ptext" />
+            <span>Infrastructure Health:</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="text-muted">PostgreSQL/SQLite: </span>
+            <Chip kind={system.data?.database === "ok" ? "verified" : "failed"}>
+              {system.data?.database?.toUpperCase() || "CHECKING"}
+            </Chip>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="text-muted">AI Provider: </span>
+            <span className="rounded bg-s2 border border-line px-2 py-0.5 font-mono text-ink">
+              {system.data?.ai_provider || "deterministic_fallback"}
+            </span>
+          </span>
+          <span className="text-muted">
+            Environment: <b className="text-ink font-mono">{system.data?.env || "production"}</b>
+          </span>
+        </div>
+
+        <span className="rounded-full bg-primary/10 border border-primary/30 px-2.5 py-0.5 text-ptext font-semibold">
+          Strict Audit Active
+        </span>
+      </GlassCard>
+
+      {/* Primary Navigation Tabs */}
+      <TabGroup tabs={tabsList} active={activeTab} onChange={setActiveTab} />
+
+      {/* =========================================================
+         TAB 1: OVERVIEW & REAL DATA VISUALIZATION
+         ========================================================= */}
+      {activeTab === "overview" && (
+        <div className="space-y-6">
+          {/* Stat Tiles Row */}
+          <Async loading={overview.loading && !overview.data} error={overview.error} onRetry={overview.reload}>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              <StatTile icon={Users} label="Total Users" value={overview.data?.users ?? "—"} accent />
+              <StatTile icon={Stethoscope} label="Doctors" value={overview.data?.doctors ?? "—"} />
+              <StatTile icon={Building2} label="Facilities" value={overview.data?.facilities ?? "—"} />
+              <StatTile icon={FileText} label="Documents" value={overview.data?.documents ?? "—"} />
+              <StatTile icon={Activity} label="Observations" value={overview.data?.observations ?? "—"} />
+              <StatTile icon={CalendarClock} label="Appointments" value={overview.data?.appointments ?? "—"} />
+            </div>
+          </Async>
+
+          {/* Real Data Distribution Chart */}
+          <Card className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-line pb-3">
+              <div>
+                <h2 className="text-base font-bold text-ink flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-ptext" />
+                  <span>Platform Data Distribution</span>
+                </h2>
+                <p className="text-xs text-muted">Real object counts currently committed to database</p>
+              </div>
+              <span className="text-xs text-muted font-mono">Live SQL Query Metric</span>
+            </div>
+
+            <div className="h-72 w-full pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={overviewChartData} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 11 }} />
+                  <YAxis stroke="var(--text-muted)" tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <RechartsTooltip
+                    contentStyle={{
+                      backgroundColor: "var(--surface-1)",
+                      borderColor: "var(--border)",
+                      borderRadius: "10px",
+                      fontSize: "12px",
+                      color: "var(--text)",
+                    }}
+                  />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                    {overviewChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* =========================================================
+         TAB 2: VERIFICATION QUEUE (DOCTORS & FACILITIES)
+         ========================================================= */}
+      {activeTab === "queue" && (
+        <div className="space-y-4">
+          {/* Reason & Evidence Control Strip */}
+          <Card className="space-y-3 border-primary/30">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted">
+              Clinical Verification Form (Required for All Approvals)
+            </h3>
+            <div className="grid gap-3 md:grid-cols-2">
+              <Input
+                label="Audit Decision Reason *"
+                value={decisionReason}
+                onChange={(e) => setDecisionReason(e.target.value)}
+                placeholder="e.g. Validated against BMDC registry portal records"
+              />
+              <Input
+                label="Evidence Reference (Gazette / BMDC URL) *"
+                value={evidenceReference}
+                onChange={(e) => setEvidenceReference(e.target.value)}
+                placeholder="e.g. BMDC Reg #A-48219 verified on 2026-11-05"
+              />
+            </div>
+          </Card>
+
+          <Async
+            loading={queue.loading && !queue.data}
+            error={queue.error}
+            onRetry={queue.reload}
+            empty={!queue.data?.doctors?.length && !queue.data?.facilities?.length && !queue.data?.applications?.length}
+            emptyNode={
+              <EmptyState
+                icon={ShieldCheck}
+                title="Verification Queue Empty"
+                body="All submitted doctors, hospitals, and role applications have been verified."
+              />
+            }
+          >
+            {/* Doctors Queue */}
+            {queue.data?.doctors?.length > 0 && (
+              <Card className="space-y-3">
+                <h3 className="text-sm font-bold text-ink flex items-center gap-2 border-b border-line pb-2">
+                  <Stethoscope className="h-4 w-4 text-ptext" />
+                  <span>Doctors Awaiting Verification ({queue.data.doctors.length})</span>
+                </h3>
+                <div className="space-y-2">
+                  {queue.data.doctors.map((d: any) => (
+                    <div
+                      key={d.id}
+                      className="rounded-card border border-line bg-s2/40 p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-ink">{d.name}</span>
+                          <Chip kind={d.verification === "pending" ? "pending" : "unverified"}>
+                            {d.verification}
+                          </Chip>
+                          {d.is_sample && <Chip kind="info">Sample</Chip>}
+                        </div>
+                        <p className="num text-xs text-muted font-mono mt-0.5">ID: {d.id}</p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="xs"
+                          variant="primary"
+                          busy={actingEntityId === d.id}
+                          onClick={() => handleVerify("doctors", d.id, "approve")}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="secondary"
+                          busy={actingEntityId === d.id}
+                          onClick={() => handleVerify("doctors", d.id, "need_more_evidence")}
+                        >
+                          Need Evidence
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="danger"
+                          busy={actingEntityId === d.id}
+                          onClick={() => handleVerify("doctors", d.id, "reject")}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </Card>
+                </div>
+              </Card>
+            )}
+
+            {/* Facilities Queue */}
+            {queue.data?.facilities?.length > 0 && (
+              <Card className="space-y-3">
+                <h3 className="text-sm font-bold text-ink flex items-center gap-2 border-b border-line pb-2">
+                  <Building2 className="h-4 w-4 text-ptext" />
+                  <span>Hospitals / Clinics Awaiting Verification ({queue.data.facilities.length})</span>
+                </h3>
+                <div className="space-y-2">
+                  {queue.data.facilities.map((f: any) => (
+                    <div
+                      key={f.id}
+                      className="rounded-card border border-line bg-s2/40 p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-ink">{f.name}</span>
+                          <Chip kind={f.verification === "pending" ? "pending" : "unverified"}>
+                            {f.verification}
+                          </Chip>
+                          {f.is_sample && <Chip kind="info">Sample</Chip>}
+                        </div>
+                        <p className="num text-xs text-muted font-mono mt-0.5">ID: {f.id}</p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="xs"
+                          variant="primary"
+                          busy={actingEntityId === f.id}
+                          onClick={() => handleVerify("facilities", f.id, "approve")}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="danger"
+                          busy={actingEntityId === f.id}
+                          onClick={() => handleVerify("facilities", f.id, "reject")}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
           </Async>
         </div>
       )}
 
-      {/* Directory Quality */}
-      {tab === "quality" && (
-        <Async loading={dq.loading} error={dq.error} onRetry={dq.reload}>
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <StatTile label={`Stale doctors (>${dq.data?.stale_after_days}d)`} value={dq.data?.stale_doctors?.length ?? "—"} />
-            <StatTile label="Stale facilities" value={dq.data?.stale_facilities?.length ?? "—"} />
-            <StatTile label="Possible duplicates" value={dq.data?.possible_duplicates?.length ?? "—"} />
-            <StatTile label="Open reports" value={dq.data?.open_reports ?? "—"} />
+      {/* =========================================================
+         TAB 3: USER MANAGEMENT (SUPER ADMIN ONLY)
+         ========================================================= */}
+      {activeTab === "users" && isSuperAdmin && (
+        <Card className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-line pb-3">
+            <div>
+              <h2 className="text-base font-bold text-ink flex items-center gap-2">
+                <Users className="h-5 w-5 text-ptext" />
+                <span>User Directory & Permission Management</span>
+              </h2>
+              <p className="text-xs text-muted">Inspect account roles, verification tokens, and status</p>
+            </div>
           </div>
-        </Async>
+
+          {/* Action Reason Input */}
+          <div className="rounded-input border border-line bg-s2/50 p-3">
+            <Input
+              label="Action Reason (Mandatory for suspend/reactivate) *"
+              value={userStatusReason}
+              onChange={(e) => setUserStatusReason(e.target.value)}
+              placeholder="e.g. Terms violation or requested account reactivation"
+            />
+          </div>
+
+          {/* Search & Role Filter */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <SearchInput
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              onClear={() => setUserSearch("")}
+              placeholder="Search user by email or ID..."
+              className="sm:max-w-xs"
+            />
+            <div className="flex items-center gap-2 text-xs">
+              <Filter className="h-4 w-4 text-muted" />
+              <select
+                value={userRoleFilter}
+                onChange={(e) => setUserRoleFilter(e.target.value)}
+                className="rounded-input border border-line bg-s2 px-3 py-1.5 text-xs text-ink focus-visible:outline-none"
+              >
+                <option value="all">All Roles</option>
+                <option value="patient">Patient</option>
+                <option value="doctor">Doctor</option>
+                <option value="facility_admin">Facility Admin</option>
+                <option value="facility_staff">Facility Staff</option>
+                <option value="reviewer">Reviewer</option>
+                <option value="super_admin">Super Admin</option>
+              </select>
+            </div>
+          </div>
+
+          <Async
+            loading={usersList.loading && !usersList.data}
+            error={usersList.error}
+            onRetry={usersList.reload}
+            empty={filteredUsers.length === 0}
+            emptyNode={<EmptyState icon={Users} title="No users found" body="No registered accounts match your filter." />}
+            skeleton="table"
+          >
+            <Table>
+              <thead>
+                <tr>
+                  <th>User Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Account ID</th>
+                  <th className="text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((u: any) => {
+                  const isActive = u.status === "active";
+                  const isBusy = statusUpdatingId === u.id;
+
+                  return (
+                    <tr key={u.id} className="hover:bg-s2/40 transition">
+                      <td className="font-bold text-ink">{u.email}</td>
+                      <td>
+                        <span className="rounded bg-s2 border border-line px-2 py-0.5 text-xs font-mono capitalize">
+                          {u.role?.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td>
+                        <Chip kind={isActive ? "verified" : "failed"}>
+                          {u.status}
+                        </Chip>
+                      </td>
+                      <td className="num text-xs text-muted font-mono">{u.id?.slice(0, 16)}…</td>
+                      <td className="text-right">
+                        {isActive ? (
+                          <Button
+                            size="xs"
+                            variant="secondary"
+                            className="text-danger hover:bg-danger/10"
+                            busy={isBusy}
+                            onClick={() => handleSetUserStatus(u.id, "suspended")}
+                          >
+                            Suspend
+                          </Button>
+                        ) : (
+                          <Button
+                            size="xs"
+                            variant="primary"
+                            busy={isBusy}
+                            onClick={() => handleSetUserStatus(u.id, "active")}
+                          >
+                            Reactivate
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          </Async>
+        </Card>
+      )}
+
+      {/* =========================================================
+         TAB 4: AUDIT LOGS (SUPER ADMIN ONLY)
+         ========================================================= */}
+      {activeTab === "audit" && isSuperAdmin && (
+        <Card className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-line pb-3">
+            <div>
+              <h2 className="text-base font-bold text-ink flex items-center gap-2">
+                <History className="h-5 w-5 text-ptext" />
+                <span>Immutable System Audit Trail</span>
+              </h2>
+              <p className="text-xs text-muted">Complete provenance log of all clinical, administrative, and consent events</p>
+            </div>
+
+            <Button size="sm" variant="secondary" icon={Download} onClick={handleExportCsv}>
+              Export Audit CSV
+            </Button>
+          </div>
+
+          {/* Audit Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <input
+              type="text"
+              value={auditActionFilter}
+              onChange={(e) => setAuditActionFilter(e.target.value)}
+              placeholder="Filter by action name (e.g. documents.upload, notes.sign)..."
+              className="flex-1 rounded-input border border-line bg-s2/60 px-3 py-1.5 text-xs text-ink placeholder:text-muted focus-visible:outline-none"
+            />
+            <select
+              value={auditResultFilter}
+              onChange={(e) => setAuditResultFilter(e.target.value)}
+              className="rounded-input border border-line bg-s2 px-3 py-1.5 text-xs text-ink focus-visible:outline-none"
+            >
+              <option value="all">All Results</option>
+              <option value="allow">Allow</option>
+              <option value="deny">Deny</option>
+            </select>
+          </div>
+
+          <Async
+            loading={auditLogs.loading && !auditLogs.data}
+            error={auditLogs.error}
+            onRetry={auditLogs.reload}
+            empty={filteredAudit.length === 0}
+            emptyNode={<EmptyState icon={History} title="No audit events found" body="No log entries match your filter." />}
+            skeleton="table"
+          >
+            <Table>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Actor Role</th>
+                  <th>Action</th>
+                  <th>Resource</th>
+                  <th>Result</th>
+                  <th>Audit Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAudit.map((l: any) => {
+                  const isDeny = l.result === "deny";
+                  return (
+                    <tr key={l.id} className="hover:bg-s2/40 transition">
+                      <td className="num text-xs text-muted whitespace-nowrap">{fmtDateTime(l.at)}</td>
+                      <td className="font-semibold text-xs text-ink capitalize">{l.actor_role}</td>
+                      <td className="font-mono text-xs text-ptext">{l.action}</td>
+                      <td className="text-xs text-muted">
+                        {l.resource_type ? `${l.resource_type}:${l.resource_id?.slice(0, 8)}…` : "—"}
+                      </td>
+                      <td>
+                        <span className={`font-mono text-xs font-bold ${isDeny ? "text-warn" : "text-ptext"}`}>
+                          {isDeny ? "✕ Deny" : "✓ Allow"}
+                        </span>
+                      </td>
+                      <td className="text-xs text-muted max-w-[200px] truncate">{l.reason || "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          </Async>
+        </Card>
+      )}
+
+      {/* =========================================================
+         TAB 5: DIRECTORY QUALITY & STALENESS
+         ========================================================= */}
+      {activeTab === "quality" && (
+        <div className="space-y-4">
+          <Async loading={directoryQuality.loading && !directoryQuality.data} error={directoryQuality.error} onRetry={directoryQuality.reload}>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <StatTile
+                icon={Stethoscope}
+                label={`Stale Doctors (>${directoryQuality.data?.stale_after_days}d)`}
+                value={directoryQuality.data?.stale_doctors?.length ?? 0}
+                trend="down"
+                trendLabel="Need reverification"
+              />
+              <StatTile
+                icon={Building2}
+                label="Stale Facilities"
+                value={directoryQuality.data?.stale_facilities?.length ?? 0}
+                trend="down"
+                trendLabel="Need reverification"
+              />
+              <StatTile
+                icon={Layers}
+                label="Possible Duplicates"
+                value={directoryQuality.data?.possible_duplicates?.length ?? 0}
+                trend="neutral"
+                trendLabel="Name collision check"
+              />
+              <StatTile
+                icon={AlertTriangle}
+                label="Open Directory Reports"
+                value={directoryQuality.data?.open_reports ?? 0}
+                trend="neutral"
+                trendLabel="Patient feedback"
+              />
+            </div>
+          </Async>
+
+          <Card className="space-y-3">
+            <h3 className="text-sm font-bold text-ink flex items-center gap-2 border-b border-line pb-2">
+              <ShieldCheck className="h-4 w-4 text-ptext" />
+              <span>Directory Health & Provenance Standard</span>
+            </h3>
+            <div className="text-xs text-muted space-y-2 leading-relaxed">
+              <p>
+                In MediBridge AI, provider listings show their provenance source, last-verified date, and confidence level.
+                Records not reverified within <b>{directoryQuality.data?.stale_after_days || 90} days</b> automatically receive a
+                <Chip kind="stale" /> badge to prevent patients from relying on stale fees or out-of-date clinic hours.
+              </p>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* =========================================================
+         TAB 6: SYSTEM SETTINGS & FEATURE FLAGS (SUPER ADMIN)
+         ========================================================= */}
+      {activeTab === "settings" && isSuperAdmin && (
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between border-b border-line pb-3">
+            <div>
+              <h2 className="text-base font-bold text-ink flex items-center gap-2">
+                <Settings className="h-5 w-5 text-ptext" />
+                <span>Feature Flags & Runtime Configuration</span>
+              </h2>
+              <p className="text-xs text-muted">Runtime feature gating with mandatory audit reasoning</p>
+            </div>
+          </div>
+
+          <div className="rounded-input border border-line bg-s2/50 p-3">
+            <Input
+              label="Modification Audit Reason *"
+              value={settingsReason}
+              onChange={(e) => setSettingsReason(e.target.value)}
+              placeholder="e.g. Activated AI summary pilot for Dhaka clinics"
+            />
+          </div>
+
+          <Async loading={systemSettings.loading && !systemSettings.data} error={systemSettings.error} onRetry={systemSettings.reload}>
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted">Feature Flags:</h3>
+              <div className="divide-y divide-line/60">
+                {Object.entries(systemSettings.data?.flags || {}).map(([flag, enabled]) => (
+                  <div key={flag} className="py-3 flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-xs text-ink font-mono">{flag}</p>
+                      <p className="text-[11px] text-muted">Runtime toggle</p>
+                    </div>
+                    <Button
+                      size="xs"
+                      variant={enabled ? "primary" : "secondary"}
+                      busy={savingSettings}
+                      disabled={!settingsReason.trim()}
+                      onClick={() => handleToggleFlag(flag, Boolean(enabled))}
+                    >
+                      {enabled ? "Enabled" : "Disabled"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Async>
+        </Card>
       )}
     </div>
   );
