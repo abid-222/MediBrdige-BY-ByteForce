@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n";
 import { AppShell } from "@/components/AppShell";
+import { ToastProvider } from "@/components/ui";
 
 export const metadata = {
   title: "MediBridge AI — AI Assists. Doctors Decide. Patients Stay in Control.",
@@ -24,7 +25,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <ThemeProvider>
           <I18nProvider>
-            <AppShell>{children}</AppShell>
+            <ToastProvider>
+              <AppShell>{children}</AppShell>
+            </ToastProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>
