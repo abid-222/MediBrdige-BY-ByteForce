@@ -1,0 +1,241 @@
+doc_id,label,text
+lab-0,lab,Complete Blood Count Hemoglobin 15 g/dL WBC platelet reference range
+lab-1,lab,Lab report test result unit reference range specimen collected pathologist
+lab-2,lab,Blood glucose fasting 74 mg/dL laboratory report pathology
+lab-3,lab,Complete Blood Count Hemoglobin 349 g/dL WBC platelet reference range
+lab-4,lab,Complete Blood Count Hemoglobin 305 g/dL WBC platelet reference range
+lab-5,lab,Serum creatinine lipid profile result units normal range
+lab-6,lab,Complete Blood Count Hemoglobin 50 g/dL WBC platelet reference range
+lab-7,lab,Blood glucose fasting 122 mg/dL laboratory report pathology
+lab-8,lab,Complete Blood Count Hemoglobin 290 g/dL WBC platelet reference range
+lab-9,lab,Blood glucose fasting 369 mg/dL laboratory report pathology
+lab-10,lab,Serum creatinine lipid profile result units normal range
+lab-11,lab,Serum creatinine lipid profile result units normal range
+lab-12,lab,Lab report test result unit reference range specimen collected pathologist
+lab-13,lab,Complete Blood Count Hemoglobin 391 g/dL WBC platelet reference range
+lab-14,lab,Blood glucose fasting 360 mg/dL laboratory report pathology
+lab-15,lab,Serum creatinine lipid profile result units normal range
+lab-16,lab,Lab report test result unit reference range specimen collected pathologist
+lab-17,lab,Blood glucose fasting 493 mg/dL laboratory report pathology
+lab-18,lab,Lab report test result unit reference range specimen collected pathologist
+lab-19,lab,Complete Blood Count Hemoglobin 197 g/dL WBC platelet reference range
+lab-20,lab,Complete Blood Count Hemoglobin 186 g/dL WBC platelet reference range
+lab-21,lab,Lab report test result unit reference range specimen collected pathologist
+lab-22,lab,Lab report test result unit reference range specimen collected pathologist
+lab-23,lab,Complete Blood Count Hemoglobin 376 g/dL WBC platelet reference range
+lab-24,lab,Serum creatinine lipid profile result units normal range
+lab-25,lab,Complete Blood Count Hemoglobin 475 g/dL WBC platelet reference range
+lab-26,lab,Serum creatinine lipid profile result units normal range
+lab-27,lab,Lab report test result unit reference range specimen collected pathologist
+lab-28,lab,Lab report test result unit reference range specimen collected pathologist
+lab-29,lab,Blood glucose fasting 363 mg/dL laboratory report pathology
+lab-30,lab,Complete Blood Count Hemoglobin 26 g/dL WBC platelet reference range
+lab-31,lab,Blood glucose fasting 398 mg/dL laboratory report pathology
+lab-32,lab,Lab report test result unit reference range specimen collected pathologist
+lab-33,lab,Blood glucose fasting 446 mg/dL laboratory report pathology
+lab-34,lab,Complete Blood Count Hemoglobin 197 g/dL WBC platelet reference range
+lab-35,lab,Lab report test result unit reference range specimen collected pathologist
+lab-36,lab,Lab report test result unit reference range specimen collected pathologist
+lab-37,lab,Lab report test result unit reference range specimen collected pathologist
+lab-38,lab,Blood glucose fasting 346 mg/dL laboratory report pathology
+lab-39,lab,Lab report test result unit reference range specimen collected pathologist
+lab-40,lab,Complete Blood Count Hemoglobin 314 g/dL WBC platelet reference range
+lab-41,lab,Blood glucose fasting 276 mg/dL laboratory report pathology
+lab-42,lab,Blood glucose fasting 86 mg/dL laboratory report pathology
+lab-43,lab,Serum creatinine lipid profile result units normal range
+lab-44,lab,Lab report test result unit reference range specimen collected pathologist
+lab-45,lab,Blood glucose fasting 353 mg/dL laboratory report pathology
+lab-46,lab,Lab report test result unit reference range specimen collected pathologist
+lab-47,lab,Complete Blood Count Hemoglobin 120 g/dL WBC platelet reference range
+lab-48,lab,Complete Blood Count Hemoglobin 415 g/dL WBC platelet reference range
+lab-49,lab,Lab report test result unit reference range specimen collected pathologist
+lab-50,lab,Lab report test result unit reference range specimen collected pathologist
+lab-51,lab,Blood glucose fasting 470 mg/dL laboratory report pathology
+lab-52,lab,Lab report test result unit reference range specimen collected pathologist
+lab-53,lab,Serum creatinine lipid profile result units normal range
+lab-54,lab,Serum creatinine lipid profile result units normal range
+lab-55,lab,Lab report test result unit reference range specimen collected pathologist
+lab-56,lab,Blood glucose fasting 384 mg/dL laboratory report pathology
+lab-57,lab,Lab report test result unit reference range specimen collected pathologist
+lab-58,lab,Serum creatinine lipid profile result units normal range
+lab-59,lab,Serum creatinine lipid profile result units normal range
+prescription-0,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-1,prescription,Prescription advice drug 1+0+1 days refill
+prescription-2,prescription,Rx Tab. 443 mg twice daily after meals for 7 days
+prescription-3,prescription,Rx Tab. 81 mg twice daily after meals for 7 days
+prescription-4,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-5,prescription,Prescription advice drug 1+0+1 days refill
+prescription-6,prescription,Rx Tab. 200 mg twice daily after meals for 7 days
+prescription-7,prescription,Prescription advice drug 1+0+1 days refill
+prescription-8,prescription,Prescription advice drug 1+0+1 days refill
+prescription-9,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-10,prescription,Rx Tab. 351 mg twice daily after meals for 7 days
+prescription-11,prescription,Rx Tab. 352 mg twice daily after meals for 7 days
+prescription-12,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-13,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-14,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-15,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-16,prescription,Rx Tab. 491 mg twice daily after meals for 7 days
+prescription-17,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-18,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-19,prescription,Rx Tab. 448 mg twice daily after meals for 7 days
+prescription-20,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-21,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-22,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-23,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-24,prescription,Rx Tab. 309 mg twice daily after meals for 7 days
+prescription-25,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-26,prescription,Rx Tab. 60 mg twice daily after meals for 7 days
+prescription-27,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-28,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-29,prescription,Rx Tab. 126 mg twice daily after meals for 7 days
+prescription-30,prescription,Rx Tab. 46 mg twice daily after meals for 7 days
+prescription-31,prescription,Prescription advice drug 1+0+1 days refill
+prescription-32,prescription,Rx Tab. 392 mg twice daily after meals for 7 days
+prescription-33,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-34,prescription,Prescription advice drug 1+0+1 days refill
+prescription-35,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-36,prescription,Prescription advice drug 1+0+1 days refill
+prescription-37,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-38,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-39,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-40,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-41,prescription,Prescription advice drug 1+0+1 days refill
+prescription-42,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-43,prescription,Rx Tab. 176 mg twice daily after meals for 7 days
+prescription-44,prescription,Rx Tab. 304 mg twice daily after meals for 7 days
+prescription-45,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-46,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-47,prescription,Rx Tab. 365 mg twice daily after meals for 7 days
+prescription-48,prescription,Rx Tab. 120 mg twice daily after meals for 7 days
+prescription-49,prescription,Rx Tab. 466 mg twice daily after meals for 7 days
+prescription-50,prescription,Rx Tab. 443 mg twice daily after meals for 7 days
+prescription-51,prescription,Rx syrup 5ml three times daily medicine name dose duration
+prescription-52,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-53,prescription,Prescription advice drug 1+0+1 days refill
+prescription-54,prescription,Prescription Cap. take one tablet at night dosage advice follow up
+prescription-55,prescription,Prescription advice drug 1+0+1 days refill
+prescription-56,prescription,Prescription advice drug 1+0+1 days refill
+prescription-57,prescription,Prescription advice drug 1+0+1 days refill
+prescription-58,prescription,Rx Tab. 52 mg twice daily after meals for 7 days
+prescription-59,prescription,Prescription advice drug 1+0+1 days refill
+discharge-0,discharge,Admission discharge date treatment given summary
+discharge-1,discharge,Admission discharge date treatment given summary
+discharge-2,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-3,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-4,discharge,Admission discharge date treatment given summary
+discharge-5,discharge,Hospital discharge summary procedure performed condition at discharge
+discharge-6,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-7,discharge,Discharge advice follow up after 100 days ward bed admission date
+discharge-8,discharge,Admission discharge date treatment given summary
+discharge-9,discharge,Admission discharge date treatment given summary
+discharge-10,discharge,Hospital discharge summary procedure performed condition at discharge
+discharge-11,discharge,Discharge advice follow up after 450 days ward bed admission date
+discharge-12,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-13,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-14,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-15,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-16,discharge,Discharge advice follow up after 88 days ward bed admission date
+discharge-17,discharge,Admission discharge date treatment given summary
+discharge-18,discharge,Admission discharge date treatment given summary
+discharge-19,discharge,Admission discharge date treatment given summary
+discharge-20,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-21,discharge,Admission discharge date treatment given summary
+discharge-22,discharge,Admission discharge date treatment given summary
+discharge-23,discharge,Admission discharge date treatment given summary
+discharge-24,discharge,Admission discharge date treatment given summary
+discharge-25,discharge,Admission discharge date treatment given summary
+discharge-26,discharge,Discharge advice follow up after 154 days ward bed admission date
+discharge-27,discharge,Discharge advice follow up after 498 days ward bed admission date
+discharge-28,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-29,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-30,discharge,Hospital discharge summary procedure performed condition at discharge
+discharge-31,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-32,discharge,Admission discharge date treatment given summary
+discharge-33,discharge,Discharge advice follow up after 32 days ward bed admission date
+discharge-34,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-35,discharge,Discharge advice follow up after 38 days ward bed admission date
+discharge-36,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-37,discharge,Discharge advice follow up after 209 days ward bed admission date
+discharge-38,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-39,discharge,Discharge advice follow up after 299 days ward bed admission date
+discharge-40,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-41,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-42,discharge,Hospital discharge summary procedure performed condition at discharge
+discharge-43,discharge,Hospital discharge summary procedure performed condition at discharge
+discharge-44,discharge,Hospital discharge summary procedure performed condition at discharge
+discharge-45,discharge,Hospital discharge summary procedure performed condition at discharge
+discharge-46,discharge,Discharge advice follow up after 346 days ward bed admission date
+discharge-47,discharge,Hospital discharge summary procedure performed condition at discharge
+discharge-48,discharge,Hospital discharge summary procedure performed condition at discharge
+discharge-49,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-50,discharge,Admission discharge date treatment given summary
+discharge-51,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-52,discharge,Discharge advice follow up after 262 days ward bed admission date
+discharge-53,discharge,Hospital discharge summary procedure performed condition at discharge
+discharge-54,discharge,Hospital discharge summary procedure performed condition at discharge
+discharge-55,discharge,Discharge summary admitted on diagnosis hospital course discharged condition
+discharge-56,discharge,Discharge advice follow up after 192 days ward bed admission date
+discharge-57,discharge,Hospital discharge summary procedure performed condition at discharge
+discharge-58,discharge,Admission discharge date treatment given summary
+discharge-59,discharge,Hospital discharge summary procedure performed condition at discharge
+other-0,other,Invoice payment receipt amount 344 thank you
+other-1,other,Insurance claim form policy number
+other-2,other,Invoice payment receipt amount 483 thank you
+other-3,other,Appointment card visit timing reception
+other-4,other,Invoice payment receipt amount 458 thank you
+other-5,other,Invoice payment receipt amount 383 thank you
+other-6,other,Appointment card visit timing reception
+other-7,other,Insurance claim form policy number
+other-8,other,Appointment card visit timing reception
+other-9,other,Insurance claim form policy number
+other-10,other,Insurance claim form policy number
+other-11,other,Photo of a document with no medical content 131
+other-12,other,Invoice payment receipt amount 50 thank you
+other-13,other,Photo of a document with no medical content 427
+other-14,other,Insurance claim form policy number
+other-15,other,Invoice payment receipt amount 173 thank you
+other-16,other,Appointment card visit timing reception
+other-17,other,Insurance claim form policy number
+other-18,other,Photo of a document with no medical content 285
+other-19,other,Photo of a document with no medical content 290
+other-20,other,Invoice payment receipt amount 60 thank you
+other-21,other,Invoice payment receipt amount 486 thank you
+other-22,other,Appointment card visit timing reception
+other-23,other,Invoice payment receipt amount 430 thank you
+other-24,other,Insurance claim form policy number
+other-25,other,Appointment card visit timing reception
+other-26,other,Appointment card visit timing reception
+other-27,other,Insurance claim form policy number
+other-28,other,Invoice payment receipt amount 463 thank you
+other-29,other,Insurance claim form policy number
+other-30,other,Appointment card visit timing reception
+other-31,other,Invoice payment receipt amount 184 thank you
+other-32,other,Photo of a document with no medical content 320
+other-33,other,Appointment card visit timing reception
+other-34,other,Appointment card visit timing reception
+other-35,other,Appointment card visit timing reception
+other-36,other,Appointment card visit timing reception
+other-37,other,Photo of a document with no medical content 15
+other-38,other,Appointment card visit timing reception
+other-39,other,Insurance claim form policy number
+other-40,other,Photo of a document with no medical content 413
+other-41,other,Appointment card visit timing reception
+other-42,other,Appointment card visit timing reception
+other-43,other,Invoice payment receipt amount 198 thank you
+other-44,other,Invoice payment receipt amount 442 thank you
+other-45,other,Photo of a document with no medical content 116
+other-46,other,Appointment card visit timing reception
+other-47,other,Photo of a document with no medical content 182
+other-48,other,Insurance claim form policy number
+other-49,other,Appointment card visit timing reception
+other-50,other,Invoice payment receipt amount 340 thank you
+other-51,other,Appointment card visit timing reception
+other-52,other,Insurance claim form policy number
+other-53,other,Invoice payment receipt amount 498 thank you
+other-54,other,Insurance claim form policy number
+other-55,other,Photo of a document with no medical content 350
+other-56,other,Insurance claim form policy number
+other-57,other,Invoice payment receipt amount 62 thank you
+other-58,other,Insurance claim form policy number
+other-59,other,Insurance claim form policy number

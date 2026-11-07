@@ -1,0 +1,47 @@
+{
+  "macro_f1": 1.0,
+  "per_class_recall": {
+    "discharge": 1.0,
+    "lab": 1.0,
+    "other": 1.0,
+    "prescription": 1.0
+  },
+  "confusion_matrix": {
+    "labels": [
+      "discharge",
+      "lab",
+      "other",
+      "prescription"
+    ],
+    "matrix": [
+      [
+        15,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        15,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        15,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        15
+      ]
+    ]
+  },
+  "n_train": 180,
+  "n_test": 60,
+  "data": "synthetic",
+  "label": "research prototype"
+}

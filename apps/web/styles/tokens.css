@@ -1,0 +1,27 @@
+/* MediBridge design tokens. Light (ivory + medical green) is the default; dark is an opt-in alternative. */
+:root, :root[data-theme="light"] {
+  --bg:#F6F5EF; --surface-1:#FFFFFF; --surface-2:#F0EFE8; --border:#E2E0D3;
+  --text:#14201B; --text-muted:#5B6862;
+  --primary:#0F8A5F; --on-primary:#FFFFFF; --primary-text:#0A6B49;
+  --primary-soft:rgba(15,138,95,.09); --glow:0 6px 20px rgba(20,32,27,.08);
+  --shadow-card:0 1px 2px rgba(20,32,27,.05), 0 1px 1px rgba(20,32,27,.03);
+  --warning:#A8530A; --danger:#BE3A2D; --info:#1D6FB8;
+  --radius-card:14px; --radius-input:10px; --radius-pill:999px;
+  --font-heading:"Sora","Inter",system-ui,sans-serif;
+  --font-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg:#0B1210; --surface-1:#121B18; --surface-2:#18231F; --border:#223029;
+  --text:#EAF1ED; --text-muted:#9DADA5;
+  --primary:#34C48A; --on-primary:#04110A; --primary-text:#4ADE9E;
+  --primary-soft:rgba(52,196,138,.12); --glow:0 6px 20px rgba(0,0,0,.35);
+  --shadow-card:0 1px 2px rgba(0,0,0,.4);
+  --warning:#F0B25A; --danger:#FF7A6B; --info:#6CB6FF;
+  color-scheme: dark;
+}
+/* Bangla locale: Bangla-capable font only here, taller line height. */
+:root[data-locale="bn"] { --font-body:"Hind Siliguri","Noto Sans Bengali","Inter",system-ui,sans-serif; }
+:root[data-locale="bn"] body { line-height: 1.7; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

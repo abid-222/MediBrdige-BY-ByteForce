@@ -1,0 +1,41 @@
+full_name,specialty_code,facility_name,facility_type,has_emergency,fee_bdt,experience_years,verification,verified_days_ago,source_name,is_sample
+Dr. Rahim Ahmed,general_medicine,Sample Dhanmondi General Hospital,private,1,,7,verified,60,Synthetic sample seed,1
+Dr. Karim Chowdhury,cardiology,Sample Mirpur Teaching Hospital,teaching,1,1000,5,verified,10,Synthetic sample seed,1
+Dr. Nasrin Akter,endocrinology,Sample Uttara Medical Centre,private,1,1200,6,unverified,,Synthetic sample seed,1
+Dr. Farhana Sarker,hematology,Sample Mohakhali Govt Hospital,government,1,800,21,pending,,Synthetic sample seed,1
+Dr. Tanvir Rahman,neurology,Sample Gulshan Specialist Clinic,clinic,0,500,9,verified,200,Synthetic sample seed,1
+Dr. Shirin Khan,pediatrics,Sample Old Dhaka Charity Hospital,charitable,1,,5,verified,10,Synthetic sample seed,1
+Dr. Imran Begum,gynecology,Sample Banani Diagnostic & Clinic,clinic,0,1000,16,unverified,,Synthetic sample seed,1
+Dr. Sadia Hossain,orthopedics,Sample Motijheel Medical College Hospital,teaching,1,500,10,pending,,Synthetic sample seed,1
+Dr. Kamal Islam,dermatology,Sample Mohammadpur Care Hospital,private,1,500,16,verified,200,Synthetic sample seed,1
+Dr. Rubina Uddin,ent,Sample Tejgaon Child Health Clinic,clinic,0,500,6,verified,200,Synthetic sample seed,1
+Dr. Mahfuz Ahmed,gastroenterology,Sample Dhanmondi General Hospital,private,1,,10,unverified,,Synthetic sample seed,1
+Dr. Tahmina Chowdhury,general_medicine,Sample Mirpur Teaching Hospital,teaching,1,1500,23,pending,,Synthetic sample seed,1
+Dr. Arif Akter,cardiology,Sample Uttara Medical Centre,private,1,1200,21,verified,10,Synthetic sample seed,1
+Dr. Sultana Sarker,endocrinology,Sample Mohakhali Govt Hospital,government,1,1200,4,verified,120,Synthetic sample seed,1
+Dr. Jahid Rahman,hematology,Sample Gulshan Specialist Clinic,clinic,0,600,4,unverified,,Synthetic sample seed,1
+Dr. Nusrat Khan,neurology,Sample Old Dhaka Charity Hospital,charitable,1,,20,pending,,Synthetic sample seed,1
+Dr. Habib Begum,pediatrics,Sample Banani Diagnostic & Clinic,clinic,0,600,16,verified,60,Synthetic sample seed,1
+Dr. Mehnaz Hossain,gynecology,Sample Motijheel Medical College Hospital,teaching,1,600,6,verified,200,Synthetic sample seed,1
+Dr. Sohel Islam,orthopedics,Sample Mohammadpur Care Hospital,private,1,1200,12,unverified,,Synthetic sample seed,1
+Dr. Lubna Uddin,dermatology,Sample Tejgaon Child Health Clinic,clinic,0,1200,24,pending,,Synthetic sample seed,1
+Dr. Rahim Ahmed,ent,Sample Dhanmondi General Hospital,private,1,,6,verified,25,Synthetic sample seed,1
+Dr. Karim Chowdhury,gastroenterology,Sample Mirpur Teaching Hospital,teaching,1,1200,23,verified,200,Synthetic sample seed,1
+Dr. Nasrin Akter,general_medicine,Sample Uttara Medical Centre,private,1,600,14,unverified,,Synthetic sample seed,1
+Dr. Farhana Sarker,cardiology,Sample Mohakhali Govt Hospital,government,1,500,20,pending,,Synthetic sample seed,1
+Dr. Tanvir Rahman,endocrinology,Sample Gulshan Specialist Clinic,clinic,0,1500,21,verified,10,Synthetic sample seed,1
+Dr. Shirin Khan,hematology,Sample Old Dhaka Charity Hospital,charitable,1,,22,verified,10,Synthetic sample seed,1
+Dr. Imran Begum,neurology,Sample Banani Diagnostic & Clinic,clinic,0,600,18,unverified,,Synthetic sample seed,1
+Dr. Sadia Hossain,pediatrics,Sample Motijheel Medical College Hospital,teaching,1,1500,20,pending,,Synthetic sample seed,1
+Dr. Kamal Islam,gynecology,Sample Mohammadpur Care Hospital,private,1,1000,17,verified,60,Synthetic sample seed,1
+Dr. Rubina Uddin,orthopedics,Sample Tejgaon Child Health Clinic,clinic,0,1200,14,verified,120,Synthetic sample seed,1
+Dr. Mahfuz Ahmed,dermatology,Sample Dhanmondi General Hospital,private,1,,12,unverified,,Synthetic sample seed,1
+Dr. Tahmina Chowdhury,ent,Sample Mirpur Teaching Hospital,teaching,1,600,8,pending,,Synthetic sample seed,1
+Dr. Arif Akter,gastroenterology,Sample Uttara Medical Centre,private,1,1500,5,verified,25,Synthetic sample seed,1
+Dr. Sultana Sarker,general_medicine,Sample Mohakhali Govt Hospital,government,1,1200,19,verified,60,Synthetic sample seed,1
+Dr. Jahid Rahman,cardiology,Sample Gulshan Specialist Clinic,clinic,0,1000,13,unverified,,Synthetic sample seed,1
+Dr. Nusrat Khan,endocrinology,Sample Old Dhaka Charity Hospital,charitable,1,,17,pending,,Synthetic sample seed,1
+Dr. Habib Begum,hematology,Sample Banani Diagnostic & Clinic,clinic,0,800,5,verified,200,Synthetic sample seed,1
+Dr. Mehnaz Hossain,neurology,Sample Motijheel Medical College Hospital,teaching,1,500,16,verified,200,Synthetic sample seed,1
+Dr. Sohel Islam,pediatrics,Sample Mohammadpur Care Hospital,private,1,600,13,unverified,,Synthetic sample seed,1
+Dr. Lubna Uddin,gynecology,Sample Tejgaon Child Health Clinic,clinic,0,600,18,pending,,Synthetic sample seed,1

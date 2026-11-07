@@ -1,0 +1,28 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment: { POSTGRES_USER: medibridge, POSTGRES_PASSWORD: medibridge, POSTGRES_DB: medibridge }
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+  api:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://medibridge:medibridge@db:5432/medibridge}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-me}
+      APP_ENV: ${APP_ENV:-dev}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-none}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      SUPABASE_BUCKET: ${SUPABASE_BUCKET:-reports}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports: ["8000:8000"]
+    depends_on: [db]
+    healthcheck: { test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health/ready')"], interval: 15s, retries: 5 }
+  web:
+    build: ./apps/web
+    environment: { NEXT_PUBLIC_API_URL: "http://localhost:8000/api/v1" }
+    ports: ["3000:3000"]
+    depends_on: [api]
+volumes: { pgdata: {} }

@@ -1,0 +1,18 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+sqlalchemy>=2.0
+pydantic-settings>=2.2
+python-multipart>=0.0.9
+pyjwt>=2.8
+email-validator>=2.1
+pymupdf>=1.24
+scikit-learn>=1.4
+joblib>=1.3
+httpx>=0.27
+pytest>=8.0
+# optional OCR for scans (heavy): paddleocr, pytesseract
+# optional LLM: anthropic
+alembic>=1.13
+pytesseract>=0.3.10
+pillow>=10.0
+psycopg[binary]>=3.1

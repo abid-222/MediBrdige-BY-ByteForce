@@ -1,0 +1,18 @@
+@import "../styles/tokens.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 16px; }
+h1, h2, h3 { font-family: var(--font-heading); font-weight: 600; }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.fade-in { animation: fade .2s ease-out; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+button, input, select, textarea { min-height: 44px; }
+a.btn-link { min-height: 44px; display: inline-flex; align-items: center; }
+.skeleton { background: linear-gradient(90deg, var(--surface-2), var(--border), var(--surface-2)); background-size: 200% 100%; animation: sk 1.2s linear infinite; border-radius: 10px; }
+@keyframes sk { to { background-position: -200% 0; } }
+
+.card-shadow { box-shadow: var(--shadow-card); }
+body { overflow-x: hidden; }

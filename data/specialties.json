@@ -1,0 +1,57 @@
+[
+ {
+  "code": "general_medicine",
+  "name_en": "General Medicine",
+  "name_bn": "সাধারণ চিকিৎসা"
+ },
+ {
+  "code": "cardiology",
+  "name_en": "Cardiology",
+  "name_bn": "হৃদরোগ"
+ },
+ {
+  "code": "endocrinology",
+  "name_en": "Endocrinology",
+  "name_bn": "এন্ডোক্রাইনোলজি"
+ },
+ {
+  "code": "hematology",
+  "name_en": "Hematology",
+  "name_bn": "রক্তরোগ"
+ },
+ {
+  "code": "neurology",
+  "name_en": "Neurology",
+  "name_bn": "স্নায়ুরোগ"
+ },
+ {
+  "code": "pediatrics",
+  "name_en": "Pediatrics",
+  "name_bn": "শিশুরোগ"
+ },
+ {
+  "code": "gynecology",
+  "name_en": "Gynecology",
+  "name_bn": "স্ত্রীরোগ"
+ },
+ {
+  "code": "orthopedics",
+  "name_en": "Orthopedics",
+  "name_bn": "অর্থোপেডিক্স"
+ },
+ {
+  "code": "dermatology",
+  "name_en": "Dermatology",
+  "name_bn": "চর্মরোগ"
+ },
+ {
+  "code": "ent",
+  "name_en": "ENT",
+  "name_bn": "নাক-কান-গলা"
+ },
+ {
+  "code": "gastroenterology",
+  "name_en": "Gastroenterology",
+  "name_bn": "গ্যাস্ট্রোএন্টেরোলজি"
+ }
+]
