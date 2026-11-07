@@ -52,3 +52,45 @@ def test_ml_datasets_endpoint(client):
     assert detail["total_missing_cells"] == 0
     assert len(detail["features"]) == 3
     assert len(detail["preview_rows"]) > 0
+
+
+def test_ml_predict_and_explain_endpoint(client):
+    # Test valid lab inference
+    r = client.post("/api/v1/ml/predict", json={"text": "Complete Blood Count Hemoglobin 14 g/dL WBC platelet reference range"})
+    assert r.status_code == 200
+    res = r.json()
+    assert res["label"] == "lab"
+    assert res["confidence"] > 0.55
+    assert res["abstained"] is False
+    assert "lab" in res["probabilities"]
+    assert len(res["token_attributions"]) > 0
+    assert "disclaimer" in res
+    assert "AI assists. Doctors decide" in res["disclaimer"]
+
+    # Test out-of-distribution text triggers abstain gate (< 0.55 confidence -> "other")
+    r_noise = client.post("/api/v1/ml/predict", json={"text": "zzzz qqqq xxxx random unmedical text"})
+    assert r_noise.status_code == 200
+    res_noise = r_noise.json()
+    assert res_noise["label"] == "other"
+
+    # Test input validation (too short)
+    r_short = client.post("/api/v1/ml/predict", json={"text": "a"})
+    assert r_short.status_code == 422
+
+
+def test_ml_explainability_endpoint(client):
+    r = client.get("/api/v1/ml/explainability")
+    assert r.status_code == 200
+    data = r.json()
+    assert "document-type-classifier" in data["model_id"]
+    assert "lab" in data["global_importance"]
+    assert "prescription" in data["global_importance"]
+    assert len(data["global_importance"]["lab"]["top_positive"]) > 0
+
+    # Verify SHAP and LIME are accurately reported as not implemented
+    methods = {m["id"]: m for m in data["methods"]}
+    assert methods["shap"]["supported"] is False
+    assert methods["lime"]["supported"] is False
+    assert methods["linear_attribution"]["supported"] is True
+    assert "AI assists. Doctors decide" in data["clinical_disclaimer"]
+

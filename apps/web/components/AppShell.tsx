@@ -48,13 +48,6 @@ type NavItem = {
   badge?: number;
 };
 
-const DEMO_PERSONAS = [
-  { role: "patient", label: "Patient", email: "patient1@demo.medibridge.dev", icon: HeartPulse, path: "/dashboard" },
-  { role: "doctor", label: "Doctor", email: "doctor1@demo.medibridge.dev", icon: Stethoscope, path: "/doctor" },
-  { role: "facility_admin", label: "Hospital", email: "hospital@demo.medibridge.dev", icon: Building2, path: "/facility" },
-  { role: "super_admin", label: "Admin", email: "admin@demo.medibridge.dev", icon: ShieldCheck, path: "/admin" },
-];
-
 export function AppShell({ children }: { children: ReactNode }) {
   const { t, locale, setLocale } = useI18n();
   const { theme, setTheme } = useTheme();
@@ -65,7 +58,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<string>("none");
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
-  const [switching, setSwitching] = useState<string | null>(null);
   const [notifOpen, setNotifOpen] = useState<boolean>(false);
   const [profileOpen, setProfileOpen] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -138,22 +130,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     setProfileOpen(false);
     addToast("info", "Logged out", "You have been securely signed out.");
     router.push("/login");
-  };
-
-  const switchDemoRole = async (email: string, targetRole: string, targetPath: string) => {
-    setSwitching(targetRole);
-    try {
-      const res = await api("/auth/login", { body: { email, password: "Demo@12345" } });
-      setSession(res.access_token, res.role);
-      setRole(res.role);
-      setMobileOpen(false);
-      addToast("success", `Switched to ${targetRole.replace("_", " ")} persona`, `Logged in as ${email}`);
-      router.push(targetPath);
-    } catch (e: any) {
-      addToast("error", "Demo switch failed", e.message || "Please check credentials");
-    } finally {
-      setSwitching(null);
-    }
   };
 
   const isActive = (href: string) => path === href || (href !== "/" && path.startsWith(href + "/"));
@@ -351,52 +327,26 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           )}
 
-          {/* Demo Persona 1-Click Switcher Card in Sidebar */}
-          {!collapsed && (
-            <div className="mt-5 rounded-xl border border-primary/30 bg-s2/60 p-3 fade-in">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-ptext">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Demo Portals</span>
-              </div>
-              <p className="mt-1 text-[11px] text-muted">1-Click role preview:</p>
-              <div className="mt-2 space-y-1">
-                {DEMO_PERSONAS.map((p) => {
-                  const Icon = p.icon;
-                  const isCurrent = role === p.role;
-                  return (
-                    <button
-                      key={p.role}
-                      onClick={() => switchDemoRole(p.email, p.role, p.path)}
-                      disabled={switching !== null}
-                      className={`flex w-full min-h-[34px] items-center justify-between rounded-lg px-2.5 text-xs font-medium transition ${
-                        isCurrent
-                          ? "bg-primary text-onprimary shadow-[0_0_10px_var(--accent-glow)]"
-                          : "text-muted hover:bg-s1 hover:text-ink"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <Icon className="h-3.5 w-3.5" />
-                        <span>{p.label}</span>
-                      </span>
-                      {switching === p.role ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : isCurrent ? (
-                        <span className="text-[10px] uppercase font-bold tracking-wider">Active</span>
-                      ) : (
-                        <span className="text-[10px] text-muted font-mono">enter →</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {/* Research & Lab Section */}
+          <div className="pt-3 mt-2 border-t border-line/40">
+            <Link
+              href="/ml-lab"
+              className={`flex min-h-[40px] items-center gap-3 rounded-input px-3 text-xs font-semibold transition ${
+                isActive("/ml-lab")
+                  ? "border border-emerald-500/50 bg-emerald-500/10 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+                  : "text-muted hover:bg-s2 hover:text-ink"
+              }`}
+            >
+              <FlaskConical className="h-4 w-4 shrink-0 text-emerald-400" />
+              {!collapsed && <span>ML & Data Science Lab</span>}
+            </Link>
+          </div>
 
           {/* Design Kit / Dev UI Link */}
-          <div className="pt-3">
+          <div className="pt-1">
             <Link
               href="/dev/ui"
-              className={`flex min-h-[38px] items-center gap-3 rounded-input px-3 text-xs text-muted hover:bg-s2 hover:text-ink ${
+              className={`flex min-h-[36px] items-center gap-3 rounded-input px-3 text-xs text-muted hover:bg-s2 hover:text-ink ${
                 isActive("/dev/ui") ? "text-ptext font-medium" : ""
               }`}
             >
@@ -523,25 +473,56 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </Link>
               ))}
 
+              {/* Core quick links in mobile menu */}
+              <div className="pt-3 mt-2 border-t border-line space-y-1">
+                <Link
+                  href="/ml-lab"
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-sm font-medium ${
+                    isActive("/ml-lab") ? "bg-emerald-500/10 text-emerald-400 font-semibold" : "text-muted hover:bg-s2 hover:text-ink"
+                  }`}
+                >
+                  <FlaskConical className="h-4 w-4 text-emerald-400" />
+                  <span>ML & Data Science Lab</span>
+                </Link>
+                <Link
+                  href="/dev/ui"
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-sm font-medium ${
+                    isActive("/dev/ui") ? "bg-psoft text-ptext font-semibold" : "text-muted hover:bg-s2 hover:text-ink"
+                  }`}
+                >
+                  <Palette className="h-4 w-4" />
+                  <span>Design Kit (/dev/ui)</span>
+                </Link>
+              </div>
+
+              {/* Mobile Auth actions */}
               <div className="pt-4 mt-2 border-t border-line">
-                <p className="px-3 text-xs font-semibold uppercase text-muted mb-2">Switch Demo Persona</p>
-                <div className="space-y-1">
-                  {DEMO_PERSONAS.map((p) => (
-                    <button
-                      key={p.role}
-                      onClick={() => switchDemoRole(p.email, p.role, p.path)}
-                      className={`flex w-full min-h-[38px] items-center justify-between rounded-input px-3 text-xs font-medium ${
-                        role === p.role ? "bg-primary text-onprimary font-semibold" : "text-muted hover:bg-s2"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <p.icon className="h-4 w-4" />
-                        <span>{p.label}</span>
-                      </span>
-                      {role === p.role && <span>Active</span>}
-                    </button>
-                  ))}
-                </div>
+                {role !== "none" ? (
+                  <button
+                    onClick={() => { setMobileOpen(false); logout(); }}
+                    className="flex w-full min-h-[40px] items-center justify-center gap-2 rounded-input border border-danger/40 bg-danger/10 px-3 text-xs font-semibold text-danger hover:bg-danger hover:text-white transition"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>{t("nav.logout") || "Log out"}</span>
+                  </button>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <Link href="/login" onClick={() => setMobileOpen(false)} className="w-full">
+                      <button className="flex min-h-[40px] w-full items-center justify-center gap-2 rounded-input border border-primary/50 bg-primary px-3 text-xs font-semibold text-onprimary shadow transition">
+                        <LogIn className="h-4 w-4" />
+                        <span>{t("auth.login") || "Log in"}</span>
+                      </button>
+                    </Link>
+                    <Link href="/register" onClick={() => setMobileOpen(false)} className="w-full">
+                      <button className="flex min-h-[38px] w-full items-center justify-center gap-2 rounded-input border border-line bg-s2 px-3 text-xs font-medium text-ink hover:bg-s3 transition">
+                        <UserPlus className="h-4 w-4" />
+                        <span>{t("auth.register") || "Register"}</span>
+                      </button>
+                    </Link>
+                  </div>
+                )}
               </div>
             </nav>
           </div>
@@ -580,30 +561,25 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </form>
 
-          {/* Persona Pills for Desktop */}
-          <div className="hidden xl:flex items-center gap-1 rounded-full border border-line bg-s2/60 px-2 py-0.5 text-xs">
-            <span className="px-1 text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-1">
-              <Sparkles className="h-3 w-3 text-ptext" /> Demo:
-            </span>
-            {DEMO_PERSONAS.map((p) => {
-              const isCurrent = role === p.role;
-              return (
-                <button
-                  key={p.role}
-                  onClick={() => switchDemoRole(p.email, p.role, p.path)}
-                  disabled={switching !== null}
-                  className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition ${
-                    isCurrent
-                      ? "bg-primary text-onprimary font-semibold shadow-[0_0_8px_var(--accent-glow)]"
-                      : "text-muted hover:bg-s1 hover:text-ink"
-                  }`}
-                >
-                  {switching === p.role ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
-                  <span>{p.label}</span>
-                </button>
-              );
-            })}
-          </div>
+          {/* Active Role Status Badge for Desktop */}
+          {role !== "none" ? (
+            <div className="hidden xl:flex items-center gap-2 rounded-full border border-primary/30 bg-psoft/60 px-3 py-1 text-xs">
+              <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+              <span className="font-semibold text-ptext capitalize">{role.replace("_", " ")} Workspace</span>
+            </div>
+          ) : (
+            <div className="hidden xl:flex items-center gap-3 text-xs text-muted">
+              <Link
+                href="/ml-lab"
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition"
+              >
+                <FlaskConical className="h-3 w-3" />
+                <span>ML Lab</span>
+              </Link>
+              <span className="text-muted/60">·</span>
+              <span className="font-medium text-ink/70">AI assists. Doctors decide. Patients stay in control.</span>
+            </div>
+          )}
 
           {/* Header Action Tools */}
           <div className="ml-auto flex items-center gap-2">

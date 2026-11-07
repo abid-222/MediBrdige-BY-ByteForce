@@ -37,32 +37,39 @@ export default function Home() {
   const { t, locale } = useI18n();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"patient" | "doctor" | "hospital" | "admin">("patient");
-  const [demoLoggingIn, setDemoLoggingIn] = useState<string | null>(null);
+  const [currentRole, setCurrentRole] = useState<string>("none");
 
   useEffect(() => {
-    if (getToken()) router.replace(homeFor(getRole()));
-  }, [router]);
-
-  // Quick 1-click Demo Login for hackathon judges & testers
-  const handleQuickDemoLogin = async (email: string, role: string) => {
-    setDemoLoggingIn(role);
-    try {
-      const res = await api("/auth/login", {
-        body: { email, password: "Demo@12345" },
-      });
-      setSession(res.access_token, res.role);
-      router.push(homeFor(res.role));
-    } catch (e: any) {
-      alert("Quick login failed: " + (e.message || "Please check credentials"));
-    } finally {
-      setDemoLoggingIn(null);
+    const token = getToken();
+    const role = getRole();
+    if (token && role) {
+      setCurrentRole(role);
     }
-  };
+  }, []);
 
   const isBn = locale === "bn";
 
   return (
     <div className="hero-glow-bg relative -mt-4 space-y-16 pb-16 pt-6">
+      {/* Logged In Quick Return Banner */}
+      {currentRole !== "none" && (
+        <div className="mx-auto max-w-4xl rounded-xl border border-primary/40 bg-psoft/70 px-4 py-3 shadow-[0_0_15px_var(--accent-glow)] flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
+            <span className="text-xs sm:text-sm font-semibold text-ink">
+              {isBn ? "আপনি বর্তমানে লগইন আছেন:" : "You are currently signed in as:"}
+              <strong className="ml-1.5 capitalize text-ptext">{currentRole.replace("_", " ")}</strong>
+            </span>
+          </div>
+          <Link href={homeFor(currentRole)}>
+            <Button size="sm" className="btn-primary-neon text-xs">
+              {isBn ? "আমার ড্যাশবোর্ডে প্রবেশ করুন" : "Enter My Workspace"}
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </div>
+      )}
+
       {/* 1. Hero Section */}
       <section className="relative z-10 mx-auto max-w-4xl text-center">
         {/* Hackathon Badge */}
@@ -104,6 +111,12 @@ export default function Home() {
               {isBn ? "ডাক্তার ও হাসপাতাল ডিরেক্টরি" : "Browse Dhaka Directory"}
             </Button>
           </Link>
+          <Link href="/ml-lab">
+            <Button variant="ghost" className="h-12 px-5 text-base border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
+              <Sparkles className="mr-2 h-4 w-4" />
+              {isBn ? "এমএল ল্যাব পরিদর্শন" : "Research ML Lab"}
+            </Button>
+          </Link>
           <Link href="/login">
             <Button variant="ghost" className="h-12 px-5 text-base">
               {isBn ? "লগইন করুন" : "Sign In"} <ArrowRight className="ml-1 h-4 w-4" />
@@ -122,88 +135,84 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2. Interactive 1-Click Demo Login Box (For Hackathon Reviewers) */}
-      <section className="relative z-10 mx-auto max-w-4xl">
+      {/* 2. Role-Based Portals Showcase */}
+      <section className="relative z-10 mx-auto max-w-5xl">
         <div className="rounded-2xl border border-primary/30 bg-gradient-to-b from-s1 to-s2/70 p-6 shadow-2xl backdrop-blur-md">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
             <div>
               <div className="flex items-center gap-2 text-sm font-semibold text-ptext">
-                <Sparkles className="h-4 w-4" />
-                {isBn ? "দ্রুত ডেমো লগইন (এক ক্লিকে পরখ করুন)" : "Instant Demo Access (1-Click Test)"}
+                <HeartPulse className="h-4 w-4" />
+                <span>{isBn ? "প্ল্যাটফর্মের ভূমিকাভিত্তিক পোর্টালসমূহ" : "Role-Based Healthcare Portals"}</span>
               </div>
               <p className="mt-0.5 text-xs text-muted">
                 {isBn
-                  ? "পাসওয়ার্ড: Demo@12345 (নিচের যে কোনো রোলে সরাসরি প্রবেশ করুন)"
-                  : "All synthetic demo accounts pre-seeded with password: Demo@12345"}
+                  ? "নিরাপদ ভূমিকাভিত্তিক অথরাইজেশন ও নিয়ন্ত্রিত অ্যাক্সেস ব্যবস্থা"
+                  : "Strict role-based access control (RBAC) engineered for clinical workflows."}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-psoft px-2.5 py-1 text-xs font-mono text-ptext">
-                <CheckCircle2 className="h-3 w-3" /> Live SQLite/Postgres Ready
+                <CheckCircle2 className="h-3 w-3" /> RBAC Enforced
               </span>
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <button
-              onClick={() => handleQuickDemoLogin("patient1@demo.medibridge.dev", "patient")}
-              disabled={!!demoLoggingIn}
-              className="flex flex-col items-start rounded-xl border border-border bg-s1/90 p-3.5 text-left transition hover:border-primary/50 hover:bg-s2 disabled:opacity-50"
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Link
+              href={currentRole === "patient" ? "/dashboard" : "/login"}
+              className="flex flex-col items-start rounded-xl border border-border bg-s1/90 p-4 text-left transition hover:border-primary/50 hover:bg-s2 hover:shadow-[0_0_12px_var(--accent-glow)] group"
             >
               <div className="flex w-full items-center justify-between">
-                <span className="rounded-md bg-psoft p-1.5 text-ptext">
+                <span className="rounded-md bg-psoft p-2 text-ptext">
                   <HeartPulse className="h-4 w-4" />
                 </span>
-                <span className="text-[10px] text-muted font-mono">patient1</span>
+                <span className="text-[10px] text-muted font-mono group-hover:text-ptext transition">Access →</span>
               </div>
-              <span className="mt-2 text-sm font-semibold text-ink">{isBn ? "রোগী পোর্টাল" : "Patient Portal"}</span>
-              <span className="text-[11px] text-muted">Reports, Timeline, Booking</span>
-            </button>
+              <span className="mt-3 text-sm font-semibold text-ink">{isBn ? "রোগী পোর্টাল" : "Patient Portal"}</span>
+              <p className="mt-1 text-xs text-muted">Reports, Longitudinal Timeline, Bookings & Emergency Card</p>
+            </Link>
 
-            <button
-              onClick={() => handleQuickDemoLogin("doctor1@demo.medibridge.dev", "doctor")}
-              disabled={!!demoLoggingIn}
-              className="flex flex-col items-start rounded-xl border border-border bg-s1/90 p-3.5 text-left transition hover:border-primary/50 hover:bg-s2 disabled:opacity-50"
+            <Link
+              href={currentRole === "doctor" ? "/doctor" : "/login"}
+              className="flex flex-col items-start rounded-xl border border-border bg-s1/90 p-4 text-left transition hover:border-info/50 hover:bg-s2 hover:shadow-[0_0_12px_rgba(91,192,255,0.2)] group"
             >
               <div className="flex w-full items-center justify-between">
-                <span className="rounded-md bg-info/10 p-1.5 text-info">
+                <span className="rounded-md bg-info/10 p-2 text-info">
                   <Stethoscope className="h-4 w-4" />
                 </span>
-                <span className="text-[10px] text-muted font-mono">doctor1</span>
+                <span className="text-[10px] text-muted font-mono group-hover:text-info transition">Access →</span>
               </div>
-              <span className="mt-2 text-sm font-semibold text-ink">{isBn ? "ডাক্তার ওয়ার্কস্পেস" : "Doctor Workspace"}</span>
-              <span className="text-[11px] text-muted">Verify OCR, AI Summary, Sign</span>
-            </button>
+              <span className="mt-3 text-sm font-semibold text-ink">{isBn ? "ডাক্তার ওয়ার্কস্পেস" : "Doctor Workspace"}</span>
+              <p className="mt-1 text-xs text-muted">BMDC Verified Registry, OCR Verification, Clinical Note Signing</p>
+            </Link>
 
-            <button
-              onClick={() => handleQuickDemoLogin("hospital@demo.medibridge.dev", "facility_admin")}
-              disabled={!!demoLoggingIn}
-              className="flex flex-col items-start rounded-xl border border-border bg-s1/90 p-3.5 text-left transition hover:border-primary/50 hover:bg-s2 disabled:opacity-50"
+            <Link
+              href={currentRole === "facility_admin" ? "/facility" : "/login"}
+              className="flex flex-col items-start rounded-xl border border-border bg-s1/90 p-4 text-left transition hover:border-warn/50 hover:bg-s2 hover:shadow-[0_0_12px_rgba(255,200,87,0.2)] group"
             >
               <div className="flex w-full items-center justify-between">
-                <span className="rounded-md bg-warn/10 p-1.5 text-warn">
+                <span className="rounded-md bg-warn/10 p-2 text-warn">
                   <Building2 className="h-4 w-4" />
                 </span>
-                <span className="text-[10px] text-muted font-mono">hospital</span>
+                <span className="text-[10px] text-muted font-mono group-hover:text-warn transition">Access →</span>
               </div>
-              <span className="mt-2 text-sm font-semibold text-ink">{isBn ? "হাসপাতাল পোর্টাল" : "Hospital Portal"}</span>
-              <span className="text-[11px] text-muted">Roster, Services & Prices</span>
-            </button>
+              <span className="mt-3 text-sm font-semibold text-ink">{isBn ? "হাসপাতাল কমান্ড" : "Hospital Command"}</span>
+              <p className="mt-1 text-xs text-muted">Real-time ICU/General Bed Availability & Specialist Shift Roster</p>
+            </Link>
 
-            <button
-              onClick={() => handleQuickDemoLogin("admin@demo.medibridge.dev", "super_admin")}
-              disabled={!!demoLoggingIn}
-              className="flex flex-col items-start rounded-xl border border-border bg-s1/90 p-3.5 text-left transition hover:border-primary/50 hover:bg-s2 disabled:opacity-50"
+            <Link
+              href={currentRole === "super_admin" || currentRole === "reviewer" ? "/admin" : "/login"}
+              className="flex flex-col items-start rounded-xl border border-border bg-s1/90 p-4 text-left transition hover:border-danger/50 hover:bg-s2 hover:shadow-[0_0_12px_rgba(255,92,108,0.2)] group"
             >
               <div className="flex w-full items-center justify-between">
-                <span className="rounded-md bg-danger/10 p-1.5 text-danger">
+                <span className="rounded-md bg-danger/10 p-2 text-danger">
                   <ShieldCheck className="h-4 w-4" />
                 </span>
-                <span className="text-[10px] text-muted font-mono">admin</span>
+                <span className="text-[10px] text-muted font-mono group-hover:text-danger transition">Access →</span>
               </div>
-              <span className="mt-2 text-sm font-semibold text-ink">{isBn ? "সুপার অ্যাডমিন" : "Super Admin"}</span>
-              <span className="text-[11px] text-muted">Verification & Audit Log</span>
-            </button>
+              <span className="mt-3 text-sm font-semibold text-ink">{isBn ? "অ্যাডমিন সেন্টার" : "Admin Center"}</span>
+              <p className="mt-1 text-xs text-muted">Access Roles, Doctor Verification Queue & System Audit Logs</p>
+            </Link>
           </div>
         </div>
       </section>
