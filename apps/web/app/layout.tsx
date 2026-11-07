@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { I18nProvider } from "@/lib/i18n";
 import { AppShell } from "@/components/AppShell";
 import { ToastProvider } from "@/components/ui";
+import { AppLoadingScreen } from "@/components/AppLoadingScreen";
 
 export const metadata = {
   title: "MediBridge AI — AI Assists. Doctors Decide. Patients Stay in Control.",
@@ -26,7 +27,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ThemeProvider>
           <I18nProvider>
             <ToastProvider>
-              <AppShell>{children}</AppShell>
+              <AppLoadingScreen minDurationMs={450}>
+                <AppShell>{children}</AppShell>
+              </AppLoadingScreen>
             </ToastProvider>
           </I18nProvider>
         </ThemeProvider>

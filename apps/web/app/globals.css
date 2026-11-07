@@ -152,7 +152,84 @@
   from { opacity: 0; transform: scale(0.95); }
   to   { opacity: 1; transform: scale(1); }
 }
-.scale-in { animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+/* =========================================================
+   ANIMATIONS & KEYFRAMES (PHASE 6)
+   ========================================================= */
+@keyframes progress-indeterminate {
+  0% { transform: translateX(-100%); width: 30%; }
+  50% { transform: translateX(50%); width: 60%; }
+  100% { transform: translateX(200%); width: 30%; }
+}
+.animate-progress-indeterminate {
+  animation: progress-indeterminate 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Micro button tap and active scale */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Smooth dropdown / popover entry */
+.scale-in {
+  animation: scale-pop 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes scale-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Slide in from left for mobile drawer */
+.slide-in-left {
+  animation: slide-drawer 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes slide-drawer {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Smooth Page Transitions */
+.page-enter {
+  animation: page-fade-up 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes page-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Respect user's reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-ping, .animate-pulse, .animate-bounce {
+    animation: none !important;
+  }
+}
 
 /* =========================================================
    APP LOADING SCREEN

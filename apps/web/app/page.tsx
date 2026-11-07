@@ -31,6 +31,7 @@ import {
 import { api, getRole, getToken, homeFor, setSession } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { Button, Card, Chip } from "@/components/ui";
+import { Medical3DHeroBadge } from "@/components/Medical3DHeroBadge";
 
 export default function Home() {
   const { t, locale } = useI18n();
@@ -80,7 +81,10 @@ export default function Home() {
           {isBn ? "এআই সহযোগিতা করবে। সিদ্ধান্ত নেবেন ডাক্তার। নিয়ন্ত্রণে থাকবেন রোগী।" : "AI assists. Doctors decide. Patients stay in control."}
         </p>
 
-        <p className="mx-auto mt-3 max-w-2xl text-base text-muted sm:text-lg">
+        {/* 3D Medical Hero Visual Badge */}
+        <Medical3DHeroBadge />
+
+        <p className="mx-auto mt-1 max-w-2xl text-base text-muted sm:text-lg">
           {isBn
             ? "বাংলাদেশি রোগীদের জন্য ক্লিনিক্যালভাবে সঠিক ও সাশ্রয়ী স্বাস্থ্যসেবা অনুসন্ধান, ল্যাব রিপোর্ট ডিজিটাইজেশন এবং চিকিৎসকদের জন্য অডিটেবল ওয়ার্কস্পেস।"
             : "Helping Bangladeshi patients find clinically eligible, affordability-aware care while giving doctors and hospitals a secure, source-linked AI workspace."}
