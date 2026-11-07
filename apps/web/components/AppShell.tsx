@@ -13,6 +13,7 @@ import {
   FileText,
   FlaskConical,
   HeartPulse,
+  History,
   Home as HomeIcon,
   LayoutDashboard,
   LineChart,
@@ -23,12 +24,14 @@ import {
   Moon,
   PhoneCall,
   Search,
+  Settings2,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
   Stethoscope,
   Sun,
   User,
+  UserCheck,
   UserPlus,
   Users,
   X,
@@ -131,7 +134,16 @@ export function AppShell({ children }: { children: ReactNode }) {
     router.push("/login");
   };
 
-  const isActive = (href: string) => path === href || (href !== "/" && path.startsWith(href + "/"));
+  const isActive = (href: string) => {
+    const [hPath, hQuery] = href.split("?");
+    if (hQuery) {
+      if (typeof window === "undefined") return path === hPath;
+      const currentQuery = window.location.search.replace(/^\?/, "");
+      return path === hPath && currentQuery.includes(hQuery);
+    }
+    if (href === "/") return path === "/";
+    return path === href || (href !== "/" && path.startsWith(href + "/"));
+  };
 
   // Generate dynamic breadcrumb segments
   const breadcrumbs = useMemo(() => {
@@ -170,36 +182,52 @@ export function AppShell({ children }: { children: ReactNode }) {
     return crumbs;
   }, [path, t]);
 
-  // Primary Navigation by Role
+  // Primary Navigation by Role (Strict Role-Based Isolation)
   const roleNavItems = useMemo<NavItem[]>(() => {
     if (role === "patient") {
       return [
-        { href: "/dashboard", labelKey: "nav.overview", fallbackLabel: "Overview", icon: LayoutDashboard },
-        { href: "/timeline", labelKey: "nav.myHealth", fallbackLabel: "My Health", icon: LineChart },
-        { href: "/reports", labelKey: "nav.documents", fallbackLabel: "Medical Documents", icon: FileText },
+        { href: "/dashboard", labelKey: "nav.overview", fallbackLabel: "Dashboard", icon: LayoutDashboard },
+        { href: "/timeline", labelKey: "nav.myHealth", fallbackLabel: "My Health Profile", icon: LineChart },
+        { href: "/reports", labelKey: "nav.documents", fallbackLabel: "Medical Reports & OCR", icon: FileText },
         { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Appointments", icon: CalendarClock },
+        { href: "/navigator", labelKey: "nav.navigator", fallbackLabel: "Find Care (Navigator)", icon: Compass },
         { href: "/consent", labelKey: "nav.settings", fallbackLabel: "Settings & Consent", icon: ShieldCheck },
       ];
     }
     if (role === "doctor") {
       return [
         { href: "/doctor", labelKey: "nav.doctor", fallbackLabel: "Doctor Workspace", icon: Stethoscope },
-        { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Appointments", icon: CalendarClock },
+        { href: "/doctor/patients", labelKey: "nav.patients", fallbackLabel: "My Patients", icon: Users },
+        { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Consultation Schedule", icon: CalendarClock },
+        { href: "/directory", labelKey: "nav.directory", fallbackLabel: "Clinical Directory", icon: Compass },
+        { href: "/ml-lab", labelKey: "nav.mllab", fallbackLabel: "ML & Data Science Lab", icon: FlaskConical },
       ];
     }
     if (role === "facility_admin" || role === "facility_staff") {
       return [
-        { href: "/facility", labelKey: "nav.facility", fallbackLabel: "Hospital Portal", icon: Building2 },
-        { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Appointments", icon: CalendarClock },
+        { href: "/facility", labelKey: "nav.facility", fallbackLabel: "Hospital Command", icon: Building2 },
+        { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Appointments & Shifts", icon: CalendarClock },
+        { href: "/directory", labelKey: "nav.directory", fallbackLabel: "Facility Directory", icon: Compass },
       ];
     }
     if (role === "super_admin" || role === "reviewer") {
       return [
         { href: "/admin", labelKey: "nav.admin", fallbackLabel: "Admin Center", icon: ShieldCheck },
-        { href: "/ml-lab", labelKey: "nav.mllab", fallbackLabel: "ML & Data Science Lab", icon: FlaskConical },
+        { href: "/admin?tab=queue", labelKey: "nav.queue", fallbackLabel: "Verification Queue", icon: UserCheck },
+        { href: "/admin?tab=users", labelKey: "nav.users", fallbackLabel: "User Management", icon: Users },
+        { href: "/admin?tab=audit", labelKey: "nav.audit", fallbackLabel: "Audit Logs", icon: History },
+        { href: "/ml-lab", labelKey: "nav.mllab", fallbackLabel: "ML & Model Registry", icon: FlaskConical },
+        { href: "/admin?tab=settings", labelKey: "nav.systemSettings", fallbackLabel: "System Settings", icon: Settings2 },
       ];
     }
-    return [];
+    // Guest / Logged out visitors
+    return [
+      { href: "/", labelKey: "nav.home", fallbackLabel: "Home", icon: HomeIcon },
+      { href: "/navigator", labelKey: "nav.navigator", fallbackLabel: "Find Care (Navigator)", icon: Compass },
+      { href: "/directory", labelKey: "nav.directory", fallbackLabel: "Dhaka Directory", icon: Users },
+      { href: "/ml-lab", labelKey: "nav.mllab", fallbackLabel: "ML & Data Science Lab", icon: FlaskConical },
+      { href: "/emergency", labelKey: "emergency.help", fallbackLabel: "Emergency Hotline", icon: PhoneCall },
+    ];
   }, [role]);
 
   // Search submission
@@ -251,94 +279,35 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         {/* Navigation list */}
         <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Main menu">
-          {/* Always accessible core links */}
-          <div className="space-y-1">
-            <Link
-              href="/"
-              className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-xs font-semibold transition ${
-                path === "/"
-                  ? "border border-primary/40 bg-psoft text-ptext shadow-[0_0_12px_var(--accent-glow)]"
-                  : "text-muted hover:bg-s2 hover:text-ink"
-              }`}
-            >
-              <HomeIcon className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>Home</span>}
-            </Link>
-
-            <Link
-              href="/navigator"
-              className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-xs font-semibold transition ${
-                isActive("/navigator")
-                  ? "border border-primary/40 bg-psoft text-ptext shadow-[0_0_12px_var(--accent-glow)]"
-                  : "text-muted hover:bg-s2 hover:text-ink"
-              }`}
-            >
-              <Compass className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{t("nav.navigator") || "Find Care"}</span>}
-            </Link>
-
-            <Link
-              href="/directory"
-              className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-xs font-semibold transition ${
-                isActive("/directory")
-                  ? "border border-primary/40 bg-psoft text-ptext shadow-[0_0_12px_var(--accent-glow)]"
-                  : "text-muted hover:bg-s2 hover:text-ink"
-              }`}
-            >
-              <Users className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{t("nav.directory") || "Directory"}</span>}
-            </Link>
-          </div>
-
-          {/* Role-Specific Portal Section */}
-          {roleNavItems.length > 0 && (
-            <div className="pt-4 mt-2 border-t border-line/60">
-              {!collapsed && (
-                <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-muted">
-                  {role.replace("_", " ")} Portal
-                </div>
-              )}
-              <div className="space-y-1">
-                {roleNavItems.map(({ href, labelKey, fallbackLabel, icon: Icon, badge }) => {
-                  const active = isActive(href);
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      aria-current={active ? "page" : undefined}
-                      className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-xs font-semibold transition ${
-                        active
-                          ? "border border-primary/40 bg-psoft text-ptext shadow-[0_0_12px_var(--accent-glow)]"
-                          : "text-muted hover:bg-s2 hover:text-ink"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      {!collapsed && (
-                        <div className="flex flex-1 items-center justify-between">
-                          <span>{t(labelKey) || fallbackLabel}</span>
-                          {badge !== undefined && badge > 0 && <Badge count={badge} />}
-                        </div>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
+          {!collapsed && (
+            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-muted">
+              {role === "none" ? "Main Navigation" : `${role.replace("_", " ")} Navigation`}
             </div>
           )}
-
-          {/* Research & Lab Section */}
-          <div className="pt-3 mt-2 border-t border-line/40">
-            <Link
-              href="/ml-lab"
-              className={`flex min-h-[40px] items-center gap-3 rounded-input px-3 text-xs font-semibold transition ${
-                isActive("/ml-lab")
-                  ? "border border-emerald-500/50 bg-emerald-500/10 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
-                  : "text-muted hover:bg-s2 hover:text-ink"
-              }`}
-            >
-              <FlaskConical className="h-4 w-4 shrink-0 text-emerald-400" />
-              {!collapsed && <span>ML & Data Science Lab</span>}
-            </Link>
+          <div className="space-y-1">
+            {roleNavItems.map(({ href, labelKey, fallbackLabel, icon: Icon, badge }) => {
+              const active = isActive(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-xs font-semibold transition ${
+                    active
+                      ? "border border-primary/40 bg-psoft text-ptext shadow-[0_0_12px_var(--accent-glow)]"
+                      : "text-muted hover:bg-s2 hover:text-ink"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {!collapsed && (
+                    <div className="flex flex-1 items-center justify-between">
+                      <span>{t(labelKey) || fallbackLabel}</span>
+                      {badge !== undefined && badge > 0 && <Badge count={badge} />}
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </nav>
 
@@ -414,37 +383,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
 
             <nav className="flex-1 space-y-1.5 overflow-y-auto py-4">
-              <Link
-                href="/"
-                onClick={() => setMobileOpen(false)}
-                className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-sm font-medium ${
-                  path === "/" ? "bg-psoft text-ptext font-semibold" : "text-muted hover:bg-s2 hover:text-ink"
-                }`}
-              >
-                <HomeIcon className="h-4 w-4" />
-                <span>Home</span>
-              </Link>
-              <Link
-                href="/navigator"
-                onClick={() => setMobileOpen(false)}
-                className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-sm font-medium ${
-                  isActive("/navigator") ? "bg-psoft text-ptext font-semibold" : "text-muted hover:bg-s2 hover:text-ink"
-                }`}
-              >
-                <Compass className="h-4 w-4" />
-                <span>{t("nav.navigator") || "Find Care"}</span>
-              </Link>
-              <Link
-                href="/directory"
-                onClick={() => setMobileOpen(false)}
-                className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-sm font-medium ${
-                  isActive("/directory") ? "bg-psoft text-ptext font-semibold" : "text-muted hover:bg-s2 hover:text-ink"
-                }`}
-              >
-                <Users className="h-4 w-4" />
-                <span>{t("nav.directory") || "Directory"}</span>
-              </Link>
-
+              <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-muted">
+                {role === "none" ? "Main Navigation" : `${role.replace("_", " ")} Navigation`}
+              </div>
               {roleNavItems.map(({ href, labelKey, fallbackLabel, icon: Icon }) => (
                 <Link
                   key={href}
@@ -458,20 +399,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <span>{t(labelKey) || fallbackLabel}</span>
                 </Link>
               ))}
-
-              {/* Core quick links in mobile menu */}
-              <div className="pt-3 mt-2 border-t border-line space-y-1">
-                <Link
-                  href="/ml-lab"
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-sm font-medium ${
-                    isActive("/ml-lab") ? "bg-emerald-500/10 text-emerald-400 font-semibold" : "text-muted hover:bg-s2 hover:text-ink"
-                  }`}
-                >
-                  <FlaskConical className="h-4 w-4 text-emerald-400" />
-                  <span>ML & Data Science Lab</span>
-                </Link>
-              </div>
 
               {/* Mobile Auth actions */}
               <div className="pt-4 mt-2 border-t border-line">

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApi } from "@/lib/useApi";
+import { useGuard } from "@/lib/useGuard";
 import { useI18n } from "@/lib/i18n";
 import {
   AiBanner,
@@ -41,6 +42,7 @@ import { ReportViewer } from "@/components/ReportViewer";
 import Link from "next/link";
 
 export default function MedicalReportDetailPage() {
+  useGuard(["patient"]);
   const { id } = useParams<{ id: string }>();
   const { t, locale } = useI18n();
   const { addToast } = useToast();

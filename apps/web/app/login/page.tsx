@@ -29,15 +29,21 @@ export default function Login() {
       const r = await api("/auth/login", { body: { email: loginEmail, password: loginPass } });
       setSession(r.access_token, r.role);
       if (r.status === "pending") return router.push("/apply");
+
+      const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      const nextTarget = params?.get("next");
+      const safeNext = nextTarget && nextTarget.startsWith("/") && !nextTarget.startsWith("//") ? nextTarget : null;
+
       if (r.role === "patient") {
         try {
           const p = await api("/patients/me");
-          return router.push(p.onboarding_completed ? "/dashboard" : "/onboarding");
+          if (!p.onboarding_completed) return router.push("/onboarding");
+          return router.push(safeNext || "/dashboard");
         } catch {
-          return router.push("/dashboard");
+          return router.push(safeNext || "/dashboard");
         }
       }
-      router.push(homeFor(r.role));
+      router.push(safeNext || homeFor(r.role));
     } catch (e: any) {
       if (e.code === "email_not_verified") {
         router.push(`/verify-email?email=${encodeURIComponent(loginEmail)}`);
