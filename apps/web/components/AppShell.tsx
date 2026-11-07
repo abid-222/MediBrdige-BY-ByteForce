@@ -21,7 +21,6 @@ import {
   LogOut,
   Menu,
   Moon,
-  Palette,
   PhoneCall,
   Search,
   ShieldAlert,
@@ -341,19 +340,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               {!collapsed && <span>ML & Data Science Lab</span>}
             </Link>
           </div>
-
-          {/* Design Kit / Dev UI Link */}
-          <div className="pt-1">
-            <Link
-              href="/dev/ui"
-              className={`flex min-h-[36px] items-center gap-3 rounded-input px-3 text-xs text-muted hover:bg-s2 hover:text-ink ${
-                isActive("/dev/ui") ? "text-ptext font-medium" : ""
-              }`}
-            >
-              <Palette className="h-3.5 w-3.5 shrink-0" />
-              {!collapsed && <span>Design Kit (/dev/ui)</span>}
-            </Link>
-          </div>
         </nav>
 
         {/* Sidebar Footer / User Profile summary */}
@@ -484,16 +470,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                 >
                   <FlaskConical className="h-4 w-4 text-emerald-400" />
                   <span>ML & Data Science Lab</span>
-                </Link>
-                <Link
-                  href="/dev/ui"
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-sm font-medium ${
-                    isActive("/dev/ui") ? "bg-psoft text-ptext font-semibold" : "text-muted hover:bg-s2 hover:text-ink"
-                  }`}
-                >
-                  <Palette className="h-4 w-4" />
-                  <span>Design Kit (/dev/ui)</span>
                 </Link>
               </div>
 
