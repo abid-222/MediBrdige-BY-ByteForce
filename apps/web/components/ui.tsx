@@ -7,15 +7,15 @@ export { fmtDate, fmtDateTime, fmtTime } from "@/lib/format";
 type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "ghost" | "danger"; busy?: boolean };
 export function Button({ variant = "primary", busy, className = "", children, disabled, ...p }: BtnProps) {
   const v = {
-    primary: "bg-primary text-onprimary hover:brightness-110 font-medium",
-    secondary: "border border-line bg-s1 text-ink hover:bg-s2",
+    primary: "bg-primary text-onprimary hover:brightness-110 font-semibold shadow-[0_0_0_1px_var(--accent),0_0_20px_var(--accent-glow)] transition-all",
+    secondary: "border border-line bg-s1 text-ink hover:bg-s2 hover:border-line/80",
     ghost: "text-ptext hover:bg-psoft",
     danger: "bg-danger text-white font-medium hover:brightness-110",
   }[variant];
   return <button {...p} disabled={disabled || busy} aria-busy={busy} className={`inline-flex items-center justify-center gap-2 rounded-input px-4 text-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${v} ${className}`}>{busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}{children}</button>;
 }
 export const Card = ({ children, className = "" }: { children: ReactNode; className?: string }) =>
-  <section className={`fade-in card-shadow rounded-card border border-line bg-s1 p-4 md:p-5 ${className}`}>{children}</section>;
+  <section className={`fade-in card-shadow card-hover rounded-card border border-line bg-s1 p-4 md:p-5 ${className}`}>{children}</section>;
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
   return (
@@ -91,10 +91,10 @@ export function StatTile({ label, value, icon: Icon }: { label: string; value: R
 export function EmergencyBanner({ text }: { text?: string }) {
   const { t } = useI18n();
   return (
-    <div role="alert" className="w-full rounded-card border-2 border-danger bg-s1 p-4">
+    <div role="alert" className="w-full emergency-pulse rounded-card border-2 border-danger bg-s1 p-4 shadow-[0_0_20px_rgba(255,92,108,0.2)]">
       <div className="flex items-center gap-2 text-xl text-danger"><ShieldAlert className="h-6 w-6" aria-hidden /><h2>{t("emergency.title")}</h2></div>
       <p className="mt-2">{text || t("emergency.body")}</p>
-      <a href="tel:999" className="btn-link mt-3 gap-2 rounded-input bg-danger px-6 font-semibold text-white"><PhoneCall className="h-4 w-4" aria-hidden />999</a>
+      <a href="tel:999" className="btn-link mt-3 gap-2 rounded-input bg-danger px-6 font-semibold text-white hover:brightness-110"><PhoneCall className="h-4 w-4" aria-hidden />999</a>
     </div>
   );
 }

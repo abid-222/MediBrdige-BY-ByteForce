@@ -67,6 +67,18 @@ for r in (auth, access, patients, directory, documents, observations, navigator,
     app.include_router(r, prefix="/api/v1")
 
 
+@app.get("/")
+def root():
+    return {
+        "app": "MediBridge AI API",
+        "tagline": "AI assists. Doctors decide. Patients stay in control.",
+        "docs": "/docs",
+        "frontend": "http://localhost:3000",
+        "health": "/health",
+        "version": "0.1.0"
+    }
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}

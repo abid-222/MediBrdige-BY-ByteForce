@@ -3,16 +3,140 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 16px; }
-h1, h2, h3 { font-family: var(--font-heading); font-weight: 600; }
-.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.fade-in { animation: fade .2s ease-out; }
-@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-button, input, select, textarea { min-height: 44px; }
-a.btn-link { min-height: 44px; display: inline-flex; align-items: center; }
-.skeleton { background: linear-gradient(90deg, var(--surface-2), var(--border), var(--surface-2)); background-size: 200% 100%; animation: sk 1.2s linear infinite; border-radius: 10px; }
-@keyframes sk { to { background-position: -200% 0; } }
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
 
-.card-shadow { box-shadow: var(--shadow-card); }
-body { overflow-x: hidden; }
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.fade-in {
+  animation: fade 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+button, input, select, textarea {
+  min-height: 44px;
+}
+
+a.btn-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2), var(--border), var(--surface-2));
+  background-size: 200% 100%;
+  animation: sk 1.2s linear infinite;
+  border-radius: 10px;
+}
+
+@keyframes sk {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* 3D Depth & Majestic Midnight Visual Effects */
+.card-shadow {
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: rgba(57, 255, 136, 0.3);
+}
+
+/* Neon glow for primary actions specified in blueprint §2.3 */
+.neon-glow {
+  box-shadow: 0 0 0 1px var(--accent), 0 0 24px var(--accent-glow);
+}
+
+.btn-primary-neon {
+  background-color: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 20px var(--accent-glow);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-primary-neon:hover {
+  box-shadow: 0 0 0 1px var(--accent), 0 0 28px rgba(57, 255, 136, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Radial Neon Glow top-right on hero page (Blueprint §2.3) */
+.hero-glow-bg {
+  position: relative;
+}
+
+.hero-glow-bg::before {
+  content: "";
+  position: absolute;
+  top: -120px;
+  right: -100px;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, var(--accent-glow) 0%, rgba(57, 255, 136, 0.05) 45%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(40px);
+}
+
+/* Emergency slow pulse specified in blueprint §2.3 */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.005); }
+}
+
+.emergency-pulse {
+  animation: pulse-slow 2.8s ease-in-out infinite;
+}
+
+/* Custom scrollbars matching midnight theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border);
+}

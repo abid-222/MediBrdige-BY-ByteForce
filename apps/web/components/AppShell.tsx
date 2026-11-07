@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <nav className="flex-1 space-y-1" aria-label="Primary">
           {items.map(([href, key, Icon]) => (
             <Link key={href} href={href} aria-current={active(href) ? "page" : undefined}
-              className={`flex min-h-[44px] items-center gap-3 rounded-input px-3 text-sm transition ${active(href) ? "bg-psoft font-medium text-ptext" : "text-muted hover:bg-s2 hover:text-ink"}`}>
+              className={`flex min-h-[44px] items-center gap-3 rounded-input px-3 text-sm transition ${active(href) ? "bg-psoft font-semibold text-ptext border border-primary/40 shadow-[0_0_16px_var(--accent-glow)]" : "text-muted hover:bg-s2 hover:text-ink"}`}>
               <Icon className="h-4 w-4" aria-hidden />{t(key)}
             </Link>
           ))}
