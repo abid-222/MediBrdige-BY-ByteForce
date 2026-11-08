@@ -8,7 +8,7 @@ from app.core import audit
 from app.core.db import get_db
 from app.core.errors import AppError
 from app.core.security import get_current_user, require_role
-from app.models import (Appointment, AppointmentEvent, AvailabilitySlot, CareRelationship, Consent, DoctorProfile,
+from app.models import (Appointment, AppointmentEvent, AvailabilitySlot, CareRelationship, Consent, DoctorFacility, DoctorProfile,
                         Facility, FacilityStaff, PatientProfile, Profile)
 from app.modules.patients.router import notify
 
@@ -44,8 +44,10 @@ def _aware(dt):
 def _view(a: Appointment, db: Session, minimal=False):
     pat = db.get(PatientProfile, a.patient_id)
     doc = db.get(DoctorProfile, a.doctor_id)
+    fac = db.get(Facility, a.facility_id) if a.facility_id else None
     out = {"id": a.id, "status": a.status, "slot_start": a.slot_start, "slot_end": a.slot_end, "doctor_id": a.doctor_id,
            "doctor_name": doc.full_name if doc else None, "facility_id": a.facility_id,
+           "facility_name": fac.name if fac else None,
            "patient_name": pat.full_name if pat else None, "patient_id": a.patient_id}
     if not minimal:
         out["reason"] = a.reason
@@ -88,7 +90,13 @@ def create(body: ApptIn, idempotency_key: str | None = Header(default=None),
                                                     Appointment.slot_start == slot_start, Appointment.status.in_(ACTIVE)))
         if clash:
             raise AppError(409, "slot_full", "This time is already booked")
-    a = Appointment(patient_id=user.id, doctor_id=body.doctor_id, facility_id=body.facility_id,
+    facility_id = body.facility_id
+    if not facility_id:
+        link = db.scalar(select(DoctorFacility).where(DoctorFacility.doctor_id == body.doctor_id))
+        if link:
+            facility_id = link.facility_id
+
+    a = Appointment(patient_id=user.id, doctor_id=body.doctor_id, facility_id=facility_id,
                     slot_id=body.slot_id, slot_start=slot_start, slot_end=slot_end, reason=body.reason,
                     share_document_ids=body.share_document_ids, share_opt_in=body.share_opt_in,
                     idempotency_key=key, created_by=user.id)
@@ -96,6 +104,25 @@ def create(body: ApptIn, idempotency_key: str | None = Header(default=None),
     try:
         db.flush()
         db.add(AppointmentEvent(appointment_id=a.id, from_status=None, to_status="requested", actor_id=user.id))
+        # Ensure CareRelationship exists immediately for doctor-patient continuity
+        rel = db.scalar(select(CareRelationship).where(CareRelationship.patient_id == user.id,
+                                                       CareRelationship.doctor_id == body.doctor_id))
+        if not rel:
+            db.add(CareRelationship(patient_id=user.id, doctor_id=body.doctor_id, facility_id=facility_id,
+                                    origin="appointment", active=True))
+        elif not rel.active:
+            rel.active, rel.ended_at = True, None
+
+        if body.share_opt_in:
+            res = ["profile", "documents", "observations", "notes"]
+            existing_c = db.scalar(select(Consent).where(Consent.patient_id == user.id,
+                                                         Consent.grantee_id == body.doctor_id,
+                                                         Consent.consent_type == "doctor_share",
+                                                         Consent.revoked_at.is_(None)))
+            if not existing_c:
+                db.add(Consent(patient_id=user.id, consent_type="doctor_share", grantee_id=body.doctor_id,
+                               scope={"resources": res, "document_ids": body.share_document_ids or None},
+                               expires_at=datetime.now(timezone.utc) + timedelta(days=30)))
         db.commit()
     except IntegrityError:
         db.rollback()   # unique index on (doctor, start) or idempotency key fired under concurrency

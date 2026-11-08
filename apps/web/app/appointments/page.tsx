@@ -186,6 +186,7 @@ export default function AppointmentsPage() {
       await api("/appointments", {
         body: {
           doctor_id: selectedDoctorId,
+          facility_id: selectedDoctor?.chambers?.[0]?.facility_id || null,
           slot_start: slotStart,
           reason: visitReason || "Consultation request",
           share_opt_in: shareOptIn,
@@ -349,9 +350,15 @@ export default function AppointmentsPage() {
                         </p>
                       )}
                       <p className="text-xs text-muted flex items-center gap-1.5 mt-1">
-                        <Clock className="h-3 w-3" />
+                        <Clock className="h-3 w-3 shrink-0" />
                         <span className="num font-semibold">{fmtDateTime(a.slot_start)}</span>
                       </p>
+                      {a.facility_name && (
+                        <p className="text-[11px] text-muted flex items-center gap-1.5 mt-0.5 truncate">
+                          <Building2 className="h-3 w-3 text-ptext shrink-0" />
+                          <span className="truncate">{a.facility_name}</span>
+                        </p>
+                      )}
                     </div>
 
                     <Chip

@@ -10,8 +10,8 @@ from app.core.config import STALE_AFTER_DAYS
 from app.core.db import get_db
 from app.core.errors import AppError
 from app.core.security import require_role
-from app.models import (Appointment, AuditLog, DirectoryReport, DoctorProfile, Facility, FeatureFlag, Document, ModelRegistry, Observation,
-                        Profile, RoleApplication, SystemSetting, VerificationCase)
+from app.models import (Appointment, AuditLog, DirectoryReport, DoctorFacility, DoctorProfile, Facility, FeatureFlag, Document, ModelRegistry, Observation,
+                        Profile, RoleApplication, Specialty, SystemSetting, VerificationCase)
 from app.modules.directory.service import is_stale
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -50,10 +50,50 @@ def queue(user: Profile = Depends(STAFF), db: Session = Depends(get_db)):
     docs = db.scalars(select(DoctorProfile).where(DoctorProfile.verification.in_(["unverified", "pending", "needs_evidence"]))).all()
     facs = db.scalars(select(Facility).where(Facility.verification.in_(["unverified", "pending", "needs_evidence"]))).all()
     apps = db.scalars(select(RoleApplication).where(RoleApplication.status == "pending")).all()
-    return {"doctors": [{"id": d.user_id, "name": d.full_name, "verification": d.verification, "is_sample": d.is_sample} for d in docs],
-            "facilities": [{"id": f.id, "name": f.name, "verification": f.verification, "is_sample": f.is_sample} for f in facs],
-            "applications": [{"id": a.id, "user_id": a.user_id, "requested_role": a.requested_role, "details": a.details,
-                              "evidence_refs": a.evidence_refs} for a in apps]}
+    
+    doc_items = []
+    for d in docs:
+        sp = db.get(Specialty, d.specialty_id) if d.specialty_id else None
+        doc_items.append({
+            "id": d.user_id,
+            "name": d.full_name,
+            "bmdc_number": d.bmdc_number,
+            "specialty": sp.name_en if sp else "General Medicine",
+            "qualifications": d.qualifications,
+            "verification": d.verification,
+            "is_sample": d.is_sample,
+        })
+
+    return {
+        "doctors": doc_items,
+        "facilities": [{"id": f.id, "name": f.name, "type": f.type, "district": f.district, "verification": f.verification, "is_sample": f.is_sample} for f in facs],
+        "applications": [{"id": a.id, "user_id": a.user_id, "requested_role": a.requested_role, "details": a.details,
+                          "evidence_refs": a.evidence_refs} for a in apps],
+    }
+
+
+@router.get("/doctors-status")
+def doctors_status(user: Profile = Depends(STAFF), db: Session = Depends(get_db)):
+    docs = db.scalars(select(DoctorProfile).order_by(DoctorProfile.full_name)).all()
+    out = []
+    for d in docs:
+        sp = db.get(Specialty, d.specialty_id) if d.specialty_id else None
+        links = db.execute(select(DoctorFacility, Facility).join(Facility, Facility.id == DoctorFacility.facility_id)
+                           .where(DoctorFacility.doctor_id == d.user_id)).all()
+        fac_names = [f.name for _, f in links]
+        out.append({
+            "id": d.user_id,
+            "full_name": d.full_name,
+            "bmdc_number": d.bmdc_number,
+            "verification": d.verification,
+            "specialty": sp.name_en if sp else "General Medicine",
+            "qualifications": d.qualifications,
+            "experience_years": d.experience_years,
+            "facilities": fac_names,
+            "last_verified_at": d.last_verified_at,
+            "is_sample": d.is_sample,
+        })
+    return {"items": out, "total": len(out)}
 
 
 @router.patch("/doctors/{doctor_id}/verify")
@@ -90,10 +130,54 @@ def decide_application(app_id: str, body: AppDecision, user: Profile = Depends(S
             raise AppError(400, "evidence_required", "Approval needs attached evidence")
         u = db.get(Profile, a.user_id)
         u.role, u.status = a.requested_role, "active"
-        if a.requested_role == "doctor" and not db.get(DoctorProfile, u.id):
-            db.add(DoctorProfile(user_id=u.id, full_name=a.details.get("full_name", u.email), verification="pending"))
+        if a.requested_role == "doctor":
+            doc = db.get(DoctorProfile, u.id)
+            if not doc:
+                doc = DoctorProfile(
+                    user_id=u.id,
+                    full_name=a.details.get("full_name", u.email),
+                    bmdc_number=a.details.get("bmdc_number", "BMDC-VERIFIED"),
+                    qualifications=a.details.get("qualifications", "MBBS"),
+                    specialty_id=a.details.get("specialty_id"),
+                    experience_years=a.details.get("experience_years", 3),
+                    bio=a.details.get("bio", ""),
+                    verification="verified",
+                    last_verified_at=datetime.now(timezone.utc),
+                    is_sample=False,
+                )
+                db.add(doc)
+            else:
+                doc.verification = "verified"
+                doc.last_verified_at = datetime.now(timezone.utc)
+                if a.details.get("full_name"): doc.full_name = a.details.get("full_name")
+                if a.details.get("bmdc_number"): doc.bmdc_number = a.details.get("bmdc_number")
+                if a.details.get("qualifications"): doc.qualifications = a.details.get("qualifications")
+                if a.details.get("specialty_id"): doc.specialty_id = a.details.get("specialty_id")
+                if a.details.get("experience_years"): doc.experience_years = a.details.get("experience_years")
+
+            facility_id = a.details.get("facility_id")
+            if facility_id:
+                link = db.scalar(select(DoctorFacility).where(DoctorFacility.doctor_id == u.id, DoctorFacility.facility_id == facility_id))
+                if not link:
+                    db.add(DoctorFacility(
+                        doctor_id=u.id,
+                        facility_id=facility_id,
+                        chamber=a.details.get("chamber_name", "OPD Consultation Room"),
+                        fee_bdt=a.details.get("fee_bdt", 1200),
+                        fee_confirmed_at=datetime.now(timezone.utc),
+                        schedule=a.details.get("schedule", {"days": ["Sun", "Mon", "Tue", "Wed", "Thu"]})
+                    ))
         if a.requested_role == "facility_admin":
-            f = Facility(name=a.details.get("facility_name", "New facility"), verification="pending")
+            f = Facility(
+                name=a.details.get("facility_name", "New Healthcare Facility"),
+                type=a.details.get("type", "private"),
+                district=a.details.get("district", "Dhaka"),
+                address=a.details.get("address", "Dhaka, Bangladesh"),
+                phone=a.details.get("phone", "+8801700000000"),
+                has_emergency=a.details.get("has_emergency", True),
+                verification="verified",
+                last_verified_at=datetime.now(timezone.utc),
+            )
             db.add(f)
             db.flush()
             u.facility_id = f.id

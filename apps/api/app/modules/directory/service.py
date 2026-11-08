@@ -52,10 +52,30 @@ def doctor_view(db: Session, d: DoctorProfile, detail: bool = False):
 
 
 def facility_view(db: Session, f: Facility, detail: bool = False):
+    links = db.execute(select(DoctorFacility, DoctorProfile)
+                       .join(DoctorProfile, DoctorProfile.user_id == DoctorFacility.doctor_id)
+                       .where(DoctorFacility.facility_id == f.id)).all()
+    affiliated_doctors = []
+    for df, dp in links:
+        spec = db.get(Specialty, dp.specialty_id) if dp.specialty_id else None
+        affiliated_doctors.append({
+            "doctor_id": dp.user_id,
+            "id": dp.user_id,
+            "full_name": dp.full_name,
+            "specialty": spec.name_en if spec else "General Medicine",
+            "qualifications": dp.qualifications,
+            "chamber": df.chamber,
+            "fee_bdt": df.fee_bdt,
+            "fee_label": f"BDT {df.fee_bdt}" if df.fee_bdt else "Confirmed Fee",
+            "verification": badge(dp.verification),
+        })
+
     out = {"id": f.id, "name": f.name, "type": f.type, "district": f.district, "address": f.address,
            "phone": f.phone, "has_emergency": f.has_emergency, "verification": badge(f.verification),
            "last_verified_at": f.last_verified_at, "stale": is_stale(f.last_verified_at), "is_sample": f.is_sample,
-           "emergency_state": "confirmed" if f.has_emergency is not None else "not_confirmed"}
+           "emergency_state": "confirmed" if f.has_emergency is not None else "not_confirmed",
+           "doctor_count": len(affiliated_doctors),
+           "doctors": affiliated_doctors}
     if detail:
         svc = db.scalars(select(FacilityService).where(FacilityService.facility_id == f.id)).all()
         out["services"] = [{"code": s.service_code, "available": s.available, "last_confirmed_at": s.last_confirmed_at}

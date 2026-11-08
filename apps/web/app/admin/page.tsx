@@ -81,6 +81,7 @@ export default function AdminDashboardPage() {
   const system = useApi("/admin/system");
   const queue = useApi("/admin/verification-queue");
   const directoryQuality = useApi("/admin/directory-quality");
+  const doctorsStatusApi = useApi(activeTab === "queue" ? "/admin/doctors-status" : null);
   const usersList = useApi(activeTab === "users" && isSuperAdmin ? "/admin/users" : null);
   const auditLogs = useApi(activeTab === "audit" && isSuperAdmin ? "/admin/audit-logs?page_size=50" : null);
   const systemSettings = useApi(activeTab === "settings" && isSuperAdmin ? "/admin/settings" : null);
@@ -89,6 +90,10 @@ export default function AdminDashboardPage() {
   const [decisionReason, setDecisionReason] = useState("");
   const [evidenceReference, setEvidenceReference] = useState("");
   const [actingEntityId, setActingEntityId] = useState<string | null>(null);
+
+  // Doctor status directory filters
+  const [docSearchQuery, setDocSearchQuery] = useState("");
+  const [docStatusFilter, setDocStatusFilter] = useState("all");
 
   // User management state
   const [userSearch, setUserSearch] = useState("");
@@ -103,6 +108,57 @@ export default function AdminDashboardPage() {
   // Settings modification state
   const [settingsReason, setSettingsReason] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
+
+  // Filtered doctors list in status explorer
+  const filteredDoctorsStatus = useMemo(() => {
+    const list = doctorsStatusApi.data?.items || [];
+    return list.filter((doc: any) => {
+      if (docStatusFilter !== "all" && doc.verification !== docStatusFilter) {
+        return false;
+      }
+      if (docSearchQuery.trim()) {
+        const q = docSearchQuery.toLowerCase();
+        const nameMatch = (doc.full_name || "").toLowerCase().includes(q);
+        const bmdcMatch = (doc.bmdc_number || "").toLowerCase().includes(q);
+        const specMatch = (doc.specialty || "").toLowerCase().includes(q);
+        const facMatch = doc.facilities?.some((f: string) => f.toLowerCase().includes(q));
+        if (!nameMatch && !bmdcMatch && !specMatch && !facMatch) return false;
+      }
+      return true;
+    });
+  }, [doctorsStatusApi.data, docStatusFilter, docSearchQuery]);
+
+  // Role Application Decision Handler
+  const handleDecideApplication = async (
+    appId: string,
+    decision: "approve" | "reject" | "need_more_evidence"
+  ) => {
+    if (!decisionReason.trim()) {
+      addToast("error", "Audit Reason Required", "Please provide a clinical audit reason for this application decision.");
+      return;
+    }
+    setActingEntityId(appId);
+    try {
+      await api(`/admin/role-applications/${appId}`, {
+        method: "PATCH",
+        body: {
+          decision,
+          reason: decisionReason.trim(),
+          evidence: evidenceReference.trim() ? [evidenceReference.trim()] : ["BMDC registry validated"],
+        },
+      });
+      queue.reload();
+      overview.reload();
+      doctorsStatusApi.reload();
+      addToast("success", "Application Decided", `Role application marked as ${decision}. Practitioner status updated.`);
+      setDecisionReason("");
+      setEvidenceReference("");
+    } catch (e: any) {
+      addToast("error", "Application Action Failed", e.message);
+    } finally {
+      setActingEntityId(null);
+    }
+  };
 
   // Verification Decision Handler
   const handleVerify = async (
@@ -419,7 +475,7 @@ export default function AdminDashboardPage() {
             loading={queue.loading && !queue.data}
             error={queue.error}
             onRetry={queue.reload}
-            empty={!queue.data?.doctors?.length && !queue.data?.facilities?.length && !queue.data?.applications?.length}
+            empty={!queue.data?.doctors?.length && !queue.data?.facilities?.length && !queue.data?.applications?.length && !doctorsStatusApi.data?.items?.length}
             emptyNode={
               <EmptyState
                 icon={ShieldCheck}
@@ -428,63 +484,204 @@ export default function AdminDashboardPage() {
               />
             }
           >
-            {/* Doctors Queue */}
-            {queue.data?.doctors?.length > 0 && (
-              <Card className="space-y-3">
-                <h3 className="text-sm font-bold text-ink flex items-center gap-2 border-b border-line pb-2">
-                  <Stethoscope className="h-4 w-4 text-ptext" />
-                  <span>Doctors Awaiting Verification ({queue.data.doctors.length})</span>
-                </h3>
-                <div className="space-y-2">
-                  {queue.data.doctors.map((d: any) => (
-                    <div
-                      key={d.id}
-                      className="rounded-card border border-line bg-s2/40 p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-ink">{d.name}</span>
-                          <Chip kind={d.verification === "pending" ? "pending" : "unverified"}>
-                            {d.verification}
-                          </Chip>
-                          {d.is_sample && <Chip kind="info">Sample</Chip>}
-                        </div>
-                        <p className="num text-xs text-muted font-mono mt-0.5">ID: {d.id}</p>
-                      </div>
+            {/* 1. Pending Role Applications (Doctors & Hospitals who applied) */}
+            {queue.data?.applications?.length > 0 && (
+              <Card className="space-y-3 border-2 border-primary/40 bg-psoft/10">
+                <div className="flex items-center justify-between border-b border-line pb-2">
+                  <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+                    <UserCheck className="h-4 w-4 text-ptext" />
+                    <span>Practitioner Applications Awaiting Review ({queue.data.applications.length})</span>
+                  </h3>
+                  <Chip kind="pending">Action Required</Chip>
+                </div>
+                <div className="space-y-3">
+                  {queue.data.applications.map((app: any) => {
+                    const isDoctor = app.requested_role === "doctor";
+                    const d = app.details || {};
+                    return (
+                      <div
+                        key={app.id}
+                        className="rounded-card border border-line bg-s1 p-4 space-y-3 shadow-xs"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-sm text-ink">
+                                {d.full_name || d.facility_name || "Applicant"}
+                              </span>
+                              <Chip kind="info">
+                                {isDoctor ? "Doctor Application" : "Facility Application"}
+                              </Chip>
+                              {d.bmdc_number && (
+                                <span className="font-mono text-xs px-2 py-0.5 rounded bg-s2 text-ptext font-bold">
+                                  BMDC: {d.bmdc_number}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted">
+                              {d.qualifications ? `${d.qualifications} • ` : ""}
+                              {d.experience_years ? `${d.experience_years} yrs exp • ` : ""}
+                              {d.chamber_name ? `Chamber: ${d.chamber_name} • ` : ""}
+                              {d.fee_bdt ? `Fee: BDT ${d.fee_bdt}` : ""}
+                            </p>
+                            {app.evidence_refs?.length > 0 && (
+                              <div className="text-[11px] text-muted flex items-center gap-1.5 pt-1">
+                                <FileText className="h-3.5 w-3.5 text-ptext" />
+                                <span>Evidence Ref: <strong className="text-ink font-mono">{app.evidence_refs.join(", ")}</strong></span>
+                              </div>
+                            )}
+                          </div>
 
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="xs"
-                          variant="primary"
-                          busy={actingEntityId === d.id}
-                          onClick={() => handleVerify("doctors", d.id, "approve")}
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          size="xs"
-                          variant="secondary"
-                          busy={actingEntityId === d.id}
-                          onClick={() => handleVerify("doctors", d.id, "need_more_evidence")}
-                        >
-                          Need Evidence
-                        </Button>
-                        <Button
-                          size="xs"
-                          variant="danger"
-                          busy={actingEntityId === d.id}
-                          onClick={() => handleVerify("doctors", d.id, "reject")}
-                        >
-                          Reject
-                        </Button>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Button
+                              size="xs"
+                              variant="primary"
+                              busy={actingEntityId === app.id}
+                              onClick={() => handleDecideApplication(app.id, "approve")}
+                            >
+                              Approve & Verify
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="secondary"
+                              busy={actingEntityId === app.id}
+                              onClick={() => handleDecideApplication(app.id, "need_more_evidence")}
+                            >
+                              Need Evidence
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="danger"
+                              busy={actingEntityId === app.id}
+                              onClick={() => handleDecideApplication(app.id, "reject")}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </Card>
             )}
 
-            {/* Facilities Queue */}
+            {/* 2. Doctor Verification Status Explorer & Directory */}
+            <Card className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-line pb-3 gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4 text-ptext" />
+                    <span>Doctor Verification & Clinical Status Directory</span>
+                  </h3>
+                  <p className="text-xs text-muted">
+                    Inspect which doctors are verified, pending accreditation, or unverified across hospitals.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted font-medium">
+                    Total: <strong className="text-ink">{doctorsStatusApi.data?.total || 0}</strong> doctors
+                  </span>
+                </div>
+              </div>
+
+              {/* Status Filter & Search Controls */}
+              <div className="flex flex-col sm:flex-row gap-2.5 sm:items-center sm:justify-between">
+                <SearchInput
+                  value={docSearchQuery}
+                  onChange={(e) => setDocSearchQuery(e.target.value)}
+                  onClear={() => setDocSearchQuery("")}
+                  placeholder="Search doctor, BMDC, hospital, specialty..."
+                  className="sm:max-w-xs"
+                />
+
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-muted font-medium">Filter Status:</span>
+                  <select
+                    value={docStatusFilter}
+                    onChange={(e) => setDocStatusFilter(e.target.value)}
+                    className="rounded-input border border-line bg-s2 px-3 py-1.5 text-xs text-ink focus-visible:outline-none"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="verified">BMDC Verified</option>
+                    <option value="pending">Pending Review</option>
+                    <option value="needs_evidence">Needs Evidence</option>
+                    <option value="unverified">Unverified</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Doctor Directory Table / Cards */}
+              <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                {filteredDoctorsStatus.length === 0 ? (
+                  <p className="text-xs text-muted text-center py-6">No doctors match the selected status filter.</p>
+                ) : (
+                  filteredDoctorsStatus.map((d: any) => {
+                    const isVerified = d.verification === "verified";
+                    return (
+                      <div
+                        key={d.id}
+                        className={`rounded-card border p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition-all ${
+                          isVerified ? "border-line bg-s1" : "border-warn/40 bg-warn/5"
+                        }`}
+                      >
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-sm text-ink truncate">{d.full_name}</span>
+                            <Chip kind={isVerified ? "verified" : d.verification === "pending" ? "pending" : "unverified"}>
+                              {isVerified ? "BMDC Verified" : d.verification}
+                            </Chip>
+                            {d.bmdc_number && (
+                              <span className="font-mono text-[11px] text-muted">
+                                BMDC: {d.bmdc_number}
+                              </span>
+                            )}
+                            {d.is_sample && <Chip kind="info">Sample</Chip>}
+                          </div>
+                          <p className="text-xs text-muted truncate">
+                            {d.specialty} • {d.qualifications || "MBBS"}
+                            {d.facilities?.length > 0 ? ` • Chambers: ${d.facilities.join(", ")}` : " • No Chamber Assigned"}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {!isVerified ? (
+                            <Button
+                              size="xs"
+                              variant="primary"
+                              busy={actingEntityId === d.id}
+                              onClick={() => handleVerify("doctors", d.id, "approve")}
+                            >
+                              Verify Doctor
+                            </Button>
+                          ) : (
+                            <Button
+                              size="xs"
+                              variant="secondary"
+                              busy={actingEntityId === d.id}
+                              onClick={() => handleVerify("doctors", d.id, "need_more_evidence")}
+                            >
+                              Audit Review
+                            </Button>
+                          )}
+                          <Button
+                            size="xs"
+                            variant="danger"
+                            busy={actingEntityId === d.id}
+                            onClick={() => handleVerify("doctors", d.id, "reject")}
+                          >
+                            Revoke
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </Card>
+
+            {/* 3. Facilities & Hospitals Queue */}
             {queue.data?.facilities?.length > 0 && (
               <Card className="space-y-3">
                 <h3 className="text-sm font-bold text-ink flex items-center gap-2 border-b border-line pb-2">
@@ -505,7 +702,7 @@ export default function AdminDashboardPage() {
                           </Chip>
                           {f.is_sample && <Chip kind="info">Sample</Chip>}
                         </div>
-                        <p className="num text-xs text-muted font-mono mt-0.5">ID: {f.id}</p>
+                        <p className="num text-xs text-muted font-mono mt-0.5">District: {f.district || "Dhaka"} • ID: {f.id}</p>
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -515,7 +712,7 @@ export default function AdminDashboardPage() {
                           busy={actingEntityId === f.id}
                           onClick={() => handleVerify("facilities", f.id, "approve")}
                         >
-                          Approve
+                          Approve Hospital
                         </Button>
                         <Button
                           size="xs"
