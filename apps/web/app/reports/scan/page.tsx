@@ -175,7 +175,7 @@ export default function OcrScannerPage() {
       setPollCount(attempts);
       try {
         const ext = await api(`/documents/${docId}/extractions`);
-        if (ext && ext.document_status === "completed") {
+        if (ext && (ext.document_status === "processed" || ext.document_status === "completed")) {
           clearInterval(interval);
           setExtractionsData(ext);
           setOcrStatus("ready");
