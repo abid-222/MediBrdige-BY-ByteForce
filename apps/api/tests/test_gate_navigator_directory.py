@@ -105,3 +105,28 @@ def test_pending_never_shows_as_verified_and_bmdc_hidden(client, make, db):
 def test_report_incorrect_info(client, make):
     d = make.doctor("r@x.com")
     assert client.post("/api/v1/directory/reports", json={"entity_type": "doctor", "entity_id": d.id, "message": "Fee is wrong"}).status_code == 200
+
+
+def test_navigator_guidance_standard_and_emergency(client):
+    # 1. Standard symptom inquiry
+    res = client.post("/api/v1/navigator/guidance", json={"text": "fever and dry cough for 3 days", "lang": "en"}).json()
+    assert res["emergency"] is False
+    assert res["primary_specialty"] == "general_medicine"
+    assert "General Medicine" in res["reply"]
+    assert len(res["preparation_tips"]) > 0
+    assert "disclaimer" in res
+
+    # 2. Emergency symptom inquiry (red-flag)
+    em_res = client.post("/api/v1/navigator/guidance", json={"text": "severe chest pain and shortness of breath", "lang": "en"}).json()
+    assert em_res["emergency"] is True
+    assert em_res["emergency_number"] == "999"
+    assert "999" in em_res["reply"]
+
+    # 3. Validation test (< 2 chars)
+    bad_res = client.post("/api/v1/navigator/guidance", json={"text": "a", "lang": "en"})
+    assert bad_res.status_code == 400
+
+    # 4. Bangla language support
+    bn_res = client.post("/api/v1/navigator/guidance", json={"text": "মাথাব্যথা এবং জ্বর", "lang": "bn"}).json()
+    assert bn_res["emergency"] is False
+    assert "পরামর্শ" in bn_res["reply"]

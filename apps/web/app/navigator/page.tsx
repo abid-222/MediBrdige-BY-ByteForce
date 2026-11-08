@@ -1,295 +1,1036 @@
 "use client";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useState } from "react";
-import { api, getToken } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Bot,
+  Building2,
+  CalendarClock,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Compass,
+  FileText,
+  Filter,
+  HelpCircle,
+  MapPin,
+  MessageSquare,
+  PhoneCall,
+  Search,
+  Send,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+  Stethoscope,
+  User,
+  Video,
+} from "lucide-react";
+import { api, getRole, getToken } from "@/lib/api";
+import { useApi } from "@/lib/useApi";
 import { useI18n } from "@/lib/i18n";
-import { AlertTriangle, ArrowRight, Compass, MapPin, ShieldAlert } from "lucide-react";
-import { Button, Card, Chip, EmergencyBanner, EmptyState, GlassCard, PageHeader, StepIndicator, useToast, verChip } from "@/components/ui";
+import {
+  AiBanner,
+  Async,
+  Button,
+  Card,
+  Chip,
+  Dialog,
+  EmptyState,
+  GlassCard,
+  PageHeader,
+  SearchInput,
+  StatTile,
+  useToast,
+  verChip,
+} from "@/components/ui";
 
-const RF: [string, string][] = [
-  ["chest pain with shortness of breath", "nav2.rf.chest"],
-  ["severe bleeding", "nav2.rf.bleed"],
-  ["unconscious", "nav2.rf.uncon"],
-  ["face drooping slurred speech sudden weakness", "nav2.rf.stroke"],
-  ["seizure", "nav2.rf.seizure"],
-];
+type NavigatorView = "hub" | "guidance" | "doctors" | "emergency";
 
-function ScoreBar({ score, max = 100 }: { score: number; max?: number }) {
-  const pct = Math.round((score / max) * 100);
-  const color = pct >= 70 ? "var(--accent)" : pct >= 40 ? "var(--warn)" : "var(--text-muted)";
-  return (
-    <div className="flex items-center gap-2">
-      <div className="score-bar-track flex-1">
-        <div className="score-bar-fill" style={{ width: `${pct}%`, background: color }} />
-      </div>
-      <span className="num text-xs text-muted w-8 text-right">{score}</span>
-    </div>
-  );
+interface ChatMessage {
+  id: string;
+  sender: "user" | "assistant";
+  text: string;
+  timestamp: string;
+  data?: {
+    emergency?: boolean;
+    primary_specialty?: string;
+    primary_specialty_label?: string;
+    suggested_specialties?: string[];
+    preparation_tips?: string[];
+    red_flags_to_watch?: string[];
+    disclaimer?: string;
+    emergency_number?: string;
+    ml_info?: any;
+  };
+  error?: boolean;
 }
 
-function MatchCard({ c, sel, onToggle }: { c: any; sel: boolean; onToggle: () => void }) {
-  const { t } = useI18n();
-  const [expanded, setExpanded] = useState(false);
-  const id = `${c.doctor_id}:${c.facility_id}`;
-
-  const affordClass = {
-    affordable: "text-ptext",
-    "needs-review": "text-warn",
-    not_confirmed: "text-muted",
-  }[c.cost_state as string] ?? "text-muted";
-
-  return (
-    <Card className={`space-y-3 transition-all ${sel ? "border-primary/60 shadow-[0_0_0_1px_var(--accent)]" : ""}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold leading-tight">{c.doctor_name}</h2>
-          <p className="text-sm text-muted mt-0.5">{c.specialty} · {c.facility_name}</p>
-        </div>
-        {verChip(c.verification)}
-      </div>
-
-      {c.score != null && (
-        <div>
-          <div className="mb-1 flex justify-between text-xs text-muted">
-            <span>Match score</span><span className="num text-ptext">{c.score}/100</span>
-          </div>
-          <ScoreBar score={c.score} />
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        <span className={`num text-sm font-medium ${affordClass}`}>{c.fee_label}</span>
-        {c.cost_state === "not_confirmed" && <Chip kind="unverified" />}
-        {c.gate === "needs_review" && <Chip kind="pending">{t("nav2.review")}</Chip>}
-        {c.stale && <Chip kind="stale" />}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-        <MapPin className="h-3 w-3" />{t("dir.confidence")}: <span className="num">{c.data_confidence}</span>
-      </div>
-
-      {/* Reasons (expandable) */}
-      {c.reasons?.length > 0 && (
-        <div>
-          <button onClick={() => setExpanded((x) => !x)}
-            className="flex items-center gap-1 text-sm text-ptext hover:underline">
-            {t("nav2.why")} {expanded ? "▲" : "▼"}
-          </button>
-          {expanded && (
-            <ul className="mt-2 space-y-1 text-sm slide-up">
-              {c.reasons.map((r: string, i: number) => (
-                <li key={i} className="flex items-start gap-2 text-muted">
-                  <span className="mt-0.5 text-ptext">•</span>{r}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      <div className="flex items-center justify-between gap-2 border-t border-line pt-3">
-        <Link href={`/directory/doctors/${c.doctor_id}`} className="btn-link text-sm text-ptext font-medium">
-          {t("dir.book")} →
-        </Link>
-        <label className="flex cursor-pointer items-center gap-2 text-xs text-muted hover:text-ink">
-          <input type="checkbox" className="h-4 w-4 rounded" checked={sel} onChange={onToggle} />
-          {t("nav2.compare")}
-        </label>
-      </div>
-    </Card>
-  );
-}
-
-function CompareTable({ cards, sel }: { cards: any[]; sel: string[] }) {
-  const selected = cards.filter((c: any) => sel.includes(`${c.doctor_id}:${c.facility_id}`));
-  const rows: { key: string; label: string }[] = [
-    { key: "doctor_name", label: "Doctor" },
-    { key: "specialty", label: "Specialty" },
-    { key: "facility_name", label: "Facility" },
-    { key: "fee_label", label: "Fee" },
-    { key: "verification", label: "Verification" },
-    { key: "data_confidence", label: "Data confidence" },
-  ];
-  return (
-    <Card className="overflow-x-auto">
-      <h3 className="mb-3 font-semibold">Comparison</h3>
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Field</th>
-            {selected.map((c: any, i: number) => <th key={i}>{c.doctor_name}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(({ key, label }) => (
-            <tr key={key}>
-              <td className="font-medium text-muted">{label}</td>
-              {selected.map((c: any, i: number) => (
-                <td key={i}>{key === "verification" ? verChip(c[key]) : String(c[key] ?? "—")}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </Card>
-  );
-}
-
-export default function Navigator() {
+export default function SmartCareNavigator() {
   const { t, locale } = useI18n();
+  const router = useRouter();
   const { addToast } = useToast();
-  const [step, setStep] = useState(0);
-  const [text, setText] = useState("");
-  const [flags, setFlags] = useState<string[]>([]);
-  const [budgetFirst, setBF] = useState(false);
-  const [res, setRes] = useState<any>(null);
-  const [err, setErr] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [sel, setSel] = useState<string[]>([]);
+  const role = getRole();
+  const isLoggedIn = !!getToken();
 
-  const run = async () => {
-    setBusy(true); setErr(""); setRes(null); setSel([]);
-    try {
-      const body = { text, lang: locale, extra_red_flags: flags, budget_first: budgetFirst, district: "Dhaka" };
-      const r = getToken()
-        ? await api("/navigator/matches", { body })
-        : { ...(await api("/navigator/triage", { body })), eligible: [], needs_review: [], loginNeeded: true };
-      setRes(r);
-      setStep(2);
-      if (r.emergency) {
-        addToast("error", "Emergency detected", "Call 999 immediately");
-      } else {
-        const total = (r.eligible?.length ?? 0) + (r.needs_review?.length ?? 0);
-        addToast("success", "Search complete", `Found ${total} match${total !== 1 ? "es" : ""}`);
-      }
-    } catch (e: any) {
-      setErr(e.message);
-      addToast("error", "Search failed", e.message);
-    } finally { setBusy(false); }
+  // Current Active View State
+  const [currentView, setCurrentView] = useState<NavigatorView>("hub");
+
+  // Chat / General Health Guidance State
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => [
+    {
+      id: "initial-assistant",
+      sender: "assistant",
+      text:
+        locale === "bn"
+          ? "আসসালামু আলাইকুম। আমি আপনার মেডিব্রিজ কেয়ার নেভিগেটর। আপনার শারীরিক কোনো লক্ষণ বা স্বাস্থ্য সমস্যা আমাকে জানান, আমি সঠিক বিশেষজ্ঞ ডাক্তার নির্ধারণ ও পরামর্শ প্রদান করতে সহায়তা করব।"
+          : "Hello! I am your MediBridge Smart Care Navigator. Describe your symptoms or health questions, and I will recommend the right clinical specialty, provide pre-consultation guidance, and check for safety red flags.",
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    },
+  ]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatBusy, setChatBusy] = useState(false);
+  const [chatError, setChatError] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Doctors & Directory State
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
+  const [doctorSearch, setDoctorSearch] = useState("");
+  const [onlyTelehealth, setOnlyTelehealth] = useState(false);
+  const [onlyVerified, setOnlyVerified] = useState(false);
+
+  // API Hooks for Directory
+  const metaApi = useApi("/directory/meta");
+  const doctorsApi = useApi("/directory/doctors");
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    if (currentView === "guidance") {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatMessages, chatBusy, currentView]);
+
+  // Check URL query parameters to jump to specific view
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get("view");
+    if (viewParam === "guidance" || viewParam === "doctors" || viewParam === "emergency") {
+      setCurrentView(viewParam);
+    }
+    const specParam = params.get("specialty");
+    if (specParam) {
+      setSelectedSpecialty(specParam);
+    }
+  }, []);
+
+  // Handler for Patient-Protected Actions
+  const handleProtectedAction = (destination: string, description: string) => {
+    if (isLoggedIn && role === "patient") {
+      router.push(destination);
+    } else {
+      addToast(
+        "info",
+        "Patient Sign In Required",
+        `Please sign in as a patient to access ${description}.`
+      );
+      router.push(`/login?next=${encodeURIComponent(destination)}`);
+    }
   };
 
-  const toggle = (id: string) => setSel((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id].slice(-3));
-  const cards = [...(res?.eligible || []), ...(res?.needs_review || [])];
+  // Handler for Submitting General Health Guidance Query
+  const handleSendGuidance = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const query = chatInput.trim();
+    if (!query || chatBusy) return;
 
-  const steps = ["Your concern", "Options", "Results"];
+    const userMsgId = `user-${Date.now()}`;
+    const userMsg: ChatMessage = {
+      id: userMsgId,
+      sender: "user",
+      text: query,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+
+    setChatMessages((prev) => [...prev, userMsg]);
+    setChatInput("");
+    setChatBusy(true);
+    setChatError("");
+
+    try {
+      const response = await api("/navigator/guidance", {
+        method: "POST",
+        body: {
+          text: query,
+          lang: locale,
+        },
+      });
+
+      const assistantMsg: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        sender: "assistant",
+        text: response.reply,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        data: response,
+      };
+
+      setChatMessages((prev) => [...prev, assistantMsg]);
+
+      if (response.emergency) {
+        addToast(
+          "error",
+          "Medical Emergency Alert",
+          "Potential emergency detected. Please call 999 or proceed to an emergency department immediately."
+        );
+      }
+    } catch (err: any) {
+      const errorMsgText = err.message || "Failed to receive response from navigation service.";
+      setChatError(errorMsgText);
+      const errorAssistantMsg: ChatMessage = {
+        id: `error-${Date.now()}`,
+        sender: "assistant",
+        text: `Unable to process query: ${errorMsgText}. Please try rephrasing or search directly in our doctor directory.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        error: true,
+      };
+      setChatMessages((prev) => [...prev, errorAssistantMsg]);
+    } finally {
+      setChatBusy(false);
+    }
+  };
+
+  // Filter Doctors
+  const filteredDoctors = useMemo(() => {
+    const list = doctorsApi.data?.items || [];
+    return list.filter((doc: any) => {
+      // Specialty filter
+      if (selectedSpecialty !== "all" && doc.specialty_code !== selectedSpecialty) {
+        return false;
+      }
+      // Verification filter
+      if (onlyVerified && doc.verification !== "verified") {
+        return false;
+      }
+      // Telehealth filter (MVP checks if active chamber or doctor offers consultation)
+      if (onlyTelehealth) {
+        const hasOnline = doc.chambers?.some((c: any) =>
+          c.facility_name?.toLowerCase().includes("online") ||
+          c.facility_name?.toLowerCase().includes("telehealth") ||
+          c.facility_type === "private"
+        );
+        if (!hasOnline && doc.chambers?.length === 0) return false;
+      }
+      // Text query
+      if (doctorSearch.trim()) {
+        const q = doctorSearch.toLowerCase();
+        const nameMatch = doc.full_name?.toLowerCase().includes(q);
+        const specMatch = doc.specialty_name_en?.toLowerCase().includes(q);
+        const facilityMatch = doc.chambers?.some((c: any) => c.facility_name?.toLowerCase().includes(q));
+        if (!nameMatch && !specMatch && !facilityMatch) return false;
+      }
+      return true;
+    });
+  }, [doctorsApi.data, selectedSpecialty, onlyVerified, onlyTelehealth, doctorSearch]);
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={t("nav2.title")} subtitle={t("nav2.disclaimer")} />
-
-      {/* Step indicator */}
-      <StepIndicator steps={steps} current={step} />
-
-      {/* Emergency full-screen takeover */}
-      {res?.emergency && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg scale-in">
-            <EmergencyBanner text={res.guidance} />
-            <button onClick={() => { setRes(null); setStep(0); }} className="mt-4 w-full rounded-input border border-line bg-s1 py-2 text-sm text-muted hover:text-ink">
-              Go back
-            </button>
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {/* View Header with Back button if in sub-view */}
+      {currentView !== "hub" && (
+        <div className="flex items-center justify-between border-b border-line pb-4">
+          <button
+            onClick={() => setCurrentView("hub")}
+            className="inline-flex items-center gap-2 rounded-lg border border-line bg-s1 px-3 py-1.5 text-xs font-semibold text-muted hover:bg-s2 hover:text-ink transition"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to All Navigator Options</span>
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted font-medium">Active Pathway:</span>
+            <span className="rounded-full bg-psoft px-2.5 py-0.5 text-xs font-bold text-ptext capitalize">
+              {currentView === "guidance"
+                ? "General Health Guidance"
+                : currentView === "doctors"
+                ? "Find a Doctor"
+                : "Emergency Help"}
+            </span>
           </div>
         </div>
       )}
 
-      {/* Step 0: Concern */}
-      {step === 0 && (
-        <Card className="space-y-4 slide-up">
-          <div>
-            <label className="mb-1 block text-sm text-muted">{t("nav2.concern")}</label>
-            <textarea
-              className="w-full rounded-input border border-line bg-s2 p-3 text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 resize-none"
-              rows={4}
-              placeholder="e.g. I have had a persistent cough for 2 weeks with mild fever…"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <p className="mb-2 text-sm text-muted">{t("nav2.redflags")}</p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {RF.map(([v, k]) => (
-                <label key={v}
-                  className={`flex cursor-pointer items-center gap-3 rounded-input border p-3 text-sm transition-all ${flags.includes(v) ? "border-danger/50 bg-danger/10 text-danger" : "border-line bg-s2 hover:border-warn/40"}`}>
-                  <input type="checkbox" className="h-4 w-4 flex-shrink-0" checked={flags.includes(v)} onChange={(e) => setFlags(e.target.checked ? [...flags, v] : flags.filter((x) => x !== v))} />
-                  <span>{t(k)}</span>
-                  {flags.includes(v) && <ShieldAlert className="ml-auto h-4 w-4 flex-shrink-0" />}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-muted hover:text-ink">
-            <input type="checkbox" className="h-4 w-4" checked={budgetFirst} onChange={(e) => setBF(e.target.checked)} />
-            {t("nav2.budgetFirst")}
-          </label>
-
-          {flags.length > 0 && (
-            <GlassCard className="border-warn/30 flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-warn mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-warn">Emergency symptoms flagged. The search will prioritise safety first. If this is life-threatening, call 999 immediately.</p>
-            </GlassCard>
-          )}
-
-          <div className="flex justify-end">
-            <Button disabled={text.length < 2} busy={busy} onClick={run}>
-              {t("nav2.search")} <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {err && <p role="alert" className="flex items-center gap-2 text-sm text-danger"><AlertTriangle className="h-4 w-4" />{err}</p>}
-        </Card>
-      )}
-
-      {/* Step 2: Results */}
-      {step === 2 && res && !res.emergency && (
-        <div className="space-y-4 slide-up">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold">Results</h2>
-              <p className="text-sm text-muted">
-                {cards.length} match{cards.length !== 1 ? "es" : ""}
-                {res.excluded_count > 0 && ` · ${res.excluded_count} excluded as clinically unsuitable`}
+      {/* =========================================================
+         1. MAIN NAVIGATOR HUB ("How can we help you today?")
+         ========================================================= */}
+      {currentView === "hub" && (
+        <div className="space-y-8 slide-up">
+          {/* Hero Welcome Card */}
+          <div className="relative overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-s1 via-s1 to-psoft/30 p-6 md:p-8 shadow-sm">
+            <div className="max-w-2xl space-y-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-psoft px-3 py-1 text-xs font-semibold text-ptext">
+                <Compass className="h-3.5 w-3.5" />
+                <span>Smart Care Navigator</span>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold font-heading tracking-tight text-ink">
+                How can we help you today?
+              </h1>
+              <p className="text-sm md:text-base text-muted leading-relaxed">
+                Choose a direct healthcare pathway below or consult our AI health assistant for symptom triage, doctor matching, and care guidance.
               </p>
             </div>
-            <Button variant="secondary" size="sm" onClick={() => { setRes(null); setStep(0); }}>
-              New search
-            </Button>
           </div>
 
-          {res.loginNeeded && (
-            <Card className="border-info/30">
-              <p className="text-sm">Log in to see personalised, budget-aware matches.</p>
-              <Link href="/login"><Button variant="secondary" size="sm" className="mt-2">{t("auth.login")} →</Button></Link>
-            </Card>
-          )}
+          {/* 6 Core Action Pathway Cards */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/* 1. Find a Doctor */}
+            <button
+              type="button"
+              onClick={() => setCurrentView("doctors")}
+              className="text-left w-full rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            >
+              <Card
+                hover
+                className="h-full space-y-3 border border-line p-5 transition-all duration-200 hover:border-primary/50 hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Stethoscope className="h-6 w-6" />
+                  </span>
+                  <ChevronRight className="h-5 w-5 text-muted" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-ink">Find a Doctor</h2>
+                  <p className="text-xs text-muted mt-1 leading-relaxed">
+                    Search certified specialists across Dhaka by department, experience, hospital affiliation, and consultation fee.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ptext">
+                    Browse Doctor Directory &rarr;
+                  </span>
+                </div>
+              </Card>
+            </button>
 
-          {res.unsupported && <Card><p className="text-warn">{res.message}</p></Card>}
+            {/* 2. Book an Appointment */}
+            <button
+              type="button"
+              onClick={() => handleProtectedAction("/appointments?book=true", "Appointment Booking")}
+              className="text-left w-full rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            >
+              <Card
+                hover
+                className="h-full space-y-3 border border-line p-5 transition-all duration-200 hover:border-primary/50 hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                    <CalendarClock className="h-6 w-6" />
+                  </span>
+                  <ChevronRight className="h-5 w-5 text-muted" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-ink">Book an Appointment</h2>
+                  <p className="text-xs text-muted mt-1 leading-relaxed">
+                    Schedule an in-person hospital chamber consultation with instant date, time, and patient record opt-in.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ptext">
+                    Open Booking Portal &rarr;
+                  </span>
+                </div>
+              </Card>
+            </button>
 
-          {!res.unsupported && cards.length === 0 && !res.loginNeeded && (
-            <EmptyState icon={Compass} title={t("common.noResults")} body="Try a different concern or fewer filters." />
-          )}
+            {/* 3. Understand a Medical Report */}
+            <button
+              type="button"
+              onClick={() => handleProtectedAction("/reports", "Medical Reports & OCR")}
+              className="text-left w-full rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            >
+              <Card
+                hover
+                className="h-full space-y-3 border border-line p-5 transition-all duration-200 hover:border-primary/50 hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400">
+                    <FileText className="h-6 w-6" />
+                  </span>
+                  <ChevronRight className="h-5 w-5 text-muted" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-ink">Understand a Medical Report</h2>
+                  <p className="text-xs text-muted mt-1 leading-relaxed">
+                    Upload CBC, Lipid, or Glucose reports for automated OCR scanning, low-confidence validation, and AI explanation.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-400">
+                    Open Report Vault &rarr;
+                  </span>
+                </div>
+              </Card>
+            </button>
 
-          <div className="grid gap-3 md:grid-cols-2">
-            {cards.map((c: any) => {
-              const id = `${c.doctor_id}:${c.facility_id}`;
-              return <MatchCard key={id} c={c} sel={sel.includes(id)} onToggle={() => toggle(id)} />;
-            })}
+            {/* 4. Find an Online Consultation */}
+            <button
+              type="button"
+              onClick={() => {
+                setOnlyTelehealth(true);
+                setCurrentView("doctors");
+              }}
+              className="text-left w-full rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            >
+              <Card
+                hover
+                className="h-full space-y-3 border border-line p-5 transition-all duration-200 hover:border-primary/50 hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400">
+                    <Video className="h-6 w-6" />
+                  </span>
+                  <ChevronRight className="h-5 w-5 text-muted" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-ink">Find an Online Consultation</h2>
+                  <p className="text-xs text-muted mt-1 leading-relaxed">
+                    Filter verified practitioners offering remote tele-consultations and digital prescriptions without traveling.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-400">
+                    View Telehealth Doctors &rarr;
+                  </span>
+                </div>
+              </Card>
+            </button>
+
+            {/* 5. Get General Health Guidance */}
+            <button
+              type="button"
+              onClick={() => setCurrentView("guidance")}
+              className="text-left w-full rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            >
+              <Card
+                hover
+                className="h-full space-y-3 border border-line p-5 transition-all duration-200 hover:border-emerald-500/50 hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+                    <Sparkles className="h-6 w-6" />
+                  </span>
+                  <ChevronRight className="h-5 w-5 text-muted" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-ink">Get General Health Guidance</h2>
+                  <p className="text-xs text-muted mt-1 leading-relaxed">
+                    Chat with our intelligent symptom analyzer to determine the right medical department and preparation steps.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                    Start Interactive Chat &rarr;
+                  </span>
+                </div>
+              </Card>
+            </button>
+
+            {/* 6. Emergency Help */}
+            <button
+              type="button"
+              onClick={() => setCurrentView("emergency")}
+              className="text-left w-full rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            >
+              <Card
+                hover
+                className="h-full space-y-3 border border-danger/40 bg-danger/5 p-5 transition-all duration-200 hover:border-danger hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-danger/10 text-danger">
+                    <AlertTriangle className="h-6 w-6" />
+                  </span>
+                  <ChevronRight className="h-5 w-5 text-danger" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-danger">Emergency Help</h2>
+                  <p className="text-xs text-muted mt-1 leading-relaxed">
+                    Immediate 24/7 hotline numbers (999, 16263), ambulance dispatch, and critical warning alerts.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-danger">
+                    Access Emergency Hotlines &rarr;
+                  </span>
+                </div>
+              </Card>
+            </button>
           </div>
 
-          {sel.length >= 2 && <CompareTable cards={cards} sel={sel} />}
-
-          <p className="text-xs text-muted">{t("nav2.disclaimer")} {t("common.sample")}</p>
+          {/* Safety Disclaimer Banner */}
+          <div className="rounded-xl border border-line/70 bg-s2/60 p-4 text-xs text-muted flex items-start gap-3">
+            <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <p>
+              <span className="font-semibold text-ink">MediBridge Safety Notice:</span> The Smart Care Navigator provides healthcare triage, navigation, and provider discovery. It is strictly informational and does not replace the diagnostic judgment of a licensed medical practitioner.
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Loading state between step 0 and step 2 */}
-      {busy && (
-        <Card className="text-center py-8 space-y-3">
-          <div className="mx-auto h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-          <p className="text-muted text-sm">Searching for the best matches…</p>
-        </Card>
+      {/* =========================================================
+         2. TEXT-BASED INTERACTION (GENERAL HEALTH GUIDANCE)
+         ========================================================= */}
+      {currentView === "guidance" && (
+        <div className="space-y-4 slide-up">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h1 className="text-xl font-bold text-ink flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-emerald-400" />
+                General Health Guidance & Triage
+              </h1>
+              <p className="text-xs text-muted">
+                Describe your symptoms in plain language (English or Bangla) to receive preliminary clinical specialty suggestions.
+              </p>
+            </div>
+            <button
+              onClick={() => setChatMessages((prev) => prev.slice(0, 1))}
+              className="text-xs text-muted hover:text-ink font-medium self-start sm:self-auto"
+            >
+              Clear Conversation
+            </button>
+          </div>
+
+          {/* Quick Symptom Starter Chips */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-muted font-medium">Quick Examples:</span>
+            {[
+              "Persistent dry cough for 5 days with mild fever",
+              "Severe headache and morning dizziness",
+              "Burning chest sensation and acidity after dinner",
+              "Right knee pain and joint swelling",
+              "Excessive thirst and frequent urination",
+            ].map((symptom) => (
+              <button
+                key={symptom}
+                onClick={() => {
+                  setChatInput(symptom);
+                }}
+                className="rounded-full border border-line bg-s1 px-2.5 py-1 text-xs text-muted hover:border-primary/50 hover:bg-s2 hover:text-ink transition"
+              >
+                {symptom}
+              </button>
+            ))}
+          </div>
+
+          {/* Chat Messages Container */}
+          <Card className="min-h-[440px] max-h-[560px] overflow-y-auto flex flex-col p-4 space-y-4 bg-s1/60">
+            {chatMessages.map((msg) => {
+              const isAssistant = msg.sender === "assistant";
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex items-start gap-3 ${isAssistant ? "justify-start" : "justify-end"}`}
+                >
+                  {isAssistant && (
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+                      <Bot className="h-4 w-4" />
+                    </div>
+                  )}
+
+                  <div
+                    className={`max-w-[85%] rounded-2xl p-4 text-xs space-y-2.5 leading-relaxed shadow-sm ${
+                      isAssistant
+                        ? msg.error
+                          ? "border border-danger/40 bg-danger/10 text-ink"
+                          : "border border-line bg-s2/80 text-ink"
+                        : "bg-primary text-onprimary font-medium"
+                    }`}
+                  >
+                    <div className="whitespace-pre-wrap">{msg.text}</div>
+
+                    {/* Emergency Alert Card within Chat */}
+                    {msg.data?.emergency && (
+                      <div className="rounded-xl border border-danger/60 bg-danger/15 p-3 text-danger space-y-2">
+                        <div className="flex items-center gap-2 font-bold text-sm">
+                          <AlertTriangle className="h-4 w-4 shrink-0" />
+                          <span>Emergency Medical Attention Required</span>
+                        </div>
+                        <p className="text-xs">
+                          Your symptoms indicate potential red-flag medical distress. Do not wait for a chat reply or routine appointment.
+                        </p>
+                        <div className="pt-1 flex flex-wrap gap-2">
+                          <a
+                            href={`tel:${msg.data.emergency_number || "999"}`}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-danger px-3 py-1.5 text-xs font-bold text-white shadow hover:bg-danger/90 transition"
+                          >
+                            <PhoneCall className="h-3.5 w-3.5" />
+                            <span>Call {msg.data.emergency_number || "999"} Now</span>
+                          </a>
+                          <button
+                            onClick={() => setCurrentView("emergency")}
+                            className="inline-flex items-center gap-1 rounded-lg border border-danger/50 bg-s1 px-2.5 py-1 text-xs font-semibold text-danger hover:bg-danger/10"
+                          >
+                            View Emergency Centers &rarr;
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Structured Clinical Guidance Details */}
+                    {isAssistant && msg.data && !msg.data.emergency && (
+                      <div className="border-t border-line/60 pt-3 space-y-3">
+                        {/* Primary Recommended Department */}
+                        {msg.data.primary_specialty_label && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] uppercase tracking-wider font-bold text-muted">
+                              Recommended Department:
+                            </span>
+                            <span className="rounded-full border border-primary/30 bg-psoft px-2.5 py-0.5 text-xs font-bold text-ptext">
+                              {msg.data.primary_specialty_label}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Pre-Consultation Preparation Tips */}
+                        {msg.data.preparation_tips && msg.data.preparation_tips.length > 0 && (
+                          <div className="space-y-1.5">
+                            <span className="text-[11px] uppercase tracking-wider font-bold text-muted">
+                              Tips Before You See the Doctor:
+                            </span>
+                            <ul className="space-y-1 text-muted pl-4 list-disc">
+                              {msg.data.preparation_tips.map((tip, idx) => (
+                                <li key={idx}>{tip}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Red Flags to Monitor */}
+                        {msg.data.red_flags_to_watch && msg.data.red_flags_to_watch.length > 0 && (
+                          <div className="space-y-1.5">
+                            <span className="text-[11px] uppercase tracking-wider font-bold text-warn">
+                              Warning Signs Requiring Urgent Care:
+                            </span>
+                            <ul className="space-y-1 text-muted pl-4 list-disc">
+                              {msg.data.red_flags_to_watch.map((rf, idx) => (
+                                <li key={idx} className="text-warn/90">
+                                  {rf}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Action Buttons to Transition to Doctor / Booking */}
+                        <div className="pt-2 flex flex-wrap gap-2 border-t border-line/40">
+                          {msg.data.primary_specialty && (
+                            <Button
+                              size="xs"
+                              variant="secondary"
+                              onClick={() => {
+                                setSelectedSpecialty(msg.data!.primary_specialty!);
+                                setCurrentView("doctors");
+                              }}
+                            >
+                              <Stethoscope className="h-3.5 w-3.5 mr-1" />
+                              Find {msg.data.primary_specialty_label} Doctors &rarr;
+                            </Button>
+                          )}
+                          <Button
+                            size="xs"
+                            variant="primary"
+                            onClick={() => handleProtectedAction("/appointments?book=true", "Appointment Booking")}
+                          >
+                            <CalendarClock className="h-3.5 w-3.5 mr-1" />
+                            Book Consultation &rarr;
+                          </Button>
+                        </div>
+
+                        {/* Disclaimer */}
+                        {msg.data.disclaimer && (
+                          <p className="text-[10px] text-muted/70 italic pt-1">
+                            {msg.data.disclaimer}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    <div
+                      className={`text-[10px] ${
+                        isAssistant ? "text-muted" : "text-onprimary/70 text-right"
+                      }`}
+                    >
+                      {msg.timestamp}
+                    </div>
+                  </div>
+
+                  {!isAssistant && (
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-psoft text-ptext">
+                      <User className="h-4 w-4" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Loading Indicator */}
+            {chatBusy && (
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div className="rounded-2xl border border-line bg-s2/80 px-4 py-3 text-xs text-muted flex items-center gap-2">
+                  <div className="h-3.5 w-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  <span>Evaluating clinical symptoms and safety guidelines...</span>
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </Card>
+
+          {/* Chat Input Box */}
+          <form onSubmit={handleSendGuidance} className="space-y-2">
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendGuidance();
+                  }
+                }}
+                disabled={chatBusy}
+                placeholder="Type your health concern, e.g., 'cough with low grade fever for 4 days'..."
+                className="w-full rounded-input border border-line bg-s1 px-4 py-3 text-xs md:text-sm text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 pr-24 shadow-sm"
+              />
+              <div className="absolute right-2 flex items-center gap-1.5">
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={chatInput.trim().length < 2 || chatBusy}
+                  busy={chatBusy}
+                >
+                  <Send className="h-3.5 w-3.5 mr-1" />
+                  <span>Send</span>
+                </Button>
+              </div>
+            </div>
+            <p className="text-[11px] text-muted flex items-center gap-1">
+              <span>Press <kbd className="font-mono bg-s2 px-1 rounded border border-line">Enter</kbd> to send.</span>
+              <span>AI guidance is strictly educational and does not provide an official prescription.</span>
+            </p>
+          </form>
+        </div>
+      )}
+
+      {/* =========================================================
+         3. DOCTOR AND APPOINTMENT NAVIGATION ("Find a Doctor")
+         ========================================================= */}
+      {currentView === "doctors" && (
+        <div className="space-y-5 slide-up">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-bold text-ink flex items-center gap-2">
+                <Stethoscope className="h-5 w-5 text-primary" />
+                Find a Doctor & Book Clinical Consultation
+              </h1>
+              <p className="text-xs text-muted">
+                Explore licensed physicians across Dhaka. Filter by specialty, chamber, or remote telehealth availability.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => handleProtectedAction("/appointments?book=true", "Appointment Booking")}
+            >
+              <CalendarClock className="h-4 w-4 mr-1.5" />
+              Direct Booking Portal
+            </Button>
+          </div>
+
+          {/* Filter Bar */}
+          <Card className="space-y-4 p-4">
+            <div className="grid gap-3 md:grid-cols-3">
+              {/* Search text */}
+              <div className="md:col-span-1">
+                <SearchInput
+                  value={doctorSearch}
+                  onChange={(e) => setDoctorSearch(e.target.value)}
+                  onClear={() => setDoctorSearch("")}
+                  placeholder="Search doctor or hospital name..."
+                />
+              </div>
+
+              {/* Specialty dropdown */}
+              <div className="md:col-span-1">
+                <select
+                  value={selectedSpecialty}
+                  onChange={(e) => setSelectedSpecialty(e.target.value)}
+                  aria-label="Filter doctors by medical specialty"
+                  className="w-full rounded-input border border-line bg-s1 px-3 py-2 text-xs text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 min-h-[38px]"
+                >
+                  <option value="all">All Specialties ({metaApi.data?.specialties?.length || "All"})</option>
+                  {(metaApi.data?.specialties || []).map((s: any) => (
+                    <option key={s.code} value={s.code}>
+                      {s.name_en} {s.name_bn ? `(${s.name_bn})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Checkbox filters */}
+              <div className="flex flex-wrap items-center gap-4 text-xs text-muted md:col-span-1 justify-end">
+                <label className="flex items-center gap-1.5 cursor-pointer hover:text-ink">
+                  <input
+                    type="checkbox"
+                    checked={onlyTelehealth}
+                    onChange={(e) => setOnlyTelehealth(e.target.checked)}
+                    className="rounded border-line text-primary focus:ring-primary"
+                  />
+                  <span>Online / Telehealth</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer hover:text-ink">
+                  <input
+                    type="checkbox"
+                    checked={onlyVerified}
+                    onChange={(e) => setOnlyVerified(e.target.checked)}
+                    className="rounded border-line text-primary focus:ring-primary"
+                  />
+                  <span>Verified BMDC Only</span>
+                </label>
+              </div>
+            </div>
+          </Card>
+
+          {/* Doctors Listing */}
+          <Async
+            loading={doctorsApi.loading}
+            error={doctorsApi.error}
+            onRetry={doctorsApi.reload}
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs text-muted px-1">
+                <span>
+                  Showing <strong className="text-ink">{filteredDoctors.length}</strong> available doctor
+                  {filteredDoctors.length === 1 ? "" : "s"}
+                </span>
+                {selectedSpecialty !== "all" && (
+                  <button
+                    onClick={() => setSelectedSpecialty("all")}
+                    className="text-ptext hover:underline font-medium"
+                  >
+                    Reset specialty filter
+                  </button>
+                )}
+              </div>
+
+              {filteredDoctors.length === 0 ? (
+                <EmptyState
+                  icon={Stethoscope}
+                  title="No Doctors Found"
+                  body="No healthcare providers matched your chosen filters. Try resetting the specialty or keywords."
+                />
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {filteredDoctors.map((doc: any) => {
+                    const chambers = doc.chambers || [];
+                    const primaryChamber = chambers[0];
+                    const feeText = primaryChamber?.fee_bdt ? `BDT ${primaryChamber.fee_bdt}` : "Fee on request";
+
+                    return (
+                      <Card
+                        key={doc.user_id}
+                        className="flex flex-col justify-between space-y-4 p-5 hover:border-primary/50 transition shadow-sm"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-3">
+                              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm font-heading">
+                                {doc.full_name?.replace(/^Dr\.\s*/i, "").slice(0, 2).toUpperCase() || "DR"}
+                              </span>
+                              <div>
+                                <h2 className="text-base font-bold text-ink">{doc.full_name}</h2>
+                                <p className="text-xs text-ptext font-semibold">
+                                  {doc.specialty_name_en || doc.specialty_code}
+                                  {doc.experience_years ? ` · ${doc.experience_years} yrs exp` : ""}
+                                </p>
+                              </div>
+                            </div>
+                            {verChip(doc.verification)}
+                          </div>
+
+                          {doc.qualifications && (
+                            <p className="text-xs text-muted line-clamp-1">{doc.qualifications}</p>
+                          )}
+
+                          {primaryChamber && (
+                            <div className="rounded-lg bg-s2/60 p-2.5 text-xs text-muted space-y-1">
+                              <div className="flex items-center gap-1.5 font-medium text-ink">
+                                <Building2 className="h-3.5 w-3.5 text-muted shrink-0" />
+                                <span className="truncate">{primaryChamber.facility_name}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span>{primaryChamber.facility_type}</span>
+                                <span className="font-semibold text-ptext">{feeText}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 border-t border-line/60 pt-3">
+                          <Link
+                            href={`/directory/doctors/${doc.user_id}`}
+                            className="text-xs font-semibold text-muted hover:text-ink transition"
+                          >
+                            View Profile &rarr;
+                          </Link>
+                          <Button
+                            size="xs"
+                            variant="primary"
+                            onClick={() =>
+                              handleProtectedAction(
+                                `/appointments?book=true&doctorId=${doc.user_id}`,
+                                `Appointment with ${doc.full_name}`
+                              )
+                            }
+                          >
+                            <CalendarClock className="h-3.5 w-3.5 mr-1" />
+                            Book Appointment
+                          </Button>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </Async>
+        </div>
+      )}
+
+      {/* =========================================================
+         4. EMERGENCY HELP INTERFACE
+         ========================================================= */}
+      {currentView === "emergency" && (
+        <div className="space-y-6 slide-up max-w-4xl mx-auto">
+          {/* Critical Warning Header */}
+          <div className="rounded-2xl border-2 border-danger bg-danger/10 p-6 md:p-8 space-y-3">
+            <div className="flex items-center gap-3 text-danger">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-danger text-white shadow-lg animate-pulse">
+                <AlertTriangle className="h-6 w-6" />
+              </span>
+              <div>
+                <h1 className="text-xl md:text-2xl font-bold font-heading">
+                  Emergency Medical Services
+                </h1>
+                <p className="text-xs md:text-sm font-semibold opacity-90">
+                  Do not wait for AI guidance, chat responses, or an appointment during a critical medical emergency.
+                </p>
+              </div>
+            </div>
+            <p className="text-xs md:text-sm text-ink/80 leading-relaxed pt-2">
+              If someone is experiencing chest pain, difficulty breathing, severe bleeding, sudden weakness, speech loss, or unconsciousness, immediate physical emergency care is required.
+            </p>
+          </div>
+
+          {/* Verified Emergency Hotlines Grid */}
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {/* National Emergency 999 */}
+            <Card className="border border-danger/40 bg-s1 p-5 space-y-3 hover:border-danger transition">
+              <div className="flex items-center justify-between">
+                <span className="rounded-lg bg-danger/10 px-2 py-1 text-[11px] font-bold text-danger uppercase tracking-wider">
+                  National Hotline
+                </span>
+                <PhoneCall className="h-5 w-5 text-danger" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold font-mono text-danger">999</h2>
+                <p className="text-xs font-semibold text-ink mt-0.5">National Emergency Service</p>
+                <p className="text-[11px] text-muted mt-1">
+                  Ambulance, Fire Service, and Police emergency response across Bangladesh. 24 hours toll-free.
+                </p>
+              </div>
+              <div className="pt-2">
+                <a
+                  href="tel:999"
+                  className="flex min-h-[38px] w-full items-center justify-center gap-2 rounded-lg bg-danger font-bold text-xs text-white shadow hover:bg-danger/90 transition"
+                >
+                  <PhoneCall className="h-4 w-4" />
+                  <span>Call 999 (National)</span>
+                </a>
+              </div>
+            </Card>
+
+            {/* Health Helpline 16263 */}
+            <Card className="border border-line bg-s1 p-5 space-y-3 hover:border-primary/50 transition">
+              <div className="flex items-center justify-between">
+                <span className="rounded-lg bg-psoft px-2 py-1 text-[11px] font-bold text-ptext uppercase tracking-wider">
+                  24/7 Health Desk
+                </span>
+                <PhoneCall className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold font-mono text-ink">16263</h2>
+                <p className="text-xs font-semibold text-ink mt-0.5">Shastho Batayan</p>
+                <p className="text-[11px] text-muted mt-1">
+                  Ministry of Health 24/7 tele-medicine and certified doctor helpline for urgent medical queries.
+                </p>
+              </div>
+              <div className="pt-2">
+                <a
+                  href="tel:16263"
+                  className="flex min-h-[38px] w-full items-center justify-center gap-2 rounded-lg border border-line bg-s2 font-bold text-xs text-ink hover:bg-s3 transition"
+                >
+                  <PhoneCall className="h-4 w-4" />
+                  <span>Call 16263</span>
+                </a>
+              </div>
+            </Card>
+
+            {/* Dhaka Medical College Hospital (DMCH) Emergency */}
+            <Card className="border border-line bg-s1 p-5 space-y-3 hover:border-primary/50 transition">
+              <div className="flex items-center justify-between">
+                <span className="rounded-lg bg-emerald-500/10 px-2 py-1 text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
+                  Dhaka ER Center
+                </span>
+                <Building2 className="h-5 w-5 text-emerald-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold font-mono text-ink truncate">+880 2-55165088</h2>
+                <p className="text-xs font-semibold text-ink mt-0.5">DMCH Emergency Room</p>
+                <p className="text-[11px] text-muted mt-1">
+                  Dhaka Medical College & Hospital 24/7 Acute Trauma & Emergency Department.
+                </p>
+              </div>
+              <div className="pt-2">
+                <a
+                  href="tel:+880255165088"
+                  className="flex min-h-[38px] w-full items-center justify-center gap-2 rounded-lg border border-line bg-s2 font-bold text-xs text-ink hover:bg-s3 transition"
+                >
+                  <PhoneCall className="h-4 w-4" />
+                  <span>Call DMCH ER</span>
+                </a>
+              </div>
+            </Card>
+          </div>
+
+          {/* Full Emergency Directory & Hospital Map Link */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl border border-line bg-s1 p-5">
+            <div className="space-y-1">
+              <h2 className="font-bold text-sm text-ink">Need a Dhaka Hospital with an Emergency Room?</h2>
+              <p className="text-xs text-muted">
+                View our verified emergency facility registry including government ICUs and ambulance bays.
+              </p>
+            </div>
+            <Link href="/emergency">
+              <Button variant="secondary" size="sm">
+                Open Full Emergency Directory &rarr;
+              </Button>
+            </Link>
+          </div>
+        </div>
       )}
     </div>
   );

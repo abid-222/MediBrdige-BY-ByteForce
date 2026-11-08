@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Calendar,
   CalendarClock,
@@ -65,6 +65,17 @@ export default function AppointmentsPage() {
   const [shareOptIn, setShareOptIn] = useState(true);
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
   const [bookingBusy, setBookingBusy] = useState(false);
+
+  // Check URL query parameters to auto-open booking modal
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("book") === "true") {
+      setBookModalOpen(true);
+      const docId = params.get("doctorId");
+      if (docId) setSelectedDoctorId(docId);
+    }
+  }, []);
 
   // Status transition state
   const [busyActionId, setBusyActionId] = useState<string | null>(null);
