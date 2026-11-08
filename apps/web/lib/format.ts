@@ -47,3 +47,21 @@ export function dhakaDay(v?: string | Date | null): string | null {
   return new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
 }
 export const todayDhaka = () => dhakaDay(new Date())!;
+
+/** Format chamber schedule safely regardless of whether it is a string, object ({ days, hours }), or array */
+export function fmtSchedule(schedule?: any): string {
+  if (!schedule) return "ইভনিং কনসালটেশন শিফট";
+  if (typeof schedule === "string") return schedule.trim() || "ইভনিং কনসালটেশন শিফট";
+  if (typeof schedule === "object") {
+    const days = Array.isArray(schedule.days)
+      ? schedule.days.join(", ")
+      : typeof schedule.days === "string"
+      ? schedule.days
+      : "";
+    const hours = schedule.hours ? ` (${schedule.hours})` : "";
+    const res = `${days}${hours}`.trim();
+    return res || "ইভনিং কনসালটেশন শিফট";
+  }
+  return "ইভনিং কনসালটেশন শিফট";
+}
+

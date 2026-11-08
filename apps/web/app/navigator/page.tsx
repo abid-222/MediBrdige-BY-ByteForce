@@ -31,6 +31,7 @@ import {
 import { api, getRole, getToken } from "@/lib/api";
 import { useApi } from "@/lib/useApi";
 import { useI18n } from "@/lib/i18n";
+import { fmtSchedule } from "@/lib/format";
 import {
   AiBanner,
   Async,
@@ -990,7 +991,7 @@ export default function SmartCareNavigator() {
                               <div className="flex items-center justify-between text-[11px] text-muted border-t border-line/40 pt-1">
                                 <span className="flex items-center gap-1 truncate">
                                   <Clock className="h-3 w-3 text-ptext shrink-0" />
-                                  <span className="truncate">{primaryChamber.schedule || "ইভনিং কনসালটেশন শিফট"}</span>
+                                  <span className="truncate">{fmtSchedule(primaryChamber.schedule)}</span>
                                 </span>
                                 <span className="text-[10px] bg-emerald-500/10 text-emerald-600 font-bold px-2 py-0.5 rounded shrink-0">
                                   অনলাইন ভিডিও

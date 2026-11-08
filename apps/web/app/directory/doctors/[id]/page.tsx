@@ -28,6 +28,7 @@ import {
 import { api, getRole, getToken } from "@/lib/api";
 import { useApi } from "@/lib/useApi";
 import { useI18n } from "@/lib/i18n";
+import { fmtSchedule } from "@/lib/format";
 import {
   Async,
   Button,
@@ -297,7 +298,7 @@ export default function DoctorProfilePage() {
                                 {c.schedule && (
                                   <span className="inline-flex items-center gap-1">
                                     <Clock className="h-3.5 w-3.5" />
-                                    {c.schedule}
+                                    {fmtSchedule(c.schedule)}
                                   </span>
                                 )}
                               </div>

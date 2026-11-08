@@ -1,14 +1,14 @@
-/* MediBridge design tokens: Clean Light Medical (Default) */
+/* MediBridge Design Tokens: Sleek Cyber-Medical Aesthetic */
 :root, :root[data-theme="light"] {
   --bg: #F8FAFC;
   --surface-1: #FFFFFF;
   --surface-2: #F1F5F9;
-  --border: #E2E8F0;
+  --border: #CBD5E1;
   --text: #0F172A;
-  --text-muted: #64748B;
-  --accent: #0F9D58;
+  --text-muted: #475569;
+  --accent: #059669;
   --accent-ink: #FFFFFF;
-  --accent-glow: rgba(15, 157, 88, 0.12);
+  --accent-glow: rgba(5, 150, 105, 0.16);
   --info: #0284C7;
   --warn: #D97706;
   --danger: #DC2626;
@@ -17,12 +17,12 @@
   --primary: var(--accent);
   --on-primary: var(--accent-ink);
   --primary-text: var(--accent);
-  --primary-soft: rgba(15, 157, 88, 0.08);
+  --primary-soft: rgba(5, 150, 105, 0.10);
   --warning: var(--warn);
 
-  --glow: 0 0 0 1px var(--accent), 0 0 14px var(--accent-glow);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-card-hover: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --glow: 0 0 0 1px var(--accent), 0 0 16px var(--accent-glow);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-card-hover: 0 10px 25px -3px rgba(0, 0, 0, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.06);
   --radius-card: 14px;
   --radius-input: 10px;
   --radius-pill: 999px;
@@ -34,15 +34,15 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #0B0F13;
-  --surface-1: #131920;
-  --surface-2: #1B232C;
-  --border: #283542;
-  --text: #E6EDF3;
-  --text-muted: #8B98A5;
-  --accent: #22C55E;
-  --accent-ink: #04140B;
-  --accent-glow: rgba(34, 197, 94, 0.14);
+  --bg: #07090D;
+  --surface-1: #0E131A;
+  --surface-2: #151D27;
+  --border: #222D3B;
+  --text: #F1F5F9;
+  --text-muted: #94A3B8;
+  --accent: #10B981;
+  --accent-ink: #021208;
+  --accent-glow: rgba(16, 185, 129, 0.22);
   --info: #38BDF8;
   --warn: #FBBF24;
   --danger: #F87171;
@@ -50,12 +50,12 @@
   --primary: var(--accent);
   --on-primary: var(--accent-ink);
   --primary-text: var(--accent);
-  --primary-soft: rgba(34, 197, 94, 0.12);
+  --primary-soft: rgba(16, 185, 129, 0.14);
   --warning: var(--warn);
 
-  --glow: 0 0 0 1px var(--accent), 0 0 18px var(--accent-glow);
-  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.6), 0 2px 6px -1px rgba(0, 0, 0, 0.4);
-  --shadow-card-hover: 0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(34, 197, 94, 0.25);
+  --glow: 0 0 0 1px var(--accent), 0 0 20px var(--accent-glow);
+  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.7), 0 2px 6px -1px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 12px 32px -4px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(16, 185, 129, 0.35);
   color-scheme: dark;
 }
 
