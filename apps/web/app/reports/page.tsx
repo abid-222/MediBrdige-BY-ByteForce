@@ -4,6 +4,7 @@ import { useMemo, useState, useRef } from "react";
 import {
   AlertTriangle,
   Calendar,
+  Download,
   FileCheck,
   FileSearch,
   FileText,
@@ -43,7 +44,7 @@ const MAX_BYTES = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 
 export default function MedicalReportsPage() {
-  useGuard(["patient"]);
+  useGuard(["patient", "doctor", "reviewer", "super_admin"]);
   const { t } = useI18n();
   const { addToast } = useToast();
   const { data, loading, error, reload } = useApi("/documents");
@@ -227,6 +228,75 @@ export default function MedicalReportsPage() {
           trend="neutral"
           trendLabel="Active pipelines"
         />
+      </div>
+
+      {/* Sample Test Reports Ready for Download & Testing */}
+      <div className="rounded-2xl border border-primary/30 bg-gradient-to-r from-s1 via-psoft/15 to-s1 p-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-ptext" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ptext">
+              Test Clinical Reports (Ready for OCR &amp; Verification Testing)
+            </h3>
+          </div>
+          <span className="text-[10px] font-mono text-muted">A4 PDF Standard</span>
+        </div>
+        <p className="mt-1.5 text-xs text-muted">
+          Download sample diagnostic PDFs to test uploading, text extraction, clinical alerts, and doctor verification:
+        </p>
+
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <a
+            href="/sample_reports/CBC_Test_Report_Normal.pdf"
+            download="CBC_Test_Report_Normal.pdf"
+            className="flex items-center justify-between rounded-xl border border-border bg-s1 p-3 transition hover:border-primary/50 hover:bg-s2 shadow-sm group"
+          >
+            <div>
+              <div className="flex items-center gap-1.5 font-bold text-xs text-ink group-hover:text-ptext">
+                <FileText className="h-3.5 w-3.5 text-ptext" />
+                <span>CBC Normal Report</span>
+              </div>
+              <p className="text-[11px] text-muted mt-0.5">Hb 14.2, WBC 7.5, PLT 250</p>
+            </div>
+            <span className="rounded-lg bg-psoft/40 p-1.5 text-ptext group-hover:bg-primary group-hover:text-onprimary transition">
+              <Download className="h-3.5 w-3.5" />
+            </span>
+          </a>
+
+          <a
+            href="/sample_reports/Blood_Glucose_Report.pdf"
+            download="Blood_Glucose_Report.pdf"
+            className="flex items-center justify-between rounded-xl border border-border bg-s1 p-3 transition hover:border-info/50 hover:bg-s2 shadow-sm group"
+          >
+            <div>
+              <div className="flex items-center gap-1.5 font-bold text-xs text-ink group-hover:text-info">
+                <FileText className="h-3.5 w-3.5 text-info" />
+                <span>Blood Glucose Report</span>
+              </div>
+              <p className="text-[11px] text-muted mt-0.5">Fasting 96 &amp; Post-Meal 138</p>
+            </div>
+            <span className="rounded-lg bg-info/10 p-1.5 text-info group-hover:bg-info group-hover:text-onprimary transition">
+              <Download className="h-3.5 w-3.5" />
+            </span>
+          </a>
+
+          <a
+            href="/sample_reports/CBC_Mild_Anemia_Report.pdf"
+            download="CBC_Mild_Anemia_Report.pdf"
+            className="flex items-center justify-between rounded-xl border border-border bg-s1 p-3 transition hover:border-warn/50 hover:bg-s2 shadow-sm group"
+          >
+            <div>
+              <div className="flex items-center gap-1.5 font-bold text-xs text-ink group-hover:text-warn">
+                <AlertTriangle className="h-3.5 w-3.5 text-warn" />
+                <span>CBC Mild Anemia</span>
+              </div>
+              <p className="text-[11px] text-muted mt-0.5">Hb 10.2 (Low), WBC 11.8</p>
+            </div>
+            <span className="rounded-lg bg-warn/10 p-1.5 text-warn group-hover:bg-warn group-hover:text-onprimary transition">
+              <Download className="h-3.5 w-3.5" />
+            </span>
+          </a>
+        </div>
       </div>
 
       {/* Upload Drop Zone Studio */}

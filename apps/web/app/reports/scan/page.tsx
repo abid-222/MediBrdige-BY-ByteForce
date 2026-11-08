@@ -119,6 +119,21 @@ export default function OcrScannerPage() {
     setSelectedFile(file);
   };
 
+  // Load verified test sample report
+  const handleLoadSample = async (filename: string, displayName: string) => {
+    try {
+      setValidationError(null);
+      const res = await fetch(`/sample_reports/${filename}`);
+      if (!res.ok) throw new Error("Could not load sample file");
+      const blob = await res.blob();
+      const file = new File([blob], displayName, { type: "application/pdf" });
+      setSelectedFile(file);
+      addToast("success", "Sample Loaded", `${displayName} is ready to scan.`);
+    } catch (e: any) {
+      addToast("error", "Error loading sample", e.message);
+    }
+  };
+
   // Trigger Upload and Pipeline
   const startUploadPipeline = async () => {
     if (!selectedFile) return;
@@ -349,6 +364,80 @@ export default function OcrScannerPage() {
               <span className="rounded bg-s2 px-2 py-0.5 font-mono font-semibold text-ink">JPG / JPEG</span>
               <span className="rounded bg-s2 px-2 py-0.5 font-mono font-semibold text-ink">PNG</span>
               <span>· Max size: 10MB</span>
+            </div>
+          </div>
+
+          {/* Sample Reports for 1-Click Testing */}
+          <div className="rounded-2xl border border-primary/30 bg-gradient-to-r from-s1/90 via-psoft/20 to-s1/90 p-5 shadow-sm">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-ptext" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-ptext">
+                  {locale === "bn" ? "টেস্টিংয়ের জন্য রেডি মেডিকেল রিপোর্ট নমুনা (১-ক্লিক টেস্ট)" : "Ready Clinical Test Reports (1-Click Test)"}
+                </h3>
+              </div>
+              <span className="text-[10px] font-mono text-muted">A4 Clinical Standard</span>
+            </div>
+            <p className="mt-2 text-xs text-muted">
+              {locale === "bn"
+                ? "আপনার কাছে কোনো রিপোর্ট ফাইল না থাকলে নিচের নমুনাগুলো সরাসরি ডাউনলোড করুন অথবা ১-ক্লিক টেস্ট বাটনে চাপুন:"
+                : "No report on hand? Click 'Test This Sample' to immediately load and process a verified clinical report:"}
+            </p>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-border bg-s1 p-3 flex flex-col justify-between space-y-2">
+                <div>
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-ink">
+                    <FileText className="h-3.5 w-3.5 text-ptext" />
+                    <span>CBC Test (Normal)</span>
+                  </div>
+                  <p className="text-[11px] text-muted mt-1">Hb 14.2 g/dL, WBC 7.5, Platelet 250, RBC, MCV</p>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <Button size="xs" variant="primary" className="w-full text-[11px]" onClick={() => handleLoadSample("CBC_Test_Report_Normal.pdf", "CBC_Normal_Sample.pdf")}>
+                    Test This
+                  </Button>
+                  <a href="/sample_reports/CBC_Test_Report_Normal.pdf" download="CBC_Test_Report_Normal.pdf" className="p-1 text-muted hover:text-ink" title="Download PDF">
+                    <Download className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border bg-s1 p-3 flex flex-col justify-between space-y-2">
+                <div>
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-ink">
+                    <FileText className="h-3.5 w-3.5 text-info" />
+                    <span>Blood Glucose</span>
+                  </div>
+                  <p className="text-[11px] text-muted mt-1">Fasting 96 mg/dL & Post-Meal 138 mg/dL</p>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <Button size="xs" variant="primary" className="w-full text-[11px]" onClick={() => handleLoadSample("Blood_Glucose_Report.pdf", "Blood_Glucose_Sample.pdf")}>
+                    Test This
+                  </Button>
+                  <a href="/sample_reports/Blood_Glucose_Report.pdf" download="Blood_Glucose_Report.pdf" className="p-1 text-muted hover:text-ink" title="Download PDF">
+                    <Download className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border bg-s1 p-3 flex flex-col justify-between space-y-2">
+                <div>
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-ink">
+                    <AlertTriangle className="h-3.5 w-3.5 text-warn" />
+                    <span>CBC (Mild Anemia)</span>
+                  </div>
+                  <p className="text-[11px] text-muted mt-1">Hb 10.2 g/dL (Low), WBC 11.8 (High) — Alert</p>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <Button size="xs" variant="primary" className="w-full text-[11px]" onClick={() => handleLoadSample("CBC_Mild_Anemia_Report.pdf", "CBC_Anemia_Sample.pdf")}>
+                    Test This
+                  </Button>
+                  <a href="/sample_reports/CBC_Mild_Anemia_Report.pdf" download="CBC_Mild_Anemia_Report.pdf" className="p-1 text-muted hover:text-ink" title="Download PDF">
+                    <Download className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
 

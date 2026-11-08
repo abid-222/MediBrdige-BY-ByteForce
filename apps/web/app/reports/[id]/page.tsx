@@ -44,7 +44,7 @@ import { ReportViewer } from "@/components/ReportViewer";
 import Link from "next/link";
 
 export default function MedicalReportDetailPage() {
-  useGuard(["patient"]);
+  useGuard(["patient", "doctor", "reviewer", "super_admin"]);
   const { id } = useParams<{ id: string }>();
   const { t, locale } = useI18n();
   const { addToast } = useToast();

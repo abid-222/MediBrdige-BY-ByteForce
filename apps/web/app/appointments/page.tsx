@@ -443,7 +443,7 @@ export default function AppointmentsPage() {
               <option value="">Choose a doctor...</option>
               {doctorsList.data?.items?.map((d: any) => (
                 <option key={d.id} value={d.id}>
-                  {d.name} — {d.specialty} ({d.fee ? `BDT ${d.fee}` : "Confirmed Fee"})
+                  {d.full_name || d.name} — {d.specialty} ({d.chambers?.[0]?.fee_label || (d.fee ? `BDT ${d.fee}` : "Confirmed Fee")})
                 </option>
               ))}
             </select>
