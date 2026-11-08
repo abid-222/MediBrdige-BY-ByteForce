@@ -73,45 +73,50 @@ export function WatermelonBrowserDemo({ isBn }: { isBn: boolean }) {
           </div>
 
           {/* Console Body */}
-          <div className="p-4 sm:p-8 space-y-6">
+          <div className="p-3.5 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
             {/* Case Selection Tabs */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line/60 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line/60 pb-4">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted font-bold uppercase tracking-wider">Test Scenario:</span>
+                <span className="text-[11px] sm:text-xs text-muted font-bold uppercase tracking-wider font-mono">
+                  Test Scenario:
+                </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setSelectedCase("fever")}
-                  className={`px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider rounded border transition ${
+                  className={`px-2 py-1.5 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider rounded border transition text-center truncate ${
                     selectedCase === "fever"
                       ? "border-primary bg-primary text-onprimary shadow-xs"
                       : "border-line bg-s2/40 text-muted hover:text-ink"
                   }`}
                 >
-                  General Triage (Fever & Headache)
+                  <span className="sm:hidden">Fever</span>
+                  <span className="hidden sm:inline">Routine Fever</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedCase("cardiac")}
-                  className={`px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider rounded border transition ${
+                  className={`px-2 py-1.5 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider rounded border transition text-center truncate ${
                     selectedCase === "cardiac"
                       ? "border-danger bg-danger text-white shadow-xs"
                       : "border-line bg-s2/40 text-muted hover:text-ink"
                   }`}
                 >
-                  Emergency Red-Flag (Chest Pain)
+                  <span className="sm:hidden">Emergency</span>
+                  <span className="hidden sm:inline">Emergency Red-Flag</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedCase("ocr")}
-                  className={`px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-wider rounded border transition ${
+                  className={`px-2 py-1.5 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider rounded border transition text-center truncate ${
                     selectedCase === "ocr"
                       ? "border-info bg-info text-white shadow-xs"
                       : "border-line bg-s2/40 text-muted hover:text-ink"
                   }`}
                 >
-                  Report Vision OCR
+                  <span className="sm:hidden">OCR Vision</span>
+                  <span className="hidden sm:inline">Report Vision OCR</span>
                 </button>
               </div>
             </div>

@@ -80,7 +80,7 @@ export function TelemetryStats({ isBn }: { isBn: boolean }) {
   ];
 
   return (
-    <section className="relative w-full overflow-hidden py-16 md:py-24 font-mono select-none">
+    <section className="relative w-full overflow-hidden py-10 sm:py-16 md:py-24 font-mono select-none">
       {/* Decorative Technical Borders */}
       <div className="absolute top-0 left-0 hidden w-full border-t border-line lg:block" />
       <div className="absolute bottom-0 left-0 hidden w-full border-b border-line lg:block" />
@@ -130,7 +130,7 @@ export function TelemetryStats({ isBn }: { isBn: boolean }) {
               <div className="absolute bottom-0 left-0 h-2 w-2 border-b border-l border-primary/60" />
               <div className="absolute right-0 bottom-0 h-2 w-2 border-r border-b border-primary/60" />
 
-              <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
+              <div className="flex h-full w-full flex-col items-center justify-center p-5 sm:p-8 text-center">
                 <div className="mb-4 opacity-80 transition-transform duration-300 group-hover:scale-110 group-hover:opacity-100">
                   {stat.icon}
                 </div>

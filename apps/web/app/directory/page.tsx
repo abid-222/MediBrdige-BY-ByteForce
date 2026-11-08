@@ -196,7 +196,7 @@ export default function DoctorDirectoryPage() {
 
       {/* Directory Mode Switcher (Doctors vs Hospitals) */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line pb-3">
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex items-center gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setViewMode("doctors")}
@@ -333,7 +333,7 @@ export default function DoctorDirectoryPage() {
         </div>
 
         {viewMode === "doctors" && (
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex items-center gap-2 w-full sm:w-auto">
             <span className="font-semibold text-ink shrink-0">সর্ট / প্রায়োরিটি:</span>
             <select
               value={sortBy}

@@ -127,12 +127,12 @@ const AccordionItem: FC<AccordionItemProps> = ({
         <button
           type="button"
           onClick={() => setOpenId(isOpen ? null : item.id)}
-          className="flex w-full cursor-pointer items-center justify-between px-5 py-4 text-left transition-colors"
+          className="flex w-full cursor-pointer items-center justify-between px-3.5 py-3 sm:px-5 sm:py-4 text-left transition-colors"
           aria-expanded={isOpen}
         >
-          <div className="flex items-center gap-3.5 pr-4 min-w-0">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 pr-2 sm:pr-4 min-w-0 flex-1">
             <div
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors ${
+              className={`flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border transition-colors ${
                 isOpen
                   ? "border-primary/40 bg-primary/10 text-primary"
                   : "border-line bg-s2 text-muted"
@@ -141,26 +141,26 @@ const AccordionItem: FC<AccordionItemProps> = ({
               {item.icon}
             </div>
 
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               {item.tag && (
-                <span className="text-[10px] font-mono tracking-widest text-primary/80 uppercase block mb-0.5">
+                <span className="text-[9px] sm:text-[10px] font-mono tracking-widest text-primary/80 uppercase block mb-0.5 truncate">
                   // {item.tag}
                 </span>
               )}
-              <span className="text-sm md:text-base font-bold text-ink tracking-tight block">
+              <span className="text-xs sm:text-sm md:text-base font-bold text-ink tracking-tight block leading-snug">
                 {item.title}
               </span>
             </div>
           </div>
 
           <div
-            className={`shrink-0 ml-2 rounded-full border border-line p-1.5 transition-transform duration-300 ease-out ${
+            className={`shrink-0 ml-2 rounded-full border border-line p-1 sm:p-1.5 transition-transform duration-300 ease-out ${
               isOpen
                 ? "rotate-180 bg-primary/10 border-primary/40 text-primary"
                 : "rotate-0 text-muted"
             }`}
           >
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
         </button>
 
@@ -171,7 +171,7 @@ const AccordionItem: FC<AccordionItemProps> = ({
           }`}
         >
           <div className="overflow-hidden">
-            <div className="border-t border-line/60 px-5 pt-3.5 pb-5 text-xs md:text-sm text-muted font-mono leading-relaxed">
+            <div className="border-t border-line/60 px-3.5 pt-3 pb-4 sm:px-5 sm:pt-3.5 sm:pb-5 text-xs md:text-sm text-muted font-mono leading-relaxed">
               <p>{item.content}</p>
             </div>
           </div>

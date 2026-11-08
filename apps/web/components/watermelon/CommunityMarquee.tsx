@@ -58,7 +58,7 @@ export function CommunityMarquee({ isBn }: { isBn: boolean }) {
   const marqueeItems = [...reviews, ...reviews];
 
   return (
-    <section className="relative overflow-hidden py-16 md:py-24 font-mono select-none">
+    <section className="relative overflow-hidden py-10 sm:py-16 md:py-24 font-mono select-none">
       {/* Decorative top border */}
       <div className="absolute top-0 left-0 hidden w-full border-t border-line lg:block" />
 
@@ -97,7 +97,7 @@ export function CommunityMarquee({ isBn }: { isBn: boolean }) {
           {marqueeItems.map((item, index) => (
             <div
               key={`${item.id}-${index}`}
-              className="group relative w-[320px] sm:w-[380px] shrink-0 border border-line bg-s1/80 backdrop-blur-md p-6 transition-all duration-300 hover:border-primary/50 shadow-xs"
+              className="group relative w-[280px] sm:w-[350px] md:w-[380px] shrink-0 border border-line bg-s1/80 backdrop-blur-md p-4 sm:p-6 transition-all duration-300 hover:border-primary/50 shadow-xs"
             >
               {/* Corner Accents */}
               <div className="absolute top-0 left-0 h-2 w-2 border-t border-l border-primary/60" />

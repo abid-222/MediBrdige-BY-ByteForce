@@ -14,33 +14,33 @@ export function InteractiveTelemetry3D() {
       {/* 3D Spotlight Tilt Card */}
       <Spotlight3DCard
         tiltMaxAngle={9}
-        className="max-w-xl border-primary/40 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_30px_var(--accent-glow)]"
+        className="w-full max-w-xl border-primary/40 p-4 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_30px_var(--accent-glow)]"
       >
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3.5 sm:gap-4">
           {/* Header Row: Live Status + Dual Gate Indicators */}
-          <div className="flex items-center justify-between border-b border-line/60 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line/60 pb-3">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
               </span>
-              <span className="text-xs font-bold tracking-wider uppercase text-ink">
-                Live Clinical Telemetry
+              <span className="text-[11px] sm:text-xs font-bold tracking-wider uppercase text-ink">
+                Live Telemetry
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-psoft/50 px-2.5 py-0.5 text-[11px] font-bold text-ptext shadow-xs">
-                <ShieldCheck className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-psoft/50 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-ptext shadow-xs">
+                <ShieldCheck className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 <span>Zero Hallucination</span>
               </span>
               <button
                 type="button"
                 onClick={() => setPulseRate((prev) => (prev === "normal" ? "active" : "normal"))}
-                className="inline-flex items-center gap-1 rounded-full border border-line bg-s2 px-2.5 py-0.5 text-[11px] font-mono text-muted hover:text-ink transition hover:border-primary/50"
+                className="inline-flex items-center gap-1 rounded-full border border-line bg-s2 px-2 py-0.5 text-[10px] sm:text-[11px] font-mono text-muted hover:text-ink transition hover:border-primary/50"
                 title="Toggle pulse simulation rhythm"
               >
-                <Heart className={`h-3 w-3 ${pulseRate === "active" ? "text-danger animate-bounce" : "text-primary"}`} />
+                <Heart className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${pulseRate === "active" ? "text-danger animate-bounce" : "text-primary"}`} />
                 <span>{pulseRate === "normal" ? "72 BPM" : "108 BPM"}</span>
               </button>
             </div>

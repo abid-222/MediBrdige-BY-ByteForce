@@ -189,98 +189,133 @@ export function WatermelonNavbar() {
           )}
         </div>
 
-        {/* Mobile Hamburger Toggle */}
+        {/* Mobile Action Controls */}
         <div className="flex md:hidden items-center gap-2">
+          {/* Theme Toggle Button for Mobile */}
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="flex items-center justify-center h-8 w-8 border border-line bg-s2/40 text-muted hover:text-ink transition-colors rounded"
+            title="Toggle Theme"
+            aria-label="Toggle Theme"
+          >
+            {theme === "dark" ? <Sun className="w-3.5 h-3.5 text-warn" /> : <Moon className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Language Switcher for Mobile */}
           <button
             onClick={() => setLocale(locale === "en" ? "bn" : "en")}
-            className="flex items-center justify-center h-8 px-2 border border-line text-[11px] font-mono text-muted rounded"
+            className="flex items-center justify-center h-8 px-2.5 border border-line text-[11px] font-mono font-bold text-muted hover:text-ink transition-colors rounded bg-s2/40"
+            aria-label="Switch Language"
           >
             {locale === "en" ? "বাং" : "EN"}
           </button>
+
+          {/* Hamburger Menu Toggle */}
           <button
-            className="text-ink p-1.5 border border-line rounded bg-s2/40"
+            className="text-ink p-1.5 border border-line rounded bg-s2/60 hover:bg-s2 transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle Navigation"
           >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileMenuOpen ? <X className="w-5 h-5 text-primary" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Dropdown Menu */}
+      {/* Mobile Dropdown Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-line bg-[#0b0f13] dark:bg-[#0b0f13] bg-s1 p-4 flex flex-col gap-3 shadow-2xl">
+        <div className="md:hidden border-b border-line bg-s1/98 backdrop-blur-2xl p-4 sm:p-5 flex flex-col gap-2.5 shadow-2xl transition-all">
           <Link
             href="/navigator"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-2 py-2 text-xs uppercase tracking-wider text-muted hover:text-primary"
+            className={`flex items-center gap-3 py-2.5 px-3 rounded-lg text-xs uppercase tracking-wider transition ${
+              pathname === "/navigator"
+                ? "bg-primary/10 text-primary font-bold border border-primary/30"
+                : "text-muted hover:text-ink hover:bg-s2/50"
+            }`}
           >
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span>{isBn ? "স্মার্টকেয়ার নেভিগেটর" : "AI Navigator"}</span>
+            <Sparkles className="w-4 h-4 text-primary shrink-0" />
+            <span>{isBn ? "স্মার্টকেয়ার নেভিগেটর" : "AI Symptom Navigator"}</span>
           </Link>
           <Link
             href="/directory"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-2 py-2 text-xs uppercase tracking-wider text-muted hover:text-primary"
+            className={`flex items-center gap-3 py-2.5 px-3 rounded-lg text-xs uppercase tracking-wider transition ${
+              pathname === "/directory"
+                ? "bg-primary/10 text-primary font-bold border border-primary/30"
+                : "text-muted hover:text-ink hover:bg-s2/50"
+            }`}
           >
-            <Stethoscope className="w-4 h-4 text-primary" />
-            <span>{isBn ? "ডাক্তার ও হাসপাতাল ডিরেক্টরি" : "Doctor Directory"}</span>
+            <Stethoscope className="w-4 h-4 text-primary shrink-0" />
+            <span>{isBn ? "ডাক্তার ও হাসপাতাল ডিরেক্টরি" : "Doctors & Hospital Directory"}</span>
           </Link>
           <Link
             href="/appointments"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-2 py-2 text-xs uppercase tracking-wider text-muted hover:text-primary"
+            className={`flex items-center gap-3 py-2.5 px-3 rounded-lg text-xs uppercase tracking-wider transition ${
+              pathname === "/appointments"
+                ? "bg-primary/10 text-primary font-bold border border-primary/30"
+                : "text-muted hover:text-ink hover:bg-s2/50"
+            }`}
           >
-            <Activity className="w-4 h-4 text-primary" />
-            <span>{isBn ? "অনলাইন টেলিহেলথ" : "Telehealth"}</span>
+            <Activity className="w-4 h-4 text-primary shrink-0" />
+            <span>{isBn ? "অনলাইন টেলিহেলথ বুকিং" : "Online Telehealth Booking"}</span>
           </Link>
           <Link
             href="/reports"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-2 py-2 text-xs uppercase tracking-wider text-muted hover:text-primary"
+            className={`flex items-center gap-3 py-2.5 px-3 rounded-lg text-xs uppercase tracking-wider transition ${
+              pathname.startsWith("/reports")
+                ? "bg-primary/10 text-primary font-bold border border-primary/30"
+                : "text-muted hover:text-ink hover:bg-s2/50"
+            }`}
           >
-            <FileText className="w-4 h-4 text-primary" />
-            <span>{isBn ? "মেডিকেল রিপোর্ট ওসিআর" : "Report OCR"}</span>
+            <FileText className="w-4 h-4 text-primary shrink-0" />
+            <span>{isBn ? "মেডিকেল রিপোর্ট ওসিআর স্ক্যান" : "Medical Report OCR"}</span>
           </Link>
           <Link
             href="/ml-lab"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-2 py-2 text-xs uppercase tracking-wider text-muted hover:text-primary"
+            className={`flex items-center gap-3 py-2.5 px-3 rounded-lg text-xs uppercase tracking-wider transition ${
+              pathname === "/ml-lab"
+                ? "bg-primary/10 text-primary font-bold border border-primary/30"
+                : "text-muted hover:text-ink hover:bg-s2/50"
+            }`}
           >
-            <FlaskConical className="w-4 h-4 text-primary" />
-            <span>{isBn ? "এমএল স্টুডিও" : "Research ML Lab"}</span>
+            <FlaskConical className="w-4 h-4 text-primary shrink-0" />
+            <span>{isBn ? "এমএল স্টুডিও ও মেট্রিক্স" : "Research ML Lab"}</span>
           </Link>
 
-          <div className="pt-2 border-t border-line flex flex-col gap-2">
+          <div className="pt-3 mt-1 border-t border-line flex flex-col gap-2">
             {role !== "none" ? (
               <div className="flex flex-col gap-2">
                 <Link
                   href={homeFor(role)}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 bg-primary/20 border border-primary text-primary font-bold text-xs uppercase tracking-widest rounded"
+                  className="w-full text-center py-3 bg-primary text-onprimary font-bold text-xs uppercase tracking-widest rounded-lg shadow-md flex items-center justify-center gap-2"
                 >
-                  <span className="capitalize">{role.replace("_", " ")} Portal</span>
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span className="capitalize">{role.replace("_", " ")} Workspace</span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="w-full text-center py-2 border border-danger/40 text-danger text-xs uppercase tracking-widest rounded"
+                  className="w-full text-center py-2.5 border border-danger/40 text-danger text-xs uppercase tracking-widest rounded-lg hover:bg-danger/10 transition"
                 >
                   Log Out
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center py-2 border border-line text-xs uppercase tracking-widest text-muted hover:text-ink rounded"
+                  className="w-full text-center py-2.5 border border-line text-xs uppercase tracking-widest text-ink hover:bg-s2 rounded-lg font-bold"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/navigator"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 bg-primary text-onprimary font-bold text-xs uppercase tracking-widest rounded shadow"
+                  className="w-full text-center py-2.5 bg-primary text-onprimary font-bold text-xs uppercase tracking-widest rounded-lg shadow-md hover:bg-primary/90"
                 >
                   Get Started
                 </Link>

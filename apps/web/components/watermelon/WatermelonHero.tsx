@@ -102,15 +102,15 @@ export function WatermelonHero({
   currentRole: string;
 }) {
   return (
-    <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 overflow-hidden font-mono select-none">
+    <section className="relative pt-20 pb-12 sm:pt-28 sm:pb-16 md:pt-32 md:pb-24 overflow-hidden font-mono select-none">
       {/* Visual Technical Radar on Right Side (Watermelon / Hyphen Signature) */}
       <TechnicalVisualRadar />
 
       <div className="container relative z-10 mx-auto px-4 md:px-8 lg:px-12 text-center max-w-4xl">
         {/* Technical Sub-Tag */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-bold text-ptext shadow-[0_0_15px_var(--accent-glow)]">
+        <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 sm:px-4 sm:py-1.5 text-[11px] sm:text-xs font-bold text-ptext shadow-[0_0_15px_var(--accent-glow)]">
           <span className="flex h-2 w-2 rounded-full bg-accent animate-ping" />
-          <span>
+          <span className="truncate max-w-[280px] sm:max-w-none">
             {isBn
               ? "🇧🇩 বাংলাদেশের জন্য স্বাস্থ্য সমন্বয় আর্কিটেকচার · ঢাকা ২০২৬"
               : "🇧🇩 HEALTHCARE COORDINATION ARCHITECTURE · DHAKA PROTOTYPE"}
@@ -118,73 +118,78 @@ export function WatermelonHero({
         </div>
 
         {/* Hero Title with Watermelon UI High-Contrast Focus */}
-        <h1 className="mt-8 font-heading text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-ink">
+        <h1 className="mt-6 sm:mt-8 font-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-ink break-words">
           Healthcare that <br className="hidden sm:block" />
           is <span className="text-primary drop-shadow-[0_0_24px_var(--accent-glow)]">engineered for trust</span>
         </h1>
 
         {/* Guiding Principle */}
-        <p className="mt-5 text-lg sm:text-2xl font-medium text-ink/90 max-w-2xl mx-auto">
+        <p className="mt-4 sm:mt-5 text-base sm:text-xl md:text-2xl font-medium text-ink/90 max-w-2xl mx-auto px-2">
           {isBn
             ? "এআই সহযোগিতা করবে। সিদ্ধান্ত নেবেন ডাক্তার। নিয়ন্ত্রণে থাকবেন রোগী।"
             : "AI assists. Doctors decide. Patients stay in control."}
         </p>
 
         {/* 3D Medical Telemetry Card */}
-        <div className="my-8">
+        <div className="my-6 sm:my-8 px-1">
           <InteractiveTelemetry3D />
         </div>
 
-        <p className="mt-2 text-xs sm:text-sm text-muted max-w-xl mx-auto uppercase tracking-wider leading-relaxed">
+        <p className="mt-2 text-xs sm:text-sm text-muted max-w-xl mx-auto uppercase tracking-wider leading-relaxed px-3">
           {isBn
             ? "কাগজে আটকে থাকা বিভ্রান্তি দূর করে রোগীকে সঠিক চিকিৎসকের কাছে পৌঁছে দেওয়া এবং প্রেসক্রিপশন ডিজিটাইজেশনের সম্পূর্ণ নিরাপদ ব্যবস্থা।"
             : "Zero-hallucination dual-gate clinical pipeline, bilingual OCR extraction, and 100% online telehealth booking."}
         </p>
 
         {/* Action Buttons with Watermelon UI Cyber Styling */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/navigator">
-            <Button className="btn-primary-neon h-12 px-6 text-xs sm:text-sm uppercase tracking-widest font-bold shadow-[0_0_18px_var(--accent-glow)] group">
+        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full max-w-lg mx-auto sm:max-w-none">
+          <Link href="/navigator" className="w-full sm:w-auto">
+            <Button className="btn-primary-neon w-full sm:w-auto min-h-[48px] px-6 text-xs sm:text-sm uppercase tracking-widest font-bold shadow-[0_0_18px_var(--accent-glow)] group">
               <Compass className="mr-2 h-4 w-4 group-hover:rotate-45 transition-transform" />
               <span>{isBn ? "স্মার্টকেয়ার নেভিগেটর চালান" : "Start SmartCare Navigator"}</span>
             </Button>
           </Link>
 
-          <Link href={currentRole === "patient" ? "/reports/scan" : "/login?next=%2Freports%2Fscan"}>
+          <Link
+            href={currentRole === "patient" ? "/reports/scan" : "/login?next=%2Freports%2Fscan"}
+            className="w-full sm:w-auto"
+          >
             <Button
               variant="secondary"
-              className="h-12 px-5 text-xs sm:text-sm uppercase tracking-widest font-bold border-primary/40 bg-s1/80 hover:bg-s2 hover:border-primary transition group"
+              className="w-full sm:w-auto min-h-[48px] px-5 text-xs sm:text-sm uppercase tracking-widest font-bold border-primary/40 bg-s1/80 hover:bg-s2 hover:border-primary transition group"
             >
               <UploadCloud className="mr-2 h-4 w-4 text-ptext group-hover:-translate-y-0.5 transition-transform" />
               <span>{isBn ? "মেডিকেল রিপোর্ট ওসিআর" : "Scan Medical Report"}</span>
             </Button>
           </Link>
 
-          <Link href="/directory">
-            <Button
-              variant="secondary"
-              className="h-12 px-5 text-xs sm:text-sm uppercase tracking-widest font-bold border-line bg-s1/80 hover:bg-s2 transition"
-            >
-              <Stethoscope className="mr-2 h-4 w-4 text-muted" />
-              <span>{isBn ? "ডাক্তার ডিরেক্টরি" : "Browse Doctors"}</span>
-            </Button>
-          </Link>
+          <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center">
+            <Link href="/directory" className="w-full sm:w-auto">
+              <Button
+                variant="secondary"
+                className="w-full sm:w-auto min-h-[44px] px-4 text-xs uppercase tracking-widest font-bold border-line bg-s1/80 hover:bg-s2 transition"
+              >
+                <Stethoscope className="mr-1.5 h-3.5 w-3.5 text-muted" />
+                <span>{isBn ? "ডিরেক্টরি" : "Doctors"}</span>
+              </Button>
+            </Link>
 
-          <Link href="/ml-lab">
-            <Button
-              variant="ghost"
-              className="h-12 px-4 text-xs sm:text-sm uppercase tracking-widest font-bold border border-primary/20 text-ptext hover:bg-primary/10 transition"
-            >
-              <FlaskConical className="mr-2 h-4 w-4" />
-              <span>{isBn ? "এমএল ল্যাব" : "ML Studio"}</span>
-            </Button>
-          </Link>
+            <Link href="/ml-lab" className="w-full sm:w-auto">
+              <Button
+                variant="ghost"
+                className="w-full sm:w-auto min-h-[44px] px-3.5 text-xs uppercase tracking-widest font-bold border border-primary/20 text-ptext hover:bg-primary/10 transition"
+              >
+                <FlaskConical className="mr-1.5 h-3.5 w-3.5" />
+                <span>{isBn ? "এমএল ল্যাব" : "ML Studio"}</span>
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Emergency Disclaimer Banner */}
-        <div className="mx-auto mt-8 flex max-w-xl items-center justify-center gap-2.5 rounded-lg border border-danger/30 bg-danger/5 px-4 py-2.5 text-xs text-muted backdrop-blur-sm">
+        <div className="mx-auto mt-6 sm:mt-8 flex max-w-xl items-center justify-center gap-2.5 rounded-lg border border-danger/30 bg-danger/5 px-3.5 py-2.5 text-xs text-muted backdrop-blur-sm">
           <ShieldAlert className="h-4 w-4 text-danger shrink-0 animate-pulse" />
-          <span className="text-[11px] font-mono leading-tight">
+          <span className="text-[11px] font-mono leading-tight text-left sm:text-center">
             {isBn
               ? "জরুরি পরিস্থিতিতে সরাসরি ৯৯৯ কল করুন। কৃত্রিম বুদ্ধিমত্তা কোনো প্রেসক্রিপশন বা ক্লিনিক্যাল ডায়াগনোসিস দেয় না।"
               : "In medical emergencies, call 999 immediately. AI never diagnoses or prescribes medication."}
