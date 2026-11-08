@@ -145,59 +145,68 @@ export function AppShell({ children }: { children: ReactNode }) {
     return path === href || (href !== "/" && path.startsWith(href + "/"));
   };
 
+  // Safe Label Resolver: guarantees that raw keys like "nav.home" or keys starting with "nav." NEVER display on screen
+  const getNavLabel = (labelKey: string, fallbackLabel: string) => {
+    const val = t(labelKey);
+    if (!val || val === labelKey || val.startsWith("nav.") || val.toLowerCase().startsWith("nav ")) {
+      return fallbackLabel;
+    }
+    return val;
+  };
+
   // Generate dynamic breadcrumb segments
   const breadcrumbs = useMemo(() => {
     if (path === "/") return [];
     const parts = path.split("/").filter(Boolean);
-    const crumbs = [{ label: t("nav.breadcrumb.home") || "Home", href: "/" }];
+    const crumbs = [{ label: getNavLabel("nav.breadcrumb.home", "Home"), href: "/" }];
     let acc = "";
     for (const part of parts) {
       acc += `/${part}`;
       const name =
         part === "dashboard"
-          ? t("nav.overview") || "Overview"
+          ? getNavLabel("nav.overview", "Dashboard")
           : part === "reports"
-          ? t("nav.documents") || "Medical Documents"
+          ? getNavLabel("nav.documents", "Prescriptions & Reports")
           : part === "timeline"
-          ? t("nav.myHealth") || "My Health"
+          ? getNavLabel("nav.myHealth", "Health Timeline & Vitals")
           : part === "navigator"
-          ? t("nav.navigator") || "Find Care"
+          ? getNavLabel("nav.navigator", "AI Symptom Navigator")
           : part === "directory"
-          ? t("nav.directory") || "Directory"
+          ? getNavLabel("nav.directory", "Doctors & Hospitals")
           : part === "appointments"
-          ? t("nav.appointments") || "Appointments"
+          ? getNavLabel("nav.appointments", "Online Telehealth")
           : part === "consent"
-          ? t("nav.settings") || "Settings & Consent"
+          ? getNavLabel("nav.settings", "Privacy & Consent")
           : part === "doctor"
-          ? t("nav.doctor") || "Doctor Portal"
+          ? getNavLabel("nav.doctor", "Doctor Workspace")
           : part === "facility"
-          ? t("nav.facility") || "Hospital Portal"
+          ? getNavLabel("nav.facility", "Hospital Command")
           : part === "admin"
-          ? t("nav.admin") || "Admin Center"
+          ? getNavLabel("nav.admin", "Admin Command")
           : part === "ml-lab"
-          ? t("nav.mllab") || "ML & Data Science Lab"
+          ? getNavLabel("nav.mllab", "AI Model Studio")
           : part;
       crumbs.push({ label: name, href: acc });
     }
     return crumbs;
   }, [path, t]);
 
-  // Primary Navigation by Role (Strict Role-Based Isolation)
+  // Primary Navigation by Role (Strict Role-Based Isolation with curated names & awesome icons)
   const roleNavItems = useMemo<NavItem[]>(() => {
     if (role === "patient") {
       return [
         { href: "/dashboard", labelKey: "nav.overview", fallbackLabel: "Dashboard", icon: LayoutDashboard },
-        { href: "/timeline", labelKey: "nav.myHealth", fallbackLabel: "My Health Profile", icon: LineChart },
-        { href: "/reports", labelKey: "nav.documents", fallbackLabel: "Medical Reports & OCR", icon: FileText },
+        { href: "/timeline", labelKey: "nav.myHealth", fallbackLabel: "Health Timeline & Vitals", icon: Activity },
+        { href: "/reports", labelKey: "nav.documents", fallbackLabel: "Prescriptions & Reports", icon: FileText },
         { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Online Telehealth", icon: CalendarClock },
-        { href: "/navigator", labelKey: "nav.navigator", fallbackLabel: "AI Symptom & Care Guide", icon: Compass },
-        { href: "/consent", labelKey: "nav.settings", fallbackLabel: "Settings & Consent", icon: ShieldCheck },
+        { href: "/navigator", labelKey: "nav.navigator", fallbackLabel: "AI Symptom Navigator", icon: Sparkles },
+        { href: "/consent", labelKey: "nav.settings", fallbackLabel: "Privacy & Consent", icon: ShieldCheck },
       ];
     }
     if (role === "doctor") {
       return [
         { href: "/doctor", labelKey: "nav.doctor", fallbackLabel: "Doctor Workspace", icon: Stethoscope },
-        { href: "/doctor/patients", labelKey: "nav.patients", fallbackLabel: "My Patients", icon: Users },
+        { href: "/doctor/patients", labelKey: "nav.patients", fallbackLabel: "Patient Roster", icon: Users },
         { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Telehealth Schedule", icon: CalendarClock },
         { href: "/directory", labelKey: "nav.directory", fallbackLabel: "Clinical Directory", icon: Compass },
       ];
@@ -206,25 +215,26 @@ export function AppShell({ children }: { children: ReactNode }) {
       return [
         { href: "/facility", labelKey: "nav.facility", fallbackLabel: "Hospital Command", icon: Building2 },
         { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Appointments & Shifts", icon: CalendarClock },
-        { href: "/directory", labelKey: "nav.directory", fallbackLabel: "Facility Directory", icon: Compass },
+        { href: "/directory", labelKey: "nav.directory", fallbackLabel: "Healthcare Directory", icon: Compass },
       ];
     }
     if (role === "super_admin" || role === "reviewer") {
       return [
-        { href: "/admin", labelKey: "nav.admin", fallbackLabel: "Admin Center", icon: ShieldCheck },
-        { href: "/admin?tab=queue", labelKey: "nav.queue", fallbackLabel: "Verification Queue", icon: UserCheck },
+        { href: "/admin", labelKey: "nav.admin", fallbackLabel: "Admin Command Center", icon: ShieldCheck },
+        { href: "/admin?tab=queue", labelKey: "nav.queue", fallbackLabel: "Accreditation Queue", icon: UserCheck },
         { href: "/admin?tab=users", labelKey: "nav.users", fallbackLabel: "User Management", icon: Users },
-        { href: "/admin?tab=audit", labelKey: "nav.audit", fallbackLabel: "Audit Logs", icon: History },
-        { href: "/ml-lab", labelKey: "nav.mllab", fallbackLabel: "ML & Model Registry", icon: FlaskConical },
-        { href: "/admin?tab=settings", labelKey: "nav.systemSettings", fallbackLabel: "System Settings", icon: Settings2 },
+        { href: "/admin?tab=audit", labelKey: "nav.audit", fallbackLabel: "Immutable Audit Logs", icon: History },
+        { href: "/ml-lab", labelKey: "nav.mllab", fallbackLabel: "AI & ML Studio", icon: FlaskConical },
+        { href: "/admin?tab=settings", labelKey: "nav.systemSettings", fallbackLabel: "System Configuration", icon: Settings2 },
       ];
     }
     // Guest / Logged out visitors
     return [
       { href: "/", labelKey: "nav.home", fallbackLabel: "Home", icon: HomeIcon },
-      { href: "/navigator", labelKey: "nav.navigator", fallbackLabel: "AI Symptom & Care Guide", icon: Compass },
-      { href: "/directory", labelKey: "nav.directory", fallbackLabel: "Dhaka Directory", icon: Users },
-      { href: "/emergency", labelKey: "emergency.help", fallbackLabel: "Emergency Hotline", icon: PhoneCall },
+      { href: "/navigator", labelKey: "nav.navigator", fallbackLabel: "AI Symptom Navigator", icon: Sparkles },
+      { href: "/directory", labelKey: "nav.directory", fallbackLabel: "Doctors & Hospitals", icon: Stethoscope },
+      { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Online Telehealth", icon: CalendarClock },
+      { href: "/emergency", labelKey: "emergency.help", fallbackLabel: "Emergency Hotline (999)", icon: PhoneCall },
     ];
   }, [role]);
 
@@ -285,21 +295,22 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="space-y-1">
             {roleNavItems.map(({ href, labelKey, fallbackLabel, icon: Icon, badge }) => {
               const active = isActive(href);
+              const label = getNavLabel(labelKey, fallbackLabel);
               return (
                 <Link
                   key={href}
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-xs font-semibold transition ${
+                  className={`group flex min-h-[42px] items-center gap-3 rounded-input px-3 text-xs font-semibold transition ${
                     active
-                      ? "border border-primary/40 bg-psoft text-ptext shadow-[0_0_12px_var(--accent-glow)]"
+                      ? "border border-primary/40 bg-psoft text-ptext shadow-[0_0_12px_var(--accent-glow)] font-bold"
                       : "text-muted hover:bg-s2 hover:text-ink"
                   }`}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
+                  <Icon className={`h-4 w-4 shrink-0 transition-transform group-hover:scale-110 ${active ? "text-ptext" : "text-muted group-hover:text-ink"}`} />
                   {!collapsed && (
                     <div className="flex flex-1 items-center justify-between">
-                      <span>{t(labelKey) || fallbackLabel}</span>
+                      <span className="truncate">{label}</span>
                       {badge !== undefined && badge > 0 && <Badge count={badge} />}
                     </div>
                   )}
@@ -390,11 +401,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                   href={href}
                   onClick={() => setMobileOpen(false)}
                   className={`flex min-h-[42px] items-center gap-3 rounded-input px-3 text-sm font-medium ${
-                    isActive(href) ? "bg-psoft text-ptext font-semibold" : "text-muted hover:bg-s2 hover:text-ink"
+                    isActive(href) ? "bg-psoft text-ptext font-semibold shadow-xs" : "text-muted hover:bg-s2 hover:text-ink"
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
-                  <span>{t(labelKey) || fallbackLabel}</span>
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{getNavLabel(labelKey, fallbackLabel)}</span>
                 </Link>
               ))}
 
@@ -652,50 +663,59 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <Link
             href="/"
-            className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] ${
-              path === "/" ? "text-ptext font-bold" : "text-muted"
+            className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] transition ${
+              path === "/" ? "text-ptext font-bold" : "text-muted hover:text-ink"
             }`}
           >
             <HomeIcon className="h-4 w-4" />
-            <span>Home</span>
+            <span>{getNavLabel("nav.home", "Home")}</span>
           </Link>
           <Link
             href="/navigator"
-            className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] ${
-              isActive("/navigator") ? "text-ptext font-bold" : "text-muted"
+            className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] transition ${
+              isActive("/navigator") ? "text-ptext font-bold" : "text-muted hover:text-ink"
             }`}
           >
-            <Compass className="h-4 w-4" />
-            <span>Find</span>
+            <Sparkles className="h-4 w-4" />
+            <span>{getNavLabel("nav.navigator", "AI Guide")}</span>
           </Link>
           <Link
             href="/directory"
-            className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] ${
-              isActive("/directory") ? "text-ptext font-bold" : "text-muted"
+            className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] transition ${
+              isActive("/directory") ? "text-ptext font-bold" : "text-muted hover:text-ink"
             }`}
           >
-            <Users className="h-4 w-4" />
-            <span>Directory</span>
+            <Stethoscope className="h-4 w-4" />
+            <span>{getNavLabel("nav.directory", "Doctors")}</span>
+          </Link>
+          <Link
+            href="/appointments"
+            className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] transition ${
+              isActive("/appointments") ? "text-ptext font-bold" : "text-muted hover:text-ink"
+            }`}
+          >
+            <CalendarClock className="h-4 w-4" />
+            <span>{getNavLabel("nav.appointments", "Telehealth")}</span>
           </Link>
           {role !== "none" ? (
             <Link
               href={homeFor(role)}
-              className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] ${
-                isActive(homeFor(role)) ? "text-ptext font-bold" : "text-muted"
+              className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] transition ${
+                isActive(homeFor(role)) ? "text-ptext font-bold" : "text-muted hover:text-ink"
               }`}
             >
               <LayoutDashboard className="h-4 w-4" />
-              <span>Portal</span>
+              <span>{getNavLabel("nav.overview", "Portal")}</span>
             </Link>
           ) : (
             <Link
               href="/login"
-              className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] ${
-                isActive("/login") ? "text-ptext font-bold" : "text-muted"
+              className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] transition ${
+                isActive("/login") ? "text-ptext font-bold" : "text-muted hover:text-ink"
               }`}
             >
               <LogIn className="h-4 w-4" />
-              <span>Login</span>
+              <span>{getNavLabel("nav.login", "Login")}</span>
             </Link>
           )}
         </nav>
