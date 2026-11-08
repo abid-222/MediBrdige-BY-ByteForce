@@ -51,20 +51,17 @@ export function WatermelonNavbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-line bg-white/98 dark:bg-[#0E131A]/98 backdrop-blur-xl shadow-xs transition-colors font-mono">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
-        {/* Brand Logo with Watermelon Cyber-Medical Glow */}
+        {/* Brand Logo with High-Contrast Solid Mark */}
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/50 flex items-center justify-center relative transition-transform duration-300 group-hover:scale-105 shadow-[0_0_14px_var(--accent-glow)] shrink-0">
-            <HeartPulse className="w-4 h-4 text-primary" />
-            {/* Corner Accents */}
-            <div className="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 border-t border-l border-primary" />
-            <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 border-b border-r border-primary" />
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-[0_0_16px_var(--accent-glow)] transition-transform duration-300 group-hover:scale-105">
+            <HeartPulse className="h-5 w-5 text-white" aria-hidden />
           </div>
           <div className="flex flex-col">
-            <span className="font-mono font-bold text-sm tracking-wider uppercase text-ink flex items-center gap-1">
-              MediBridge <span className="text-primary">//</span> AI
+            <span className="font-heading font-bold text-base sm:text-lg tracking-tight text-ink leading-tight flex items-center gap-1">
+              MediBridge <span className="text-primary font-extrabold">AI</span>
             </span>
-            <span className="text-[9px] text-muted tracking-widest hidden sm:block">
-              DHAKA CLINICAL GRID
+            <span className="text-[10px] font-mono text-muted tracking-wider uppercase hidden sm:block">
+              Dhaka Edition
             </span>
           </div>
         </Link>
