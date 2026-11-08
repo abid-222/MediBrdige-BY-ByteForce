@@ -1,22 +1,114 @@
 "use client";
+
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, HeartPulse, KeyRound, Loader2, ShieldCheck, Sparkles, Stethoscope, Users } from "lucide-react";
+import {
+  Activity,
+  AlertCircle,
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  HeartPulse,
+  KeyRound,
+  Loader2,
+  Lock,
+  Mail,
+  PhoneCall,
+  ShieldCheck,
+  Sparkles,
+  Stethoscope,
+  Users,
+} from "lucide-react";
 import { api, homeFor, setSession } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { Button, Card, Input } from "@/components/ui";
 
+type PortalRole = "patient" | "doctor" | "hospital" | "admin";
+
+const ROLES_CONFIG: Record<
+  PortalRole,
+  {
+    nameEn: string;
+    nameBn: string;
+    descEn: string;
+    descBn: string;
+    demoEmail: string;
+    color: string;
+    glow: string;
+    border: string;
+    icon: typeof HeartPulse;
+  }
+> = {
+  patient: {
+    nameEn: "Patient Portal",
+    nameBn: "রোগী পোর্টাল",
+    descEn: "View health profile, upload OCR medical reports, and access digital prescriptions.",
+    descBn: "স্বাস্থ্য প্রোফাইল, ওসিআর রিপোর্ট স্ক্যানার এবং ডিজিটাল প্রেসক্রিপশন দেখুন।",
+    demoEmail: "patient1@demo.medibridge.dev",
+    color: "text-primary bg-psoft",
+    glow: "shadow-[0_0_20px_var(--accent-glow)]",
+    border: "border-primary",
+    icon: HeartPulse,
+  },
+  doctor: {
+    nameEn: "Doctor & Specialist",
+    nameBn: "ডাক্তার ও বিশেষজ্ঞ",
+    descEn: "Review patient history, verify lab observations, and compose digital prescriptions.",
+    descBn: "রোগীর হিস্ট্রি পর্যালোচনা, ল্যাব টেস্ট যাচাই এবং প্রেসক্রিপশন তৈরি করুন।",
+    demoEmail: "doctor1@demo.medibridge.dev",
+    color: "text-info bg-info/10",
+    glow: "shadow-[0_0_20px_rgba(91,192,255,0.3)]",
+    border: "border-info",
+    icon: Stethoscope,
+  },
+  hospital: {
+    nameEn: "Hospital & Facility",
+    nameBn: "হাসপাতাল ও ক্লিনিক",
+    descEn: "Manage facility departments, doctor schedules, and clinical operations.",
+    descBn: "হাসপাতাল বিভাগ, ডাক্তারদের শিডিউল এবং অপারেশন পরিচালনা করুন।",
+    demoEmail: "hospital@demo.medibridge.dev",
+    color: "text-warn bg-warn/10",
+    glow: "shadow-[0_0_20px_rgba(255,200,87,0.3)]",
+    border: "border-warn",
+    icon: Building2,
+  },
+  admin: {
+    nameEn: "Super Admin",
+    nameBn: "সিস্টেম অ্যাডমিন",
+    descEn: "Verify doctor licenses, monitor ML pipelines, and inspect system audit logs.",
+    descBn: "ডাক্তারদের লাইসেন্স যাচাই, এমএল মডেল পর্যবেক্ষণ এবং অডিট লগ দেখুন।",
+    demoEmail: "admin@demo.medibridge.dev",
+    color: "text-danger bg-danger/10",
+    glow: "shadow-[0_0_20px_rgba(255,92,108,0.3)]",
+    border: "border-danger",
+    icon: ShieldCheck,
+  },
+};
+
 export default function Login() {
   const { t, locale } = useI18n();
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const isBn = locale === "bn";
+
+  const [activeRole, setActiveRole] = useState<PortalRole>("patient");
+  const [email, setEmail] = useState("patient1@demo.medibridge.dev");
+  const [password, setPassword] = useState("Demo@12345");
+  const [showPassword, setShowPassword] = useState(false);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
-  const [quickRole, setQuickRole] = useState<string | null>(null);
 
-  const isBn = locale === "bn";
+  const activeConfig = ROLES_CONFIG[activeRole];
+  const ActiveIcon = activeConfig.icon;
+
+  const handleRoleChange = (role: PortalRole) => {
+    setActiveRole(role);
+    setEmail(ROLES_CONFIG[role].demoEmail);
+    setPassword("Demo@12345");
+    setErr("");
+  };
 
   const submit = async (e?: React.FormEvent, customEmail?: string, customPass?: string) => {
     if (e) e.preventDefault();
@@ -48,133 +140,203 @@ export default function Login() {
       if (e.code === "email_not_verified") {
         router.push(`/verify-email?email=${encodeURIComponent(loginEmail)}`);
       } else {
-        setErr(e.message || "Login failed");
+        setErr(e.message || (isBn ? "লগইন ব্যর্থ হয়েছে। ইমেইল বা পাসওয়ার্ড চেক করুন।" : "Login failed. Please check your credentials."));
       }
     } finally {
       setBusy(false);
-      setQuickRole(null);
     }
   };
 
-  const handleQuickLogin = (roleEmail: string, roleName: string) => {
-    setQuickRole(roleName);
-    setEmail(roleEmail);
-    setPassword("Demo@12345");
-    submit(undefined, roleEmail, "Demo@12345");
-  };
-
   return (
-    <div className="mx-auto mt-4 max-w-xl space-y-6">
-      {/* 1-Click Demo Login Box */}
-      <div className="rounded-2xl border border-primary/40 bg-gradient-to-b from-s1 to-s2/80 p-5 shadow-2xl backdrop-blur">
-        <div className="flex items-center justify-between border-b border-border/60 pb-3">
-          <div className="flex items-center gap-2 text-sm font-semibold text-ptext">
-            <Sparkles className="h-4 w-4" />
-            <span>{isBn ? "এক ক্লিকে ডেমো লগইন" : "1-Click Demo Logins (No typing needed)"}</span>
-          </div>
-          <span className="font-mono text-xs text-muted">PW: Demo@12345</span>
+    <div className="relative mx-auto mt-2 max-w-2xl space-y-6 pb-12">
+      {/* 3D Ambient Glowing Orbs */}
+      <div className="pointer-events-none absolute -top-12 left-1/2 -z-10 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/15 blur-[90px]" />
+      <div className="pointer-events-none absolute bottom-10 -right-10 -z-10 h-64 w-64 rounded-full bg-info/10 blur-[80px]" />
+
+      {/* Header Banner */}
+      <div className="text-center">
+        <div className="mx-auto mb-3 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-s1/80 px-4 py-1.5 shadow-[0_0_20px_var(--accent-glow)] backdrop-blur">
+          <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+          <span className="text-xs font-semibold tracking-wide uppercase text-ptext">
+            {isBn ? "নিরাপদ ডিজিটাল হেলথ অথেনটিকেশন" : "Secure Healthcare Authentication"}
+          </span>
         </div>
-        <p className="mt-2 text-xs text-muted">
+        <h1 className="font-heading text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+          {isBn ? "মেডিকেল পোর্টালে সাইন-ইন করুন" : "Sign In to MediBridge AI"}
+        </h1>
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted">
           {isBn
-            ? "নিচের যেকোনো বাটনে ক্লিক করলেই সরাসরি সেই রোলের ড্যাশবোর্ডে প্রবেশ করবেন:"
-            : "Click any role below to instantly log in and access its full dashboard:"}
+            ? "আপনার নির্দিষ্ট রোল নির্বাচন করুন অথবা ডেমো ক্রেডেনশিয়াল দিয়ে সরাসরি প্রবেশ করুন।"
+            : "Select your role below or enter your verified email to access your clinical portal."}
         </p>
+      </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-          <button
-            type="button"
-            onClick={() => handleQuickLogin("patient1@demo.medibridge.dev", "Patient")}
-            disabled={busy}
-            className="flex flex-col items-center justify-center rounded-xl border border-border bg-s1 p-3 text-center transition hover:border-primary hover:bg-s2 hover:shadow-[0_0_12px_var(--accent-glow)] disabled:opacity-50"
-          >
-            <span className="rounded-md bg-psoft p-2 text-ptext">
-              {quickRole === "Patient" ? <Loader2 className="h-4 w-4 animate-spin" /> : <HeartPulse className="h-4 w-4" />}
-            </span>
-            <span className="mt-1.5 text-xs font-semibold text-ink">{isBn ? "রোগী" : "Patient"}</span>
-            <span className="text-[10px] text-muted">patient1</span>
-          </button>
+      {/* 3D Interactive Role Selector Bar */}
+      <div className="rounded-2xl border border-border/80 bg-s1/90 p-2 shadow-xl backdrop-blur-md">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {(Object.keys(ROLES_CONFIG) as PortalRole[]).map((role) => {
+            const cfg = ROLES_CONFIG[role];
+            const Icon = cfg.icon;
+            const isSelected = activeRole === role;
 
-          <button
-            type="button"
-            onClick={() => handleQuickLogin("doctor1@demo.medibridge.dev", "Doctor")}
-            disabled={busy}
-            className="flex flex-col items-center justify-center rounded-xl border border-border bg-s1 p-3 text-center transition hover:border-info hover:bg-s2 hover:shadow-[0_0_12px_rgba(91,192,255,0.2)] disabled:opacity-50"
-          >
-            <span className="rounded-md bg-info/10 p-2 text-info">
-              {quickRole === "Doctor" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Stethoscope className="h-4 w-4" />}
-            </span>
-            <span className="mt-1.5 text-xs font-semibold text-ink">{isBn ? "ডাক্তার" : "Doctor"}</span>
-            <span className="text-[10px] text-muted">doctor1</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleQuickLogin("hospital@demo.medibridge.dev", "Hospital")}
-            disabled={busy}
-            className="flex flex-col items-center justify-center rounded-xl border border-border bg-s1 p-3 text-center transition hover:border-warn hover:bg-s2 hover:shadow-[0_0_12px_rgba(255,200,87,0.2)] disabled:opacity-50"
-          >
-            <span className="rounded-md bg-warn/10 p-2 text-warn">
-              {quickRole === "Hospital" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Building2 className="h-4 w-4" />}
-            </span>
-            <span className="mt-1.5 text-xs font-semibold text-ink">{isBn ? "হাসপাতাল" : "Hospital"}</span>
-            <span className="text-[10px] text-muted">hospital</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleQuickLogin("admin@demo.medibridge.dev", "Admin")}
-            disabled={busy}
-            className="flex flex-col items-center justify-center rounded-xl border border-border bg-s1 p-3 text-center transition hover:border-danger hover:bg-s2 hover:shadow-[0_0_12px_rgba(255,92,108,0.2)] disabled:opacity-50"
-          >
-            <span className="rounded-md bg-danger/10 p-2 text-danger">
-              {quickRole === "Admin" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-            </span>
-            <span className="mt-1.5 text-xs font-semibold text-ink">{isBn ? "অ্যাডমিন" : "Admin"}</span>
-            <span className="text-[10px] text-muted">admin</span>
-          </button>
+            return (
+              <button
+                key={role}
+                type="button"
+                onClick={() => handleRoleChange(role)}
+                className={`flex flex-col items-center justify-center rounded-xl p-3 text-center transition-all duration-300 ${
+                  isSelected
+                    ? `border ${cfg.border} bg-s2/90 ${cfg.glow} scale-[1.02]`
+                    : "border border-transparent bg-s1/40 hover:bg-s2/50 text-muted"
+                }`}
+              >
+                <span className={`rounded-lg p-2.5 ${cfg.color} shadow-sm`}>
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className={`mt-2 text-xs font-bold ${isSelected ? "text-ink" : "text-muted"}`}>
+                  {isBn ? cfg.nameBn : cfg.nameEn}
+                </span>
+                <span className="text-[10px] text-muted font-mono">{role}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Manual Login Card */}
-      <Card className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="font-heading text-2xl font-bold">{t("auth.login")}</h1>
-          <Link href="/register" className="text-xs text-ptext hover:underline">
-            {isBn ? "নতুন অ্যাকাউন্ট তৈরি করুন" : "Create new account"}
-          </Link>
+      {/* 3D Main Login Card with Glassmorphism */}
+      <div className="relative rounded-3xl border border-primary/30 bg-gradient-to-b from-s1/95 via-s1/85 to-s2/90 p-6 sm:p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),0_0_25px_var(--accent-glow)] backdrop-blur-2xl">
+        {/* Selected Role Mini-Hero Header */}
+        <div className="mb-6 flex items-center justify-between border-b border-border/60 pb-4">
+          <div className="flex items-center gap-3">
+            <span className={`rounded-xl p-2.5 ${activeConfig.color} shadow-sm`}>
+              <ActiveIcon className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-base font-bold text-ink">
+                {isBn ? activeConfig.nameBn : activeConfig.nameEn}
+              </h2>
+              <p className="text-xs text-muted max-w-sm">
+                {isBn ? activeConfig.descBn : activeConfig.descEn}
+              </p>
+            </div>
+          </div>
+
+          {/* 1-Click Fast Pass Badge */}
+          <button
+            type="button"
+            onClick={() => submit(undefined, activeConfig.demoEmail, "Demo@12345")}
+            disabled={busy}
+            className="flex items-center gap-1.5 rounded-full border border-primary/40 bg-psoft px-3 py-1.5 text-xs font-bold text-ptext transition hover:brightness-110 active:scale-95 shadow-sm"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>{isBn ? "১-ক্লিক ডেমো লগইন" : "1-Click Login"}</span>
+          </button>
         </div>
 
-        <form onSubmit={submit} className="space-y-3">
-          <Input
-            label={t("auth.email")}
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="patient1@demo.medibridge.dev"
-            required
-          />
-          <Input
-            label={t("auth.password")}
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-          />
-          {err && <p role="alert" className="text-sm text-danger">⚠ {err}</p>}
-          <Button disabled={busy} busy={busy} className="w-full">
+        {/* Login Form */}
+        <form onSubmit={submit} className="space-y-4">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-ink">
+              {isBn ? "ইমেইল ঠিকানা" : "Email Address"}
+            </label>
+            <div className="relative">
+              <Input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="user@demo.medibridge.dev"
+                className="pl-9"
+              />
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted" />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-ink">
+                {isBn ? "পাসওয়ার্ড" : "Password"}
+              </label>
+              <span className="font-mono text-[11px] text-muted">
+                Demo: <strong className="text-ink">Demo@12345</strong>
+              </span>
+            </div>
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className="pl-9 pr-10"
+              />
+              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-2.5 text-muted hover:text-ink"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          {err && (
+            <div role="alert" className="flex items-center gap-2 rounded-xl border border-danger/40 bg-danger/10 p-3 text-xs text-danger shadow-sm">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{err}</span>
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            disabled={busy}
+            busy={busy}
+            className="w-full h-11 text-sm font-bold shadow-[0_0_20px_var(--accent-glow)] active:scale-[0.99] transition"
+          >
             <KeyRound className="mr-2 h-4 w-4" />
-            {t("auth.login")}
+            {isBn ? "পোর্টালে প্রবেশ করুন" : "Sign In to Dashboard"}
+            <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </form>
 
-        <div className="flex flex-wrap items-center justify-between border-t border-border/60 pt-3 text-xs text-muted">
-          <span>{isBn ? "ডেমো অ্যাকাউন্ট পাসওয়ার্ড:" : "Demo accounts password:"} <strong className="font-mono text-ink">Demo@12345</strong></span>
-          <Link href="/register" className="text-ptext hover:underline">
-            {t("auth.register")}
+        {/* Prominent 3D Patient Registration Banner */}
+        <div className="mt-6 rounded-2xl border border-primary/40 bg-gradient-to-r from-psoft/40 via-s1/60 to-psoft/20 p-4 shadow-sm backdrop-blur">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <div>
+              <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-extrabold text-ptext">
+                <HeartPulse className="h-4 w-4" />
+                <span>{isBn ? "নতুন রোগী? ডিজিটাল অ্যাকাউন্ট নেই?" : "New Patient? Create Health Record"}</span>
+              </div>
+              <p className="text-[11px] text-muted mt-0.5">
+                {isBn
+                  ? "মাত্র ২ মিনিটে সম্পূর্ণ ফ্রি ডিজিটাল প্রেসক্রিপশন ও রিপোর্ট ট্র্যাকিং অ্যাকাউন্ট খুলুন।"
+                  : "Register in 2 minutes for zero-hallucination report analysis & e-prescriptions."}
+              </p>
+            </div>
+
+            <Link href="/register">
+              <Button size="sm" variant="outline" className="shrink-0 border-primary/50 text-ptext hover:bg-primary/20">
+                {isBn ? "নতুন অ্যাকাউন্ট তৈরি করুন" : "Register Patient"}
+                <ArrowRight className="ml-1 h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Footer Role Links */}
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4 text-xs text-muted">
+          <Link href="/apply" className="flex items-center gap-1 text-info hover:underline">
+            <Stethoscope className="h-3.5 w-3.5" />
+            <span>{isBn ? "ডাক্তার বা ক্লিনিক হিসেবে আবেদন করুন" : "Apply as Doctor / Hospital"}</span>
+          </Link>
+
+          <Link href="/navigator" className="flex items-center gap-1 text-warn hover:underline">
+            <PhoneCall className="h-3.5 w-3.5" />
+            <span>{isBn ? "জরুরি সহায়তা (৯৯৯) / কেয়ার নেভিগেটর" : "Emergency (999) / Care Navigator"}</span>
           </Link>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

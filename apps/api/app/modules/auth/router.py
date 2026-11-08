@@ -19,6 +19,15 @@ class RegisterIn(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
     full_name: str = ""
+    phone: str | None = None
+    dob: str | None = None
+    sex: str | None = None
+    blood_group: str | None = None
+    district: str | None = None
+    division: str | None = None
+    emergency_name: str | None = None
+    emergency_phone: str | None = None
+    emergency_relation: str | None = None
     # NOTE: no `role` field. Role is never accepted from the client.
 
 
@@ -93,7 +102,26 @@ def register(body: RegisterIn, db: Session = Depends(get_db)):
         p = Profile(email=email, password_hash=hash_password(body.password), role="patient", status="active")
         db.add(p)
         db.flush()
-        db.add(PatientProfile(user_id=p.id, full_name=body.full_name))
+        
+        # Build accessibility / clinical notes if blood group or extra info is given
+        notes = f"Blood Group: {body.blood_group}" if body.blood_group else None
+        has_demographics = bool(body.phone or body.dob or body.sex)
+        
+        db.add(PatientProfile(
+            user_id=p.id,
+            full_name=body.full_name,
+            phone=body.phone,
+            dob=body.dob,
+            sex=body.sex,
+            division=body.division,
+            district=body.district,
+            emergency_name=body.emergency_name,
+            emergency_phone=body.emergency_phone,
+            emergency_relation=body.emergency_relation,
+            accessibility_needs=notes,
+            onboarding_completed=has_demographics,
+            onboarding_step=7 if has_demographics else 1
+        ))
         db.commit()
         code = _issue_otp(db, email, "verify")
         if code:
