@@ -3,18 +3,24 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Activity,
+  AlertCircle,
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  Award,
   Bot,
-  Building2,
   Calendar,
   CalendarClock,
   Camera,
+  Check,
   CheckCircle2,
+  ChevronRight,
   Clock,
   Download,
+  Eye,
   FileCheck,
+  FileCode,
   FileSearch,
   FileText,
   Flag,
@@ -27,32 +33,25 @@ import {
   ShieldCheck,
   Sparkles,
   Stethoscope,
+  Trash2,
   UploadCloud,
   X,
+  Zap,
 } from "lucide-react";
 import { api, uploadWithProgress } from "@/lib/api";
-import { useApi } from "@/lib/useApi";
 import { useGuard } from "@/lib/useGuard";
 import { useI18n } from "@/lib/i18n";
 import {
-  AiBanner,
-  Async,
   Button,
   Card,
   Chip,
-  Dialog,
-  docStatus,
   EmergencyBanner,
-  EmptyState,
-  fmtDate,
   GlassCard,
-  PageHeader,
   ProgressBar,
   StatTile,
   StepIndicator,
   Table,
   useToast,
-  verChip,
 } from "@/components/ui";
 import { ReportViewer } from "@/components/ReportViewer";
 
@@ -101,10 +100,14 @@ export default function OcrScannerPage() {
     const isValidType = ALLOWED_MIME.includes(file.type) || ALLOWED_EXTS.includes(ext);
 
     if (!isValidType) {
-      return "Unsupported file format. Only PDF, JPG, and PNG medical reports are supported by our OCR engine.";
+      return isBn
+        ? "অনুপযুক্ত ফাইল ফরম্যাট। আমাদের ওসিআর ইঞ্জিন শুধুমাত্র PDF, JPG ও PNG রিপোর্ট সমর্থন করে।"
+        : "Unsupported file format. Only PDF, JPG, and PNG medical reports are supported by our OCR engine.";
     }
     if (file.size > MAX_BYTES) {
-      return `File exceeds maximum size limit of 10MB (${(file.size / (1024 * 1024)).toFixed(1)}MB).`;
+      return isBn
+        ? `ফাইলের আকার সর্বোচ্চ সীমা ১০ মেগাবাইট অতিক্রম করেছে (${(file.size / (1024 * 1024)).toFixed(1)}MB)।`
+        : `File exceeds maximum size limit of 10MB (${(file.size / (1024 * 1024)).toFixed(1)}MB).`;
     }
     return null;
   };
@@ -114,7 +117,7 @@ export default function OcrScannerPage() {
     const err = validateFile(file);
     if (err) {
       setValidationError(err);
-      addToast("error", "Invalid File", err);
+      addToast("error", isBn ? "ফাইল ত্রুটি" : "Invalid File", err);
       return;
     }
     setValidationError(null);
@@ -130,9 +133,13 @@ export default function OcrScannerPage() {
       const blob = await res.blob();
       const file = new File([blob], displayName, { type: "application/pdf" });
       setSelectedFile(file);
-      addToast("success", "Sample Loaded", `${displayName} is ready to scan.`);
+      addToast(
+        "success",
+        isBn ? "নমুনা লোড সম্পন্ন" : "Sample Loaded",
+        isBn ? `${displayName} স্ক্যান করার জন্য প্রস্তুত।` : `${displayName} is ready to scan.`
+      );
     } catch (e: any) {
-      addToast("error", "Error loading sample", e.message);
+      addToast("error", isBn ? "নমুনা লোড ব্যর্থ" : "Error loading sample", e.message);
     }
   };
 
@@ -155,7 +162,11 @@ export default function OcrScannerPage() {
 
       const docId = response.id;
       setUploadedDocId(docId);
-      addToast("success", "File Uploaded", "Document stored securely. OCR extraction in progress.");
+      addToast(
+        "success",
+        isBn ? "ফাইল সংরক্ষিত" : "File Uploaded",
+        isBn ? "ডকুমেন্ট নিরাপদে সংরক্ষিত। ওসিআর প্রসেসিং চলছে..." : "Document stored securely. OCR extraction in progress."
+      );
 
       // Start Polling extractions
       pollExtractions(docId);
@@ -163,7 +174,7 @@ export default function OcrScannerPage() {
       setValidationError(e.message || "Upload failed");
       setOcrStatus("error");
       setUploading(false);
-      addToast("error", "Upload Failed", e.message);
+      addToast("error", isBn ? "আপলোড ব্যর্থ" : "Upload Failed", e.message);
     }
   };
 
@@ -183,7 +194,11 @@ export default function OcrScannerPage() {
           setOcrStatus("ready");
           setUploading(false);
           setCurrentStep(2);
-          addToast("success", "OCR Extraction Complete", `Successfully extracted ${ext.rows?.length || 0} clinical observations.`);
+          addToast(
+            "success",
+            isBn ? "ওসিআর নিষ্কাশন সম্পন্ন" : "OCR Extraction Complete",
+            isBn ? `সফলভাবে ${ext.rows?.length || 0}টি ক্লিনিক্যাল মান নিষ্কাশিত হয়েছে।` : `Successfully extracted ${ext.rows?.length || 0} clinical observations.`
+          );
           // Automatically trigger AI clinical explanation and doctor match
           requestAiExplanation(docId);
         } else if (ext && ext.document_status === "failed") {
@@ -191,7 +206,7 @@ export default function OcrScannerPage() {
           setOcrStatus("error");
           setUploading(false);
           setValidationError(ext.message || "OCR processing failed for this report.");
-          addToast("error", "OCR Failed", ext.message || "Could not parse document structure.");
+          addToast("error", isBn ? "ওসিআর ব্যর্থ" : "OCR Failed", ext.message || "Could not parse document structure.");
         } else if (attempts >= maxAttempts) {
           clearInterval(interval);
           setExtractionsData(ext);
@@ -222,9 +237,9 @@ export default function OcrScannerPage() {
       // Refresh extractions
       const updated = await api(`/documents/${uploadedDocId}/extractions`);
       setExtractionsData(updated);
-      addToast("success", "Observation Updated", successMessage);
+      addToast("success", isBn ? "আপডেট সম্পন্ন" : "Observation Updated", successMessage);
     } catch (e: any) {
-      addToast("error", "Update Failed", e.message);
+      addToast("error", isBn ? "আপডেট ব্যর্থ" : "Update Failed", e.message);
     } finally {
       setPatchingId(null);
     }
@@ -243,8 +258,8 @@ export default function OcrScannerPage() {
       setAiData(res);
       addToast(
         "success",
-        isBn ? "এআই ক্লিনিক্যাল রিপোর্ট তৈরি সম্পন্ন" : "AI Analysis Generated",
-        isBn ? "স্বয়ংক্রিয় বিস্তারিত বিশ্লেষণ ও উপযুক্ত বিশেষজ্ঞ নির্ধারণ করা হয়েছে।" : "Plain-language summary & specialist match ready."
+        isBn ? "এআই ক্লিনিক্যাল রিপোর্ট প্রস্তুত" : "AI Analysis Generated",
+        isBn ? "স্বয়ংক্রিয় বিস্তারিত বিবরণী ও উপযুক্ত বিশেষজ্ঞ ডাক্তার তালিকা তৈরি সম্পন্ন।" : "Plain-language summary & specialist match ready."
       );
     } catch (e: any) {
       setAiError(e.message || "AI service temporarily unavailable.");
@@ -271,42 +286,109 @@ export default function OcrScannerPage() {
   const lowConfidenceRows = rows.filter((r: any) => r.low_confidence);
   const verifiedRows = rows.filter((r: any) => r.status === "doctor_verified");
 
-  const stepsList = ["Select Report File", "Secure Upload & OCR", "Review, Corrections & AI"];
+  const stepsList = [
+    isBn ? "রিপোর্ট আপলোড" : "Select Report",
+    isBn ? "নিউরাল ওসিআর বিশ্লেষণ" : "Neural OCR Engine",
+    isBn ? "পর্যবেক্ষণ ও এআই সামারি" : "Review & AI Insights",
+  ];
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      {/* Header with Navigation */}
-      <div className="flex items-center justify-between border-b border-line pb-4">
+    <div className="space-y-8 max-w-6xl mx-auto pb-16 px-3 sm:px-6">
+      {/* =========================================================
+         TOP NAVIGATION & BADGES BAR
+         ========================================================= */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line/80 pb-4">
         <Link href="/reports">
-          <button className="inline-flex items-center gap-2 rounded-lg border border-line bg-s1 px-3 py-1.5 text-xs font-semibold text-muted hover:bg-s2 hover:text-ink transition">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to All Reports Vault</span>
+          <button className="group inline-flex items-center gap-2 rounded-xl border border-line bg-s1/80 px-3.5 py-1.5 text-xs font-semibold text-muted hover:bg-s2 hover:text-ink hover:border-primary/40 transition-all shadow-xs">
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            <span>{isBn ? "সকল রিপোর্ট ভল্টে ফিরে যান" : "Back to Medical Reports Vault"}</span>
           </button>
         </Link>
-        <span className="text-xs text-muted font-mono">
-          Engine: PyMuPDF · Max 10MB
-        </span>
+
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-semibold text-ptext font-mono">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+            Neural OCR v2.4 Active
+          </span>
+          <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-line bg-s1 px-2.5 py-1 text-[11px] text-muted font-mono">
+            <Lock className="h-3 w-3 text-primary" />
+            <span>256-Bit Encrypted</span>
+          </span>
+        </div>
       </div>
 
-      <PageHeader
-        title="OCR Medical Report Scanner"
-        subtitle="Securely scan blood tests, CBC, lipid profiles, and diagnostic documents. Review extracted values side-by-side with your original scan and generate AI plain-language explanations."
-      />
+      {/* =========================================================
+         HERO BANNER SECTION
+         ========================================================= */}
+      <div className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-s1 via-s1/90 to-primary/10 p-6 sm:p-8 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.6),0_0_20px_var(--accent-glow)]">
+        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-psoft px-3.5 py-1 text-xs font-bold text-ptext shadow-xs">
+              <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+              <span>{isBn ? "স্মার্ট ক্লিনিক্যাল ভিশন সিস্টেম" : "Clinical Vision & Extraction Engine"}</span>
+            </div>
 
-      {/* Workflow Step Tracker */}
-      <StepIndicator steps={stepsList} current={currentStep} />
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-ink font-heading">
+              {isBn ? (
+                <>মেডিকেল রিপোর্ট <span className="text-ptext">স্মার্ট ওসিআর স্ক্যানার</span></>
+              ) : (
+                <>OCR Medical Report <span className="text-ptext">Scanner & AI Insights</span></>
+              )}
+            </h1>
+
+            <p className="text-xs sm:text-sm text-muted leading-relaxed">
+              {isBn
+                ? "ব্লাড টেস্ট, সিবিসি, লিপিড প্রোফাইল ও প্রেসক্রিপশন স্ক্যান করুন। কৃত্রিম বুদ্ধিমত্তা স্বয়ংক্রিয়ভাবে ক্লিনিক্যাল ভ্যালু নিখুঁতভাবে বের করে সাধারণ বাংলায় ফলাফল ও বিশেষজ্ঞ ডাক্তার সুপারিশ প্রদর্শন করে।"
+                : "Securely scan blood panels, CBC, lipid profiles, and diagnostic documents. Neural OCR extracts clinical observations side-by-side with your original scan and generates instant AI physician explanations."}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-muted">
+              <span className="flex items-center gap-1.5 text-ink font-medium">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                {isBn ? "স্বয়ংক্রিয় টেবিল শনাক্তকরণ" : "Tabular Multiline Detection"}
+              </span>
+              <span className="flex items-center gap-1.5 text-ink font-medium">
+                <Stethoscope className="h-4 w-4 text-info" />
+                {isBn ? "স্পেশালিস্ট ডক্টর ম্যাচিং" : "Specialist Triage Match"}
+              </span>
+              <span className="flex items-center gap-1.5 text-ink font-medium">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                {isBn ? "১০০% রোগী-নিয়ন্ত্রিত গোপনীয়তা" : "Zero-Trust Privacy"}
+              </span>
+            </div>
+          </div>
+
+          <div className="hidden lg:flex flex-col items-center justify-center p-6 rounded-2xl border border-line bg-s2/60 backdrop-blur-md text-center shrink-0 w-64 shadow-inner">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary/20 to-primary/40 text-ptext shadow-[0_0_20px_var(--accent-glow)] mb-3">
+              <Bot className="h-8 w-8" />
+            </div>
+            <p className="text-xs font-bold text-ink uppercase tracking-wider">AI Medical Intelligence</p>
+            <p className="text-[11px] text-muted mt-1 leading-snug">
+              Powered by PyMuPDF + Gemini Vision OCR Multimodal Engine
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================
+         STEP TRACKER
+         ========================================================= */}
+      <div className="rounded-2xl border border-line bg-s1/60 p-4 shadow-sm">
+        <StepIndicator steps={stepsList} current={currentStep} />
+      </div>
 
       {/* =========================================================
          STEP 0: SELECT OR CAPTURE MEDICAL REPORT
          ========================================================= */}
       {currentStep === 0 && (
-        <div className="space-y-6 slide-up max-w-3xl mx-auto">
-          {/* Drag & Drop Card */}
+        <div className="space-y-8 slide-up max-w-4xl mx-auto">
+          {/* Main Upload Dropzone */}
           <div
-            className={`relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 md:p-12 text-center transition-all ${
+            className={`group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-8 sm:p-14 text-center transition-all duration-300 ${
               dragActive
-                ? "border-primary bg-primary/10 shadow-lg"
-                : "border-line bg-s1/60 hover:border-primary/50"
+                ? "border-primary bg-primary/10 shadow-[0_0_30px_var(--accent-glow)] scale-[1.01]"
+                : "border-line/80 bg-s1/70 hover:border-primary/60 hover:bg-s1 hover:shadow-lg"
             }`}
             onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
               e.preventDefault();
@@ -320,16 +402,24 @@ export default function OcrScannerPage() {
               if (file) handleFileChosen(file);
             }}
           >
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm mb-4">
-              <UploadCloud className="h-8 w-8" />
+            {/* Pulsing Aura Behind Icon */}
+            <div className="relative mb-5 flex h-20 w-20 items-center justify-center">
+              <div className="absolute inset-0 rounded-2xl bg-primary/20 blur-xl group-hover:bg-primary/30 transition-all" />
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-primary/40 bg-gradient-to-tr from-s1 to-psoft text-ptext shadow-md">
+                <UploadCloud className="h-10 w-10 transition-transform group-hover:scale-110" />
+              </div>
             </div>
 
-            <h2 className="text-lg font-bold text-ink">Upload your Medical Report</h2>
-            <p className="text-xs text-muted max-w-md mt-1 leading-relaxed">
-              Drag and drop your laboratory report here, or choose from your computer or camera.
+            <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight font-heading">
+              {isBn ? "মেডিকেল রিপোর্ট ফাইল আপলোড করুন" : "Upload your Clinical Lab Report"}
+            </h2>
+            <p className="text-xs sm:text-sm text-muted max-w-lg mt-2 leading-relaxed">
+              {isBn
+                ? "কম্পিউটার বা মোবাইল থেকে রিপোর্ট ফাইলটি এখানে টেনে এনে ছাড়ুন, অথবা সরাসরি ক্যামেরা দিয়ে ছবি তুলুন।"
+                : "Drag and drop your diagnostic PDF report, high-resolution photo, or capture a live paper scan."}
             </p>
 
-            {/* Hidden native inputs */}
+            {/* Hidden Native File Inputs */}
             <input
               ref={fileInputRef}
               type="file"
@@ -352,211 +442,316 @@ export default function OcrScannerPage() {
               }}
             />
 
-            {/* Upload & Camera Buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+            {/* Action Buttons: Browse vs Camera */}
+            <div className="flex flex-wrap items-center justify-center gap-3.5 mt-7">
               <Button
                 type="button"
                 variant="primary"
+                size="md"
+                className="font-semibold shadow-[0_0_20px_var(--accent-glow)]"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <FileText className="h-4 w-4 mr-1.5" />
-                Browse Files
+                {isBn ? "ফাইল বাছাই করুন" : "Browse Device Files"}
               </Button>
 
               <Button
                 type="button"
                 variant="secondary"
+                size="md"
                 onClick={() => cameraInputRef.current?.click()}
               >
-                <Camera className="h-4 w-4 mr-1.5" />
-                Take Photo
+                <Camera className="h-4 w-4 mr-1.5 text-ptext" />
+                {isBn ? "ক্যামেরা দিয়ে তুলুন" : "Capture with Camera"}
               </Button>
             </div>
 
-            {/* Allowed types badges */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-6 text-[11px] text-muted">
-              <span>Supported formats:</span>
-              <span className="rounded bg-s2 px-2 py-0.5 font-mono font-semibold text-ink">PDF</span>
-              <span className="rounded bg-s2 px-2 py-0.5 font-mono font-semibold text-ink">JPG / JPEG</span>
-              <span className="rounded bg-s2 px-2 py-0.5 font-mono font-semibold text-ink">PNG</span>
-              <span>· Max size: 10MB</span>
+            {/* Supported Formats Pill Indicators */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-8 text-xs text-muted">
+              <span className="font-medium text-ink/80">{isBn ? "সমর্থিত ফরম্যাট:" : "Supported Standards:"}</span>
+              <span className="rounded-lg border border-line bg-s2/80 px-2.5 py-1 font-mono font-semibold text-ink text-[11px]">
+                PDF Document
+              </span>
+              <span className="rounded-lg border border-line bg-s2/80 px-2.5 py-1 font-mono font-semibold text-ink text-[11px]">
+                JPG / JPEG
+              </span>
+              <span className="rounded-lg border border-line bg-s2/80 px-2.5 py-1 font-mono font-semibold text-ink text-[11px]">
+                PNG High-Res
+              </span>
+              <span className="text-[11px] text-muted">· Max 10 MB</span>
             </div>
           </div>
 
-          {/* Sample Reports for 1-Click Testing */}
-          <div className="rounded-2xl border border-primary/30 bg-gradient-to-r from-s1/90 via-psoft/20 to-s1/90 p-5 shadow-sm">
-            <div className="flex items-center justify-between border-b border-border/60 pb-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-ptext" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-ptext">
-                  {locale === "bn" ? "টেস্টিংয়ের জন্য রেডি মেডিকেল রিপোর্ট নমুনা (১-ক্লিক টেস্ট)" : "Ready Clinical Test Reports (1-Click Test)"}
-                </h3>
-              </div>
-              <span className="text-[10px] font-mono text-muted">A4 Clinical Standard</span>
-            </div>
-            <p className="mt-2 text-xs text-muted">
-              {locale === "bn"
-                ? "আপনার কাছে কোনো রিপোর্ট ফাইল না থাকলে নিচের নমুনাগুলো সরাসরি ডাউনলোড করুন অথবা ১-ক্লিক টেস্ট বাটনে চাপুন:"
-                : "No report on hand? Click 'Test This Sample' to immediately load and process a verified clinical report:"}
-            </p>
-
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-border bg-s1 p-3 flex flex-col justify-between space-y-2">
-                <div>
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-ink">
-                    <FileText className="h-3.5 w-3.5 text-ptext" />
-                    <span>CBC Test (Normal)</span>
+          {/* Selected File Card & Confirm Trigger */}
+          {selectedFile && !validationError && (
+            <div className="relative overflow-hidden rounded-2xl border border-primary/50 bg-gradient-to-r from-s1 via-psoft/15 to-s1 p-5 shadow-[0_0_25px_var(--accent-glow)] slide-up">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-onprimary font-black uppercase text-sm shadow-sm">
+                    {selectedFile.name.split(".").pop() || "FILE"}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-sm sm:text-base text-ink truncate">{selectedFile.name}</p>
+                      <span className="rounded bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-ptext uppercase">
+                        Ready
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted font-mono mt-0.5">
+                      {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB · {selectedFile.type || "Document"}
+                    </p>
                   </div>
-                  <p className="text-[11px] text-muted mt-1">Hb 14.2 g/dL, WBC 7.5, Platelet 250, RBC, MCV</p>
                 </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <Button size="xs" variant="primary" className="w-full text-[11px]" onClick={() => handleLoadSample("CBC_Test_Report_Normal.pdf", "CBC_Normal_Sample.pdf")}>
-                    Test This
-                  </Button>
-                  <a href="/sample_reports/CBC_Test_Report_Normal.pdf" download="CBC_Test_Report_Normal.pdf" className="p-1 text-muted hover:text-ink" title="Download PDF">
-                    <Download className="h-3.5 w-3.5" />
-                  </a>
-                </div>
-              </div>
 
-              <div className="rounded-xl border border-border bg-s1 p-3 flex flex-col justify-between space-y-2">
-                <div>
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-ink">
-                    <FileText className="h-3.5 w-3.5 text-info" />
-                    <span>Blood Glucose</span>
-                  </div>
-                  <p className="text-[11px] text-muted mt-1">Fasting 96 mg/dL & Post-Meal 138 mg/dL</p>
-                </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <Button size="xs" variant="primary" className="w-full text-[11px]" onClick={() => handleLoadSample("Blood_Glucose_Report.pdf", "Blood_Glucose_Sample.pdf")}>
-                    Test This
+                <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFile(null)}
+                    className="rounded-xl border border-line/80 bg-s1 p-2.5 text-muted hover:bg-danger/10 hover:text-danger hover:border-danger/30 transition shadow-xs"
+                    title="Remove file"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="md"
+                    className="font-bold shadow-[0_0_25px_var(--accent-glow)]"
+                    onClick={startUploadPipeline}
+                  >
+                    <span>{isBn ? "ওসিআর স্ক্যান শুরু করুন" : "Start Deep OCR Extraction"}</span>
+                    <ArrowRight className="h-4 w-4 ml-1.5" />
                   </Button>
-                  <a href="/sample_reports/Blood_Glucose_Report.pdf" download="Blood_Glucose_Report.pdf" className="p-1 text-muted hover:text-ink" title="Download PDF">
-                    <Download className="h-3.5 w-3.5" />
-                  </a>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border bg-s1 p-3 flex flex-col justify-between space-y-2">
-                <div>
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-ink">
-                    <AlertTriangle className="h-3.5 w-3.5 text-warn" />
-                    <span>CBC (Mild Anemia)</span>
-                  </div>
-                  <p className="text-[11px] text-muted mt-1">Hb 10.2 g/dL (Low), WBC 11.8 (High) — Alert</p>
-                </div>
-                <div className="flex items-center gap-2 pt-1">
-                  <Button size="xs" variant="primary" className="w-full text-[11px]" onClick={() => handleLoadSample("CBC_Mild_Anemia_Report.pdf", "CBC_Anemia_Sample.pdf")}>
-                    Test This
-                  </Button>
-                  <a href="/sample_reports/CBC_Mild_Anemia_Report.pdf" download="CBC_Mild_Anemia_Report.pdf" className="p-1 text-muted hover:text-ink" title="Download PDF">
-                    <Download className="h-3.5 w-3.5" />
-                  </a>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Validation Error Banner */}
           {validationError && (
-            <div className="rounded-xl border border-danger/50 bg-danger/10 p-4 text-xs text-danger flex items-center gap-3">
+            <div className="rounded-2xl border border-danger/50 bg-danger/10 p-4 text-xs text-danger flex items-center gap-3 slide-up">
               <AlertTriangle className="h-5 w-5 shrink-0" />
-              <span>{validationError}</span>
+              <span className="font-medium">{validationError}</span>
             </div>
           )}
 
-          {/* Selected File Card & Confirm Action */}
-          {selectedFile && !validationError && (
-            <Card className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-primary/40 bg-psoft/20">
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-onprimary shadow-sm font-bold uppercase text-xs">
-                  {selectedFile.name.split(".").pop() || "FILE"}
-                </span>
-                <div className="min-w-0">
-                  <p className="font-bold text-sm text-ink truncate">{selectedFile.name}</p>
-                  <p className="text-xs text-muted">
-                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB · {selectedFile.type || "Document"}
+          {/* Sample Reports for 1-Click Testing Laboratory */}
+          <div className="rounded-3xl border border-line bg-gradient-to-b from-s1 to-s2/40 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-line pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/20 text-ptext">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-ink">
+                    {isBn ? "টেস্টিং ল্যাবরেটরি: প্রস্তুত মেডিকেল রিপোর্ট নমুনা" : "1-Click Testing Clinical Samples"}
+                  </h3>
+                  <p className="text-[11px] text-muted">
+                    {isBn ? "তাৎক্ষণিক পরীক্ষার জন্য নিচে ১-ক্লিক টেস্ট চাপুন" : "Click any verified standard sample below to immediately test the neural extraction"}
                   </p>
                 </div>
               </div>
+              <span className="rounded-full border border-line bg-s1 px-2.5 py-0.5 text-[10px] font-mono text-muted self-start sm:self-auto">
+                A4 Diagnostic Format
+              </span>
+            </div>
 
-              <div className="flex items-center gap-2 self-end sm:self-auto">
-                <button
-                  type="button"
-                  onClick={() => setSelectedFile(null)}
-                  className="rounded-lg border border-line p-2 text-muted hover:bg-s2 hover:text-ink transition"
-                  title="Remove file"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-                <Button
-                  type="button"
-                  variant="primary"
-                  onClick={startUploadPipeline}
-                >
-                  Start OCR Extraction &rarr;
-                </Button>
+            <div className="grid gap-3.5 sm:grid-cols-3">
+              {/* Sample 1: Normal CBC */}
+              <div className="group rounded-2xl border border-line bg-s1 p-4 flex flex-col justify-between space-y-3 hover:border-primary/50 hover:shadow-md transition">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-md bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-ptext uppercase">
+                      Normal Result
+                    </span>
+                    <FileText className="h-4 w-4 text-ptext" />
+                  </div>
+                  <h4 className="font-bold text-xs text-ink group-hover:text-ptext transition">
+                    Complete Blood Count (CBC)
+                  </h4>
+                  <p className="text-[11px] text-muted leading-relaxed font-mono">
+                    Hb 14.2 g/dL · WBC 7.5 · Platelet 250k · RBC 4.8 · MCV 88
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 pt-2 border-t border-line/60">
+                  <Button
+                    size="xs"
+                    variant="primary"
+                    className="w-full text-xs font-semibold"
+                    onClick={() => handleLoadSample("CBC_Test_Report_Normal.pdf", "CBC_Normal_Sample.pdf")}
+                  >
+                    <Zap className="h-3 w-3 mr-1" />
+                    {isBn ? "১-ক্লিক টেস্ট" : "Test This"}
+                  </Button>
+                  <a
+                    href="/sample_reports/CBC_Test_Report_Normal.pdf"
+                    download="CBC_Test_Report_Normal.pdf"
+                    className="rounded-lg border border-line p-1.5 text-muted hover:text-ink hover:bg-s2 transition"
+                    title="Download Sample PDF"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </a>
+                </div>
               </div>
-            </Card>
-          )}
 
-          {/* Privacy & Security Note */}
-          <div className="rounded-xl border border-line bg-s1 p-4 text-xs text-muted flex items-start gap-3">
-            <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <p>
-              <strong className="text-ink">Patient Privacy Guarantee:</strong> Uploaded medical documents are stored using server-generated cryptographic keys under strict patient ownership. Only you and explicitly authorized physicians holding unexpired consent can view your records.
-            </p>
+              {/* Sample 2: Blood Glucose */}
+              <div className="group rounded-2xl border border-line bg-s1 p-4 flex flex-col justify-between space-y-3 hover:border-info/50 hover:shadow-md transition">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-md bg-info/15 px-2 py-0.5 text-[10px] font-bold text-info uppercase">
+                      Endocrinology
+                    </span>
+                    <Activity className="h-4 w-4 text-info" />
+                  </div>
+                  <h4 className="font-bold text-xs text-ink group-hover:text-info transition">
+                    Blood Glucose Panel
+                  </h4>
+                  <p className="text-[11px] text-muted leading-relaxed font-mono">
+                    Fasting 96 mg/dL · Post-Meal 138 mg/dL · Clinical Reference
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 pt-2 border-t border-line/60">
+                  <Button
+                    size="xs"
+                    variant="primary"
+                    className="w-full text-xs font-semibold"
+                    onClick={() => handleLoadSample("Blood_Glucose_Report.pdf", "Blood_Glucose_Sample.pdf")}
+                  >
+                    <Zap className="h-3 w-3 mr-1" />
+                    {isBn ? "১-ক্লিক টেস্ট" : "Test This"}
+                  </Button>
+                  <a
+                    href="/sample_reports/Blood_Glucose_Report.pdf"
+                    download="Blood_Glucose_Report.pdf"
+                    className="rounded-lg border border-line p-1.5 text-muted hover:text-ink hover:bg-s2 transition"
+                    title="Download Sample PDF"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Sample 3: Mild Anemia */}
+              <div className="group rounded-2xl border border-line bg-s1 p-4 flex flex-col justify-between space-y-3 hover:border-warn/50 hover:shadow-md transition">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-md bg-warn/15 px-2 py-0.5 text-[10px] font-bold text-warn uppercase">
+                      Alert Finding
+                    </span>
+                    <AlertTriangle className="h-4 w-4 text-warn" />
+                  </div>
+                  <h4 className="font-bold text-xs text-ink group-hover:text-warn transition">
+                    CBC with Mild Anemia
+                  </h4>
+                  <p className="text-[11px] text-muted leading-relaxed font-mono">
+                    Hb 10.2 g/dL (Low) · WBC 11.8 (High) · Triggers AI Urgency
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 pt-2 border-t border-line/60">
+                  <Button
+                    size="xs"
+                    variant="primary"
+                    className="w-full text-xs font-semibold"
+                    onClick={() => handleLoadSample("CBC_Mild_Anemia_Report.pdf", "CBC_Anemia_Sample.pdf")}
+                  >
+                    <Zap className="h-3 w-3 mr-1" />
+                    {isBn ? "১-ক্লিক টেস্ট" : "Test This"}
+                  </Button>
+                  <a
+                    href="/sample_reports/CBC_Mild_Anemia_Report.pdf"
+                    download="CBC_Mild_Anemia_Report.pdf"
+                    className="rounded-lg border border-line p-1.5 text-muted hover:text-ink hover:bg-s2 transition"
+                    title="Download Sample PDF"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Privacy & Zero-Trust Notice */}
+          <div className="rounded-2xl border border-line bg-s1/60 p-4 text-xs text-muted flex items-start gap-3.5">
+            <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="font-bold text-ink">
+                {isBn ? "রোগীর তথ্য গোপনীয়তা ও ডেটা সুরক্ষার নিশ্চয়তা" : "Patient Privacy & Cryptographic Safety Guarantee"}
+              </p>
+              <p className="leading-relaxed">
+                {isBn
+                  ? "আপনার আপলোড করা প্রতিটি মেডিকেল ডকুমেন্ট সার্ভার-জেনারেটেড এনক্রিপশন কি দ্বারা সংরক্ষিত থাকে। আপনার স্পষ্ট সম্মতি ছাড়া অন্য কোনো ব্যক্তি বা তৃতীয় পক্ষ এই তথ্য দেখতে পারে না।"
+                  : "All uploaded medical diagnostic files are encrypted at rest with server-isolated cryptographic keys. Only you and licensed physicians holding explicit, unexpired consent tokens can inspect clinical observations."}
+              </p>
+            </div>
           </div>
         </div>
       )}
 
       {/* =========================================================
-         STEP 1: UPLOADING & OCR EXTRACTION IN PROGRESS
+         STEP 1: UPLOADING & NEURAL OCR PIPELINE ANIMATION
          ========================================================= */}
       {currentStep === 1 && (
-        <Card className="text-center py-12 px-6 space-y-6 max-w-2xl mx-auto slide-up">
-          <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-            <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-            <Sparkles className="h-8 w-8 text-primary animate-pulse" />
+        <Card className="text-center py-14 px-6 space-y-8 max-w-2xl mx-auto slide-up border-primary/40 bg-gradient-to-b from-s1 via-s1 to-psoft/10 shadow-[0_0_30px_var(--accent-glow)]">
+          {/* Multi-ring Futuristic Scanner Core */}
+          <div className="relative mx-auto flex h-28 w-28 items-center justify-center">
+            <div className="absolute inset-0 rounded-full border-4 border-dashed border-primary/30 animate-[spin_10s_linear_infinite]" />
+            <div className="absolute inset-2 rounded-full border-2 border-primary border-t-transparent animate-[spin_2s_linear_infinite]" />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-primary/20 text-ptext shadow-[0_0_20px_var(--accent-glow)]">
+              <Sparkles className="h-8 w-8 animate-pulse text-primary" />
+            </div>
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-xl font-bold text-ink">
+            <h2 className="text-xl sm:text-2xl font-bold text-ink font-heading">
               {uploading && uploadPercent !== null && uploadPercent < 100
-                ? "Securely Storing Document..."
-                : "Running Automated OCR Pipeline..."}
+                ? (isBn ? "ডকুমেন্ট নিরাপদে সার্ভারে পাঠানো হচ্ছে..." : "Encrypting & Storing Document...")
+                : (isBn ? "নিউরাল ওসিআর পাইপলাইন বিশ্লেষণ চলছে..." : "Running Neural OCR Pipeline...")}
             </h2>
-            <p className="text-xs text-muted max-w-md mx-auto">
-              Extracting text lines, matching test catalogs, parsing units, and calculating confidence boundaries.
+            <p className="text-xs sm:text-sm text-muted max-w-md mx-auto leading-relaxed">
+              {isBn
+                ? "টেক্সট ও টেবিল ডিকনস্ট্রাকশন, টেস্ট ক্যাটালগ ম্যাপিং এবং রেফারেন্স ভ্যালু কনফিডেন্স যাচাই করা হচ্ছে।"
+                : "Extracting tabular data, calculating Loinc standard codes, and mapping confidence boundaries."}
             </p>
           </div>
 
           {/* Upload Progress Bar */}
           {uploadPercent !== null && uploadPercent < 100 && (
-            <div className="space-y-1.5 max-w-sm mx-auto">
-              <div className="flex justify-between text-xs text-muted">
-                <span>Upload progress</span>
-                <span className="font-mono">{uploadPercent}%</span>
+            <div className="space-y-2 max-w-sm mx-auto">
+              <div className="flex justify-between text-xs text-muted font-mono">
+                <span>{isBn ? "আপলোড অগ্রগতি" : "Upload progress"}</span>
+                <span>{uploadPercent}%</span>
               </div>
               <ProgressBar value={uploadPercent} max={100} />
             </div>
           )}
 
-          {/* Extraction Polling Indicator */}
-          {ocrStatus === "extracting" && (
-            <div className="inline-flex items-center gap-2 rounded-full border border-line bg-s2 px-3 py-1 text-xs text-muted">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin text-primary" />
-              <span>Analyzing document layers (check #{pollCount})...</span>
+          {/* Stepped Checklist Indicators */}
+          <div className="max-w-md mx-auto text-left space-y-2.5 rounded-2xl border border-line bg-s2/40 p-4 text-xs font-mono">
+            <div className="flex items-center gap-2.5 text-ptext">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+              <span>{isBn ? "১. ক্রিপ্টোগ্রাফিক চেকসাম ও অ্যান্টি-ট্যাম্পার যাচাই" : "1. Cryptographic checksum & anti-tamper pass"}</span>
             </div>
-          )}
+            <div className="flex items-center gap-2.5 text-ptext">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+              <span>{isBn ? "২. PyMuPDF মাল্টিলাইন ভেক্টর লেয়ার এক্সট্রাকশন" : "2. PyMuPDF multiline column & table reconstruction"}</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-ink">
+              <RefreshCw className="h-4 w-4 shrink-0 animate-spin text-primary" />
+              <span>{isBn ? `৩. টেস্ট ক্যাটালগ ও জেমিনি ভিশন সিন্থেসিস (চেক #${pollCount})` : `3. Clinical catalog match & Gemini Vision fallback (check #${pollCount})`}</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-muted">
+              <Clock className="h-4 w-4 shrink-0" />
+              <span>{isBn ? "৪. এআই চিকিৎসাগত বিশ্লেষণ ও উপযুক্ত স্পেশালিস্ট ম্যাচিং" : "4. AI plain-language summary & specialist match"}</span>
+            </div>
+          </div>
 
           {ocrStatus === "error" && (
-            <div className="rounded-xl border border-danger/40 bg-danger/10 p-4 text-xs text-danger space-y-2">
-              <p className="font-bold flex items-center justify-center gap-1.5">
-                <AlertTriangle className="h-4 w-4" />
-                Extraction Error
+            <div className="rounded-2xl border border-danger/40 bg-danger/10 p-5 text-xs text-danger space-y-3">
+              <p className="font-bold flex items-center justify-center gap-2 text-sm">
+                <AlertTriangle className="h-5 w-5" />
+                {isBn ? "ওসিআর এক্সট্রাকশন ত্রুটি" : "Extraction Error"}
               </p>
-              <p>{validationError || "Could not complete automated OCR extraction."}</p>
+              <p className="leading-relaxed">{validationError || "Could not complete automated OCR extraction."}</p>
               <Button
                 size="sm"
                 variant="secondary"
@@ -565,7 +760,7 @@ export default function OcrScannerPage() {
                   setSelectedFile(null);
                 }}
               >
-                Try Another File
+                {isBn ? "অন্য ফাইল দিয়ে চেষ্টা করুন" : "Try Another File"}
               </Button>
             </div>
           )}
@@ -576,23 +771,23 @@ export default function OcrScannerPage() {
          STEP 2: REVIEW, OBSERVATION CORRECTIONS & AI EXPLANATION
          ========================================================= */}
       {currentStep === 2 && uploadedDocId && (
-        <div className="space-y-6 slide-up">
-          {/* Top Banner Action Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-primary/30 bg-gradient-to-r from-s1 via-s1 to-psoft/20 p-4 shadow-sm">
-            <div className="space-y-0.5">
+        <div className="space-y-8 slide-up">
+          {/* Top Status & Quick Action Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-primary/40 bg-gradient-to-r from-s1 via-s1 to-psoft/20 p-5 shadow-[0_0_20px_var(--accent-glow)]">
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-ptext uppercase">
-                  Extraction Ready
+                <span className="rounded-full bg-primary/20 px-2.5 py-0.5 text-[10px] font-bold text-ptext uppercase tracking-wider">
+                  {isBn ? "এক্সট্রাকশন প্রস্তুত" : "Extraction Ready"}
                 </span>
-                <span className="text-xs text-muted font-mono">ID: {uploadedDocId.slice(0, 8)}...</span>
+                <span className="text-xs text-muted font-mono">ID: {uploadedDocId.slice(0, 10)}...</span>
               </div>
-              <h2 className="text-base font-bold text-ink">
-                Review Extracted Laboratory Observations
+              <h2 className="text-lg sm:text-xl font-bold text-ink font-heading">
+                {isBn ? "নিষ্কাশিত ল্যাব টেস্ট পর্যবেক্ষণ ও ফলাফল" : "Review Extracted Laboratory Observations"}
               </h2>
             </div>
 
             {/* Quick Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2.5">
               <a
                 href={`/api/v1/documents/${uploadedDocId}/summary-pdf`}
                 target="_blank"
@@ -600,7 +795,7 @@ export default function OcrScannerPage() {
               >
                 <Button size="sm" variant="secondary">
                   <Download className="h-3.5 w-3.5 mr-1.5" />
-                  Download Summary PDF
+                  {isBn ? "পিডিএফ ডাউনলোড" : "Download Summary PDF"}
                 </Button>
               </a>
 
@@ -608,51 +803,55 @@ export default function OcrScannerPage() {
                 size="sm"
                 variant="primary"
                 busy={aiBusy}
-                onClick={requestAiExplanation}
+                onClick={() => requestAiExplanation(uploadedDocId)}
               >
                 <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                {aiData ? "Re-analyze with AI" : "Explain with AI"}
+                {aiData ? (isBn ? "পুনরায় এআই বিশ্লেষণ" : "Re-analyze with AI") : (isBn ? "এআই বিস্তারিত দেখুন" : "Explain with AI")}
               </Button>
             </div>
           </div>
 
-          {/* Summary Stat Tiles */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {/* Summary Stat Tiles Grid */}
+          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
             <StatTile
               icon={FileText}
-              label="Extracted Observations"
+              label={isBn ? "মোট পর্যবেক্ষণ" : "Extracted Observations"}
               value={rows.length}
               accent
             />
             <StatTile
               icon={FileCheck}
-              label="Doctor Verified"
+              label={isBn ? "ডাক্তার দ্বারা যাচাইকৃত" : "Doctor Verified"}
               value={verifiedRows.length}
               trend={verifiedRows.length === rows.length && rows.length > 0 ? "up" : "neutral"}
-              trendLabel={verifiedRows.length === rows.length && rows.length > 0 ? "All verified" : "Pending consultation"}
+              trendLabel={verifiedRows.length === rows.length && rows.length > 0 ? (isBn ? "সম্পূর্ণ যাচাইকৃত" : "All verified") : (isBn ? "পেন্ডিং পরামর্শ" : "Pending consultation")}
             />
             <StatTile
               icon={FileSearch}
-              label="Low Confidence OCR"
+              label={isBn ? "কম কনফিডেন্স মান" : "Low Confidence OCR"}
               value={lowConfidenceRows.length}
               trend={lowConfidenceRows.length > 0 ? "down" : "neutral"}
-              trendLabel={lowConfidenceRows.length > 0 ? "Check against original" : "High confidence"}
+              trendLabel={lowConfidenceRows.length > 0 ? (isBn ? "মূল স্ক্যানের সাথে মেলান" : "Review against scan") : (isBn ? "উচ্চ নির্ভুলতা" : "High accuracy")}
             />
             <StatTile
               icon={Layers}
-              label="Extractor Pipeline"
+              label={isBn ? "ওসিআর ইঞ্জিন" : "Extractor Pipeline"}
               value={extractionsData?.extractor_version || "PyMuPDF · v1"}
             />
           </div>
 
           {/* Low Confidence Warning Notice */}
           {lowConfidenceRows.length > 0 && (
-            <GlassCard className="border-warn/40 flex items-start gap-3">
-              <Info className="h-5 w-5 text-warn shrink-0 mt-0.5" />
+            <GlassCard className="border-warn/40 flex items-start gap-3.5">
+              <AlertCircle className="h-5 w-5 text-warn shrink-0 mt-0.5" />
               <div className="text-xs text-muted">
-                <p className="font-semibold text-warn text-sm">Low Confidence OCR Alert</p>
+                <p className="font-bold text-warn text-sm">
+                  {isBn ? "স্বল্প কনফিডেন্স ওসিআর সতর্কতা" : "Low Confidence OCR Review Advised"}
+                </p>
                 <p className="mt-0.5 leading-relaxed">
-                  {lowConfidenceRows.length} observation(s) have an automated OCR confidence score below 80%. Verify them against your original scan. You can flag wrong values or confirm accurate extractions.
+                  {isBn
+                    ? `${lowConfidenceRows.length}টি ক্লিনিক্যাল মানের কনফিডেন্স ৮০%-এর নিচে। অনুগ্রহ করে মূল স্ক্যানের সাথে মিলিয়ে ভুল হলে 'ভুল চিহ্নিত' বাটনে চাপুন অথবা 'নিশ্চিত করুন'।`
+                    : `${lowConfidenceRows.length} observation(s) scored below 80% extraction confidence. Cross-reference them with your original document preview below.`}
                 </p>
               </div>
             </GlassCard>
@@ -662,17 +861,17 @@ export default function OcrScannerPage() {
              AUTOMATIC AI CLINICAL SUMMARY & DOCTOR RECOMMENDATION
              ========================================================= */}
           {aiBusy && !aiData && (
-            <Card className="p-5 border-primary/40 bg-gradient-to-r from-s1 via-psoft/10 to-s1 animate-pulse">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-ptext">
-                  <Sparkles className="h-5 w-5 animate-spin" />
+            <Card className="p-6 border-primary/40 bg-gradient-to-r from-s1 via-psoft/15 to-s1 animate-pulse rounded-3xl shadow-[0_0_20px_var(--accent-glow)]">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/20 text-ptext">
+                  <Sparkles className="h-6 w-6 animate-spin text-primary" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-ink">
+                  <h3 className="text-base font-bold text-ink">
                     {isBn ? "এআই বিস্তারিত বিশ্লেষণ ও বিশেষজ্ঞ ডাক্তার ম্যাচিং চলছে..." : "Generating AI Clinical Summary & Matching Specialists..."}
                   </h3>
                   <p className="text-xs text-muted">
-                    {isBn ? "ল্যাব টেস্টের ফলাফল বিশ্লেষণ করে স্বয়ংক্রিয় বিস্তারিত বিবরণী ও উপযুক্ত ডাক্তার নির্ধারণ করা হচ্ছে।" : "Cross-referencing verified observations against clinical specialty mappings and directory doctors."}
+                    {isBn ? "ল্যাব টেস্টের ফলাফল বিশ্লেষণ করে স্বয়ংক্রিয় সারসংক্ষেপ ও উপযুক্ত ডাক্তার সুপারিশ তৈরি হচ্ছে।" : "Cross-referencing verified observations against clinical specialty mappings and directory doctors."}
                   </p>
                 </div>
               </div>
@@ -680,10 +879,10 @@ export default function OcrScannerPage() {
           )}
 
           {aiError && (
-            <Card className="border-danger/40 bg-danger/10 p-4">
+            <Card className="border-danger/40 bg-danger/10 p-5 rounded-2xl">
               <p className="text-xs text-danger flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                {aiError}
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>{aiError}</span>
               </p>
             </Card>
           )}
@@ -693,17 +892,17 @@ export default function OcrScannerPage() {
           )}
 
           {aiData && !aiData.emergency && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* 1. Plain-Language Summary Box */}
-              <div className="relative overflow-hidden rounded-2xl border border-primary/40 bg-gradient-to-br from-s1 via-s1 to-psoft/20 p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5),0_0_15px_var(--accent-glow)]">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line/60 pb-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-onprimary shadow-sm font-bold">
+              <div className="relative overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-s1 via-s1 to-psoft/25 p-6 sm:p-7 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.6),0_0_20px_var(--accent-glow)]">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line/70 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-onprimary shadow-md font-bold">
                       <Sparkles className="h-5 w-5" />
                     </span>
                     <div>
-                      <h3 className="text-base font-bold text-ink">
-                        {isBn ? "এআই ক্লিনিক্যাল বিস্তারিত বিবরণী (AI Report Summary)" : "AI Clinical Intelligence Summary"}
+                      <h3 className="text-lg font-bold text-ink font-heading">
+                        {isBn ? "এআই ক্লিনিক্যাল বিস্তারিত বিবরণী" : "AI Clinical Intelligence Summary"}
                       </h3>
                       <p className="text-xs text-muted">
                         {isBn ? "ল্যাব টেস্টের সকল মানের উপর ভিত্তি করে সহজ বাংলায় বিশ্লেষণ" : "Autonomous plain-language clinical correlation"}
@@ -718,19 +917,19 @@ export default function OcrScannerPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-xl border border-line bg-s2/60 p-4 text-xs text-ink leading-relaxed font-sans sm:text-sm">
+                <div className="mt-5 rounded-2xl border border-line/80 bg-s2/70 p-5 text-xs sm:text-sm text-ink leading-relaxed font-sans shadow-inner">
                   <p>{aiData.summary || "No automated summary available."}</p>
                 </div>
 
                 {/* Facts Bullet List */}
                 {aiData.known_facts?.length > 0 && (
-                  <div className="mt-3.5 space-y-2">
+                  <div className="mt-5 space-y-2.5">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                      {isBn ? "মূল পর্যবেক্ষণসমূহ:" : "Clinical Observations:"}
+                      {isBn ? "মূল ক্লিনিক্যাল পর্যবেক্ষণসমূহ:" : "Clinical Observations Identified:"}
                     </p>
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="grid gap-2.5 sm:grid-cols-2">
                       {aiData.known_facts.map((fact: any, i: number) => (
-                        <div key={i} className="flex items-start gap-2 rounded-lg border border-line bg-s1/60 p-2.5 text-xs text-ink">
+                        <div key={i} className="flex items-start gap-2.5 rounded-xl border border-line bg-s1/70 p-3 text-xs text-ink hover:border-primary/40 transition">
                           <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                           <span>{fact.text}</span>
                         </div>
@@ -741,78 +940,78 @@ export default function OcrScannerPage() {
               </div>
 
               {/* 2. Doctor Specialty Recommendation & 1-Click Match Cards */}
-              <div className="rounded-2xl border border-line bg-s1 p-5 space-y-4 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-line pb-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-info/20 text-info font-bold">
+              <div className="rounded-3xl border border-line bg-s1 p-6 sm:p-7 space-y-5 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-info/20 text-info font-bold shadow-xs">
                       <Stethoscope className="h-5 w-5" />
                     </span>
                     <div>
-                      <h4 className="text-sm font-bold text-ink">
-                        {isBn ? "কোন ডাক্তার দেখানো উচিত? (এআই বিশেষজ্ঞ সুপারিশ)" : "Which Doctor Should You Consult?"}
+                      <h4 className="text-base font-bold text-ink font-heading">
+                        {isBn ? "কোন বিশেষজ্ঞ ডাক্তার দেখানো উচিত?" : "Which Doctor Should You Consult?"}
                       </h4>
                       <p className="text-xs text-muted">
-                        {isBn ? "ল্যাব টেস্টের ফলাফলের উপর ভিত্তি করে প্রস্তাবিত স্পেশালিস্ট" : "Specialist match calculated from laboratory findings"}
+                        {isBn ? "ল্যাব টেস্টের ফলাফলের ভিত্তিতে স্বয়ংক্রিয় স্পেশালিস্ট সুপারিশ" : "Specialist match calculated from laboratory findings"}
                       </p>
                     </div>
                   </div>
 
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold self-start sm:self-auto ${
                     aiData.urgency === "soon"
-                      ? "border border-warn/40 bg-warn/15 text-warn"
+                      ? "border border-warn/40 bg-warn/15 text-warn shadow-[0_0_12px_rgba(251,191,36,0.2)]"
                       : "border border-primary/40 bg-psoft text-ptext"
                   }`}>
                     <Clock className="h-3.5 w-3.5" />
                     <span>
                       {aiData.urgency === "soon"
-                        ? (isBn ? "দ্রুত পরামর্শ জরুরি" : "Consultation Advised Soon")
-                        : (isBn ? "নিয়মিত স্বাস্থ্য পরামর্শ" : "Routine Consultation")}
+                        ? (isBn ? "দ্রুত পরামর্শ জরুরি (Consult Soon)" : "Consultation Advised Soon")
+                        : (isBn ? "নিয়মিত স্বাস্থ্য পরামর্শ (Routine)" : "Routine Consultation")}
                     </span>
                   </span>
                 </div>
 
                 {/* Recommendation Reason Box */}
-                <div className="rounded-xl border border-line bg-s2/40 p-3.5 flex items-start gap-3 text-xs text-ink">
-                  <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  <div>
+                <div className="rounded-2xl border border-line bg-s2/40 p-4 flex items-start gap-3.5 text-xs text-ink">
+                  <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div className="space-y-1">
                     <p className="font-bold text-sm text-ptext">{aiData.doctor_recommendation}</p>
-                    <p className="mt-1 text-muted leading-relaxed">{aiData.recommendation_reason}</p>
+                    <p className="text-muted leading-relaxed">{aiData.recommendation_reason}</p>
                   </div>
                 </div>
 
                 {/* Matching Doctors Grid */}
                 {aiData.matching_doctors?.length > 0 && (
-                  <div className="space-y-2.5">
+                  <div className="space-y-3 pt-2">
                     <p className="text-xs font-bold uppercase tracking-wider text-muted">
-                      {isBn ? "প্রস্তাবিত ভেরিফায়েড বিশেষজ্ঞ চিকিৎসকবৃন্দ:" : "Recommended Verified Doctors in Network:"}
+                      {isBn ? "নেটওয়ার্কের প্রস্তাবিত ভেরিফায়েড বিশেষজ্ঞ চিকিৎসক:" : "Recommended Verified Doctors in Network:"}
                     </p>
-                    <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="grid gap-3.5 sm:grid-cols-3">
                       {aiData.matching_doctors.map((doc: any, i: number) => (
                         <div
                           key={doc.id || i}
-                          className="flex flex-col justify-between rounded-xl border border-line bg-s2/40 p-3.5 hover:border-primary/50 transition shadow-xs"
+                          className="group flex flex-col justify-between rounded-2xl border border-line bg-s2/40 p-4 hover:border-primary/50 hover:shadow-md transition duration-200"
                         >
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/20 text-ptext font-bold text-xs">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2.5">
+                              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-ptext font-bold text-xs shadow-xs">
                                 Dr
                               </span>
                               <div className="min-w-0">
-                                <p className="font-bold text-xs text-ink truncate">{doc.name}</p>
+                                <p className="font-bold text-xs text-ink truncate group-hover:text-ptext transition">{doc.name}</p>
                                 <p className="text-[10px] text-muted truncate">{doc.specialty}</p>
                               </div>
                             </div>
-                            <p className="text-[11px] text-muted font-mono pt-1">{doc.qualifications}</p>
+                            <p className="text-[11px] text-muted font-mono">{doc.qualifications}</p>
                           </div>
 
-                          <div className="mt-3 pt-2 border-t border-line/60">
+                          <div className="mt-4 pt-3 border-t border-line/60">
                             <Button
                               size="xs"
                               variant="primary"
                               className="w-full text-xs font-semibold"
                               onClick={() => router.push(`/appointments?book=true&shareDoc=${uploadedDocId}&doctor=${doc.id}`)}
                             >
-                              <Calendar className="h-3 w-3 mr-1" />
+                              <Calendar className="h-3.5 w-3.5 mr-1" />
                               {isBn ? "অ্যাপয়েন্টমেন্ট নিন" : "Book Doctor"}
                             </Button>
                           </div>
@@ -823,9 +1022,9 @@ export default function OcrScannerPage() {
                 )}
 
                 {/* Find More Doctors Action Row */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-line/60">
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-line/70">
                   <p className="text-xs text-muted">
-                    {isBn ? "অন্যান্য হাসপাতাল বা নির্দিষ্ট লোকেশনে ডাক্তার খুঁজতে চান?" : "Looking for specific hospital chambers or doctors near you?"}
+                    {isBn ? "নির্দিষ্ট হাসপাতাল বা লোকেশনে আরও ডাক্তার খুঁজতে চান?" : "Looking for specific hospital chambers or doctors near you?"}
                   </p>
                   <Button
                     size="sm"
@@ -840,47 +1039,54 @@ export default function OcrScannerPage() {
             </div>
           )}
 
-          {/* Side-by-Side: Original Document Preview vs Extracted Table */}
+          {/* =========================================================
+             SIDE-BY-SIDE: ORIGINAL PREVIEW VS EXTRACTED TABLE
+             ========================================================= */}
           <div className="grid gap-6 lg:grid-cols-12">
             {/* Left: Original Scan Preview */}
             <div className="lg:col-span-5 space-y-3">
-              <Card className="h-full space-y-3 p-4">
+              <Card className="h-full space-y-3 p-4 rounded-3xl">
                 <div className="flex items-center justify-between border-b border-line pb-2.5">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-2">
                     <FileText className="h-4 w-4 text-ptext" />
-                    <span>Original Document Preview</span>
+                    <span>{isBn ? "মূল স্ক্যান ডকুমেন্ট" : "Original Document Preview"}</span>
                   </h3>
                   <span className="text-[10px] font-mono text-muted uppercase">Secure Vault</span>
                 </div>
-                <div className="min-h-[460px] rounded-input border border-line bg-s2/40 overflow-hidden">
+                <div className="min-h-[480px] rounded-2xl border border-line bg-s2/40 overflow-hidden shadow-inner">
                   <ReportViewer docId={uploadedDocId} mime={selectedFile?.type} />
                 </div>
               </Card>
             </div>
 
             {/* Right: Extracted Observations Table */}
-            <div className="lg:col-span-7 space-y-4">
-              <Card className="space-y-4 p-4">
-                <div className="flex items-center justify-between border-b border-line pb-2.5">
+            <div className="lg:col-span-7 space-y-5">
+              <Card className="space-y-4 p-5 rounded-3xl">
+                <div className="flex items-center justify-between border-b border-line pb-3">
                   <div>
                     <h3 className="text-sm font-bold text-ink flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-ptext" />
-                      <span>Extracted Clinical Observations</span>
+                      <span>{isBn ? "নিষ্কাশিত ক্লিনিক্যাল মানসমূহ" : "Extracted Clinical Observations"}</span>
                     </h3>
-                    <p className="text-[11px] text-muted">Click Flag Wrong or Confirm to maintain clinical accuracy</p>
+                    <p className="text-[11px] text-muted">
+                      {isBn ? "নির্ভুলতা নিশ্চিত করতে 'ভুল চিহ্নিত' বা 'নিশ্চিত করুন' বাটনে চাপুন" : "Click Flag Wrong or Confirm to maintain clinical accuracy"}
+                    </p>
                   </div>
+                  <span className="rounded-full bg-s2 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-ptext">
+                    {rows.length} {isBn ? "টি টেস্ট" : "tests"}
+                  </span>
                 </div>
 
                 <div className="overflow-x-auto">
                   <Table>
                     <thead>
                       <tr>
-                        <th>Test Code</th>
-                        <th>Observed Value</th>
-                        <th>Unit</th>
-                        <th>Reference</th>
-                        <th>Confidence</th>
-                        <th className="text-right">Action</th>
+                        <th>{isBn ? "টেস্ট কোড" : "Test Code"}</th>
+                        <th>{isBn ? "মান" : "Observed"}</th>
+                        <th>{isBn ? "একক" : "Unit"}</th>
+                        <th>{isBn ? "স্বাভাবিক সীমা" : "Reference"}</th>
+                        <th>{isBn ? "কনফিডেন্স" : "Confidence"}</th>
+                        <th className="text-right">{isBn ? "অ্যাকশন" : "Action"}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -894,10 +1100,10 @@ export default function OcrScannerPage() {
                             key={r.observation_id}
                             className={`transition ${r.low_confidence ? "bg-warn/5 hover:bg-warn/10" : "hover:bg-s2/40"}`}
                           >
-                            <td className="font-bold text-ink uppercase">{r.test_code}</td>
+                            <td className="font-bold text-ink uppercase tracking-wide">{r.test_code}</td>
                             <td className="num font-bold text-ptext">{r.value}</td>
-                            <td className="text-muted text-xs">{r.unit || "—"}</td>
-                            <td className="num text-xs text-muted">
+                            <td className="text-muted text-xs font-mono">{r.unit || "—"}</td>
+                            <td className="num text-xs text-muted font-mono">
                               {r.ref_low != null ? `${r.ref_low} – ${r.ref_high}` : "—"}
                             </td>
                             <td>
@@ -912,16 +1118,16 @@ export default function OcrScannerPage() {
                               {isVerified ? (
                                 <Chip kind="doctor" />
                               ) : (
-                                <div className="flex items-center justify-end gap-1">
+                                <div className="flex items-center justify-end gap-1.5">
                                   {isFlagged ? (
                                     <span className="text-xs text-warn font-semibold flex items-center gap-1">
-                                      <Flag className="h-3 w-3" /> Flagged
+                                      <Flag className="h-3 w-3" /> {isBn ? "চিহ্নিত" : "Flagged"}
                                     </span>
                                   ) : (
                                     <Button
                                       size="xs"
                                       variant="ghost"
-                                      className="text-warn hover:bg-warn/10"
+                                      className="text-warn hover:bg-warn/10 text-[11px]"
                                       busy={isBusy}
                                       onClick={() =>
                                         patchField(
@@ -931,7 +1137,7 @@ export default function OcrScannerPage() {
                                         )
                                       }
                                     >
-                                      Flag Wrong
+                                      {isBn ? "ভুল" : "Flag Wrong"}
                                     </Button>
                                   )}
 
@@ -939,6 +1145,7 @@ export default function OcrScannerPage() {
                                     <Button
                                       size="xs"
                                       variant="outline"
+                                      className="text-[11px]"
                                       busy={isBusy}
                                       onClick={() =>
                                         patchField(
@@ -948,7 +1155,7 @@ export default function OcrScannerPage() {
                                         )
                                       }
                                     >
-                                      Confirm
+                                      {isBn ? "ঠিক" : "Confirm"}
                                     </Button>
                                   )}
                                 </div>
@@ -963,21 +1170,21 @@ export default function OcrScannerPage() {
               </Card>
 
               {/* Raw OCR Text Filter Box */}
-              <Card className="space-y-3 p-4">
+              <Card className="space-y-3 p-4 rounded-3xl">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-line pb-2.5">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
                     <Search className="h-3.5 w-3.5" />
-                    <span>Raw OCR Extracted Text</span>
+                    <span>{isBn ? "র' ওসিআর টেক্সট ইন্সপেক্টর" : "Raw OCR Extracted Text"}</span>
                   </h4>
                   <input
                     type="text"
                     value={rawTextSearch}
                     onChange={(e) => setRawTextSearch(e.target.value)}
-                    placeholder="Filter OCR text..."
-                    className="rounded-input border border-line bg-s2/60 px-2.5 py-1 text-xs text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/60"
+                    placeholder={isBn ? "টেক্সট ফিল্টার করুন..." : "Filter OCR text..."}
+                    className="rounded-input border border-line bg-s2/60 px-3 py-1 text-xs text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/60"
                   />
                 </div>
-                <pre className="num max-h-40 overflow-y-auto whitespace-pre-wrap rounded-input bg-s2/40 p-3 text-xs text-muted font-mono leading-relaxed">
+                <pre className="num max-h-40 overflow-y-auto whitespace-pre-wrap rounded-2xl bg-s2/40 p-3.5 text-xs text-muted font-mono leading-relaxed border border-line/60">
                   {filteredRawLines.length > 0 ? (
                     filteredRawLines.map((l: string, i: number) => <div key={i}>{l}</div>)
                   ) : (
@@ -989,23 +1196,27 @@ export default function OcrScannerPage() {
           </div>
 
           {/* Action Center (Doctor Referral, Booking, PDF) */}
-          <div className="rounded-2xl border border-line bg-s1 p-6 space-y-4 shadow-sm">
-            <h3 className="text-base font-bold text-ink">Next Clinical Steps & Actions</h3>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-3xl border border-line bg-s1 p-6 sm:p-7 space-y-4 shadow-sm">
+            <h3 className="text-base font-bold text-ink font-heading">
+              {isBn ? "পরবর্তী পদক্ষেপ ও চিকিৎসাসেবা" : "Next Clinical Steps & Patient Actions"}
+            </h3>
+            <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
               {/* Action 1: Book Consultation with shared report */}
               <Button
                 variant="primary"
+                size="md"
+                className="font-bold shadow-[0_0_20px_var(--accent-glow)]"
                 onClick={() => router.push(`/appointments?book=true&shareDoc=${uploadedDocId}`)}
               >
                 <CalendarClock className="h-4 w-4 mr-1.5" />
-                Request Doctor Review
+                {isBn ? "ডাক্তার রিভিউ নিন" : "Request Doctor Review"}
               </Button>
 
               {/* Action 2: Find a Doctor */}
               <Link href="/directory" className="w-full">
-                <Button variant="secondary" className="w-full">
+                <Button variant="secondary" size="md" className="w-full font-medium">
                   <Stethoscope className="h-4 w-4 mr-1.5" />
-                  Find Relevant Doctor
+                  {isBn ? "ডাক্তার ডিরেক্টরি খুঁজুন" : "Find Relevant Doctor"}
                 </Button>
               </Link>
 
@@ -1016,15 +1227,17 @@ export default function OcrScannerPage() {
                 rel="noopener noreferrer"
                 className="w-full"
               >
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" size="md" className="w-full font-medium">
                   <Download className="h-4 w-4 mr-1.5" />
-                  Download Summary PDF
+                  {isBn ? "সারসংক্ষেপ পিডিএফ" : "Download Summary PDF"}
                 </Button>
               </a>
 
               {/* Action 4: Scan Another Report */}
               <Button
                 variant="ghost"
+                size="md"
+                className="font-medium"
                 onClick={() => {
                   setCurrentStep(0);
                   setSelectedFile(null);
@@ -1034,7 +1247,7 @@ export default function OcrScannerPage() {
                 }}
               >
                 <Plus className="h-4 w-4 mr-1.5" />
-                Scan Another Report
+                {isBn ? "অন্য রিপোর্ট স্ক্যান করুন" : "Scan Another Report"}
               </Button>
             </div>
           </div>
