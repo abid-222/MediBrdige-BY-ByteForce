@@ -100,6 +100,7 @@ export default function SmartCareNavigator() {
   const [doctorSearch, setDoctorSearch] = useState("");
   const [onlyTelehealth, setOnlyTelehealth] = useState(false);
   const [onlyVerified, setOnlyVerified] = useState(false);
+  const [navSortBy, setNavSortBy] = useState<"smart" | "fee_asc" | "fee_desc" | "experience">("smart");
 
   // API Hooks for Directory
   const metaApi = useApi("/directory/meta");
@@ -239,10 +240,10 @@ export default function SmartCareNavigator() {
     }
   };
 
-  // Filter Doctors
+  // Filter & Smart Rank Doctors
   const filteredDoctors = useMemo(() => {
     const list = doctorsApi.data?.items || [];
-    return list.filter((doc: any) => {
+    const filtered = list.filter((doc: any) => {
       // Specialty filter
       if (selectedSpecialty !== "all" && doc.specialty_code !== selectedSpecialty) {
         return false;
@@ -251,7 +252,7 @@ export default function SmartCareNavigator() {
       if (onlyVerified && doc.verification !== "verified") {
         return false;
       }
-      // Telehealth filter (MVP checks if active chamber or doctor offers consultation)
+      // Telehealth filter
       if (onlyTelehealth) {
         const hasOnline = doc.chambers?.some((c: any) =>
           c.facility_name?.toLowerCase().includes("online") ||
@@ -264,13 +265,58 @@ export default function SmartCareNavigator() {
       if (doctorSearch.trim()) {
         const q = doctorSearch.toLowerCase();
         const nameMatch = doc.full_name?.toLowerCase().includes(q);
-        const specMatch = doc.specialty_name_en?.toLowerCase().includes(q);
+        const specMatch = doc.specialty?.toLowerCase().includes(q) || doc.specialty_name_en?.toLowerCase().includes(q);
         const facilityMatch = doc.chambers?.some((c: any) => c.facility_name?.toLowerCase().includes(q));
         if (!nameMatch && !specMatch && !facilityMatch) return false;
       }
       return true;
     });
-  }, [doctorsApi.data, selectedSpecialty, onlyVerified, onlyTelehealth, doctorSearch]);
+
+    // Score & Badges
+    const enriched = filtered.map((doc: any) => {
+      const primaryChamber = doc.chambers?.[0];
+      const fee = primaryChamber?.fee_bdt || 1500;
+      const exp = doc.experience_years || 0;
+      const isVerified = doc.verification === "verified";
+      const hasSchedule = !!primaryChamber?.schedule;
+
+      let score = 50;
+      const badges: string[] = [];
+
+      if (fee <= 1000) {
+        score += 35;
+        badges.push("💰 সাশ্রয়ী ফি (Best Value)");
+      } else if (fee <= 1500) {
+        score += 15;
+      }
+
+      if (isVerified) score += 25;
+      if (exp >= 12) {
+        score += 20;
+        badges.push("⭐ শীর্ষ অভিজ্ঞ");
+      }
+      if (hasSchedule) {
+        score += 15;
+        badges.push("🕒 শিডিউল নির্ধারিত");
+      }
+
+      return {
+        ...doc,
+        _smartScore: score,
+        _fee: fee,
+        _exp: exp,
+        _badges: badges,
+      };
+    });
+
+    return enriched.sort((a: any, b: any) => {
+      if (navSortBy === "smart") return b._smartScore - a._smartScore;
+      if (navSortBy === "fee_asc") return a._fee - b._fee;
+      if (navSortBy === "fee_desc") return b._fee - a._fee;
+      if (navSortBy === "experience") return b._exp - a._exp;
+      return 0;
+    });
+  }, [doctorsApi.data, selectedSpecialty, onlyVerified, onlyTelehealth, doctorSearch, navSortBy]);
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
@@ -350,31 +396,31 @@ export default function SmartCareNavigator() {
               </Card>
             </button>
 
-            {/* 2. Book an Appointment */}
+            {/* 2. Book 100% Online Video Consultation */}
             <button
               type="button"
-              onClick={() => handleProtectedAction("/appointments?book=true", "Appointment Booking")}
+              onClick={() => handleProtectedAction("/appointments?book=true", "Online Video Consultation")}
               className="text-left w-full rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
             >
               <Card
                 hover
-                className="h-full space-y-3 border border-line p-5 transition-all duration-200 hover:border-primary/50 hover:shadow-md"
+                className="h-full space-y-3 border border-emerald-500/40 bg-emerald-500/5 p-5 transition-all duration-200 hover:border-emerald-500 hover:shadow-md"
               >
                 <div className="flex items-center justify-between">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent">
-                    <CalendarClock className="h-6 w-6" />
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600">
+                    <Video className="h-6 w-6" />
                   </span>
                   <ChevronRight className="h-5 w-5 text-muted" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-ink">Book an Appointment</h2>
+                  <h2 className="text-base font-bold text-ink">অনলাইন ভিডিও পরামর্শ (Book Telehealth)</h2>
                   <p className="text-xs text-muted mt-1 leading-relaxed">
-                    Schedule an in-person hospital chamber consultation with instant date, time, and patient record opt-in.
+                    ১০০% অনলাইন ভিডিও কনসালটেশন। ডাক্তারের ভার্চুয়াল রুমে যুক্ত হয়ে ডিজিটাল প্রেসক্রিপশন সংগ্রহ করুন।
                   </p>
                 </div>
                 <div className="pt-2">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ptext">
-                    Open Booking Portal &rarr;
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                    বুক অনলাইন কনসালটেশন &rarr;
                   </span>
                 </div>
               </Card>
@@ -405,39 +451,6 @@ export default function SmartCareNavigator() {
                 <div className="pt-2">
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-400">
                     Open Report Vault &rarr;
-                  </span>
-                </div>
-              </Card>
-            </button>
-
-            {/* 4. Find an Online Consultation */}
-            <button
-              type="button"
-              onClick={() => {
-                setOnlyTelehealth(true);
-                setCurrentView("doctors");
-              }}
-              className="text-left w-full rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-            >
-              <Card
-                hover
-                className="h-full space-y-3 border border-line p-5 transition-all duration-200 hover:border-primary/50 hover:shadow-md"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400">
-                    <Video className="h-6 w-6" />
-                  </span>
-                  <ChevronRight className="h-5 w-5 text-muted" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-ink">Find an Online Consultation</h2>
-                  <p className="text-xs text-muted mt-1 leading-relaxed">
-                    Filter verified practitioners offering remote tele-consultations and digital prescriptions without traveling.
-                  </p>
-                </div>
-                <div className="pt-2">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-400">
-                    View Telehealth Doctors &rarr;
                   </span>
                 </div>
               </Card>
@@ -880,19 +893,35 @@ export default function SmartCareNavigator() {
             onRetry={doctorsApi.reload}
           >
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-muted px-1">
-                <span>
-                  Showing <strong className="text-ink">{filteredDoctors.length}</strong> available doctor
-                  {filteredDoctors.length === 1 ? "" : "s"}
-                </span>
-                {selectedSpecialty !== "all" && (
-                  <button
-                    onClick={() => setSelectedSpecialty("all")}
-                    className="text-ptext hover:underline font-medium"
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-muted px-1">
+                <div className="flex items-center gap-3">
+                  <span>
+                    Showing <strong className="text-ink">{filteredDoctors.length}</strong> available doctor
+                    {filteredDoctors.length === 1 ? "" : "s"}
+                  </span>
+                  {selectedSpecialty !== "all" && (
+                    <button
+                      onClick={() => setSelectedSpecialty("all")}
+                      className="text-ptext hover:underline font-medium"
+                    >
+                      Reset specialty filter
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-ink shrink-0">সর্ট / প্রায়োরিটি:</span>
+                  <select
+                    value={navSortBy}
+                    onChange={(e: any) => setNavSortBy(e.target.value)}
+                    className="rounded-input border border-line bg-s1 px-2.5 py-1 text-xs text-ink focus-visible:outline-none"
                   >
-                    Reset specialty filter
-                  </button>
-                )}
+                    <option value="smart">⚡ AI Smart Priority (সেরা মিল)</option>
+                    <option value="fee_asc">💰 স্বল্প ফি (Lowest Fee First)</option>
+                    <option value="fee_desc">💎 প্রিমিয়াম ফি (Highest Fee)</option>
+                    <option value="experience">⭐ শীর্ষ অভিজ্ঞতা (Senior Specialists)</option>
+                  </select>
+                </div>
               </div>
 
               {filteredDoctors.length === 0 ? (
@@ -907,7 +936,6 @@ export default function SmartCareNavigator() {
                     const chambers = doc.chambers || [];
                     const primaryChamber = chambers[0];
                     const feeText = primaryChamber?.fee_bdt ? `BDT ${primaryChamber.fee_bdt}` : "Fee on request";
-
                     const docId = doc.id || doc.user_id;
 
                     return (
@@ -924,7 +952,7 @@ export default function SmartCareNavigator() {
                               <div>
                                 <h2 className="text-base font-bold text-ink">{doc.full_name}</h2>
                                 <p className="text-xs text-ptext font-semibold">
-                                  {doc.specialty_name_en || doc.specialty_code}
+                                  {doc.specialty || doc.specialty_name_en || doc.specialty_code}
                                   {doc.experience_years ? ` · ${doc.experience_years} yrs exp` : ""}
                                 </p>
                               </div>
@@ -932,19 +960,41 @@ export default function SmartCareNavigator() {
                             {verChip(doc.verification)}
                           </div>
 
+                          {/* Smart Badges */}
+                          {doc._badges?.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                              {doc._badges.map((bText: string, bIdx: number) => (
+                                <span
+                                  key={bIdx}
+                                  className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20"
+                                >
+                                  {bText}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
                           {doc.qualifications && (
                             <p className="text-xs text-muted line-clamp-1">{doc.qualifications}</p>
                           )}
 
                           {primaryChamber && (
-                            <div className="rounded-lg bg-s2/60 p-2.5 text-xs text-muted space-y-1">
-                              <div className="flex items-center gap-1.5 font-medium text-ink">
-                                <Building2 className="h-3.5 w-3.5 text-muted shrink-0" />
-                                <span className="truncate">{primaryChamber.facility_name}</span>
+                            <div className="rounded-lg bg-s2/60 p-2.5 text-xs text-muted space-y-1.5">
+                              <div className="flex items-center justify-between gap-1.5 font-medium text-ink">
+                                <span className="flex items-center gap-1.5 truncate">
+                                  <Building2 className="h-3.5 w-3.5 text-ptext shrink-0" />
+                                  <span className="truncate">{primaryChamber.facility_name}</span>
+                                </span>
+                                <span className="font-bold text-ptext shrink-0">{feeText}</span>
                               </div>
-                              <div className="flex items-center justify-between text-[11px]">
-                                <span>{primaryChamber.facility_type}</span>
-                                <span className="font-semibold text-ptext">{feeText}</span>
+                              <div className="flex items-center justify-between text-[11px] text-muted border-t border-line/40 pt-1">
+                                <span className="flex items-center gap-1 truncate">
+                                  <Clock className="h-3 w-3 text-ptext shrink-0" />
+                                  <span className="truncate">{primaryChamber.schedule || "ইভনিং কনসালটেশন শিফট"}</span>
+                                </span>
+                                <span className="text-[10px] bg-emerald-500/10 text-emerald-600 font-bold px-2 py-0.5 rounded shrink-0">
+                                  অনলাইন ভিডিও
+                                </span>
                               </div>
                             </div>
                           )}
@@ -962,7 +1012,7 @@ export default function SmartCareNavigator() {
                             variant="primary"
                             onClick={() =>
                               handleProtectedAction(
-                                `/appointments?book=true&doctorId=${docId}`,
+                                `/appointments?book=true&doctorId=${docId}&doctorName=${encodeURIComponent(doc.full_name)}`,
                                 `Appointment with ${doc.full_name}`
                               )
                             }

@@ -97,36 +97,63 @@ def _check_otp(db: Session, email: str, code: str, purpose: str):
 def register(body: RegisterIn, db: Session = Depends(get_db)):
     email = body.email.lower()
     existing = db.scalar(select(Profile).where(Profile.email == email))
-    out = dict(GENERIC)
-    if existing is None:
-        p = Profile(email=email, password_hash=hash_password(body.password), role="patient", status="active")
-        db.add(p)
-        db.flush()
-        
-        # Build accessibility / clinical notes if blood group or extra info is given
-        notes = f"Blood Group: {body.blood_group}" if body.blood_group else None
-        has_demographics = bool(body.phone or body.dob or body.sex)
-        
-        db.add(PatientProfile(
-            user_id=p.id,
-            full_name=body.full_name,
-            phone=body.phone,
-            dob=body.dob,
-            sex=body.sex,
-            division=body.division,
-            district=body.district,
-            emergency_name=body.emergency_name,
-            emergency_phone=body.emergency_phone,
-            emergency_relation=body.emergency_relation,
-            accessibility_needs=notes,
-            onboarding_completed=has_demographics,
-            onboarding_step=7 if has_demographics else 1
-        ))
-        db.commit()
+    
+    # If account exists
+    if existing is not None:
+        if existing.email_verified_at is not None:
+            raise AppError(400, "email_exists", "An account with this email already exists. Please log in.")
+        # If unverified account from earlier in dev, auto-verify now
+        if settings.email_provider == "none" or settings.app_env == "dev":
+            existing.email_verified_at = datetime.now(timezone.utc)
+            db.commit()
+            return {"message": "Email verified! You can now log in.", "auto_verified": True}
         code = _issue_otp(db, email, "verify")
+        out = dict(GENERIC)
         if code:
             out["dev_otp"] = code
-    return out  # identical shape whether or not the email existed (enumeration-safe)
+        return out
+
+    # Auto-verify in dev/local mode when no live email provider is configured
+    auto_verify = (settings.email_provider == "none" or settings.app_env == "dev")
+    p = Profile(
+        email=email,
+        password_hash=hash_password(body.password),
+        role="patient",
+        status="active",
+        email_verified_at=datetime.now(timezone.utc) if auto_verify else None,
+    )
+    db.add(p)
+    db.flush()
+    
+    # Build accessibility / clinical notes if blood group or extra info is given
+    notes = f"Blood Group: {body.blood_group}" if body.blood_group else None
+    has_demographics = bool(body.phone or body.dob or body.sex)
+    
+    db.add(PatientProfile(
+        user_id=p.id,
+        full_name=body.full_name,
+        phone=body.phone,
+        dob=body.dob,
+        sex=body.sex,
+        division=body.division,
+        district=body.district,
+        emergency_name=body.emergency_name,
+        emergency_phone=body.emergency_phone,
+        emergency_relation=body.emergency_relation,
+        accessibility_needs=notes,
+        onboarding_completed=has_demographics,
+        onboarding_step=7 if has_demographics else 1
+    ))
+    db.commit()
+
+    code = _issue_otp(db, email, "verify")
+    out = {
+        "message": "Account created successfully! You can now log in." if auto_verify else GENERIC["message"],
+        "auto_verified": auto_verify,
+    }
+    if code:
+        out["dev_otp"] = code
+    return out
 
 
 @router.post("/verify-email")

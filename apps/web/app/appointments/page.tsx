@@ -74,6 +74,7 @@ export default function AppointmentsPage() {
   const [bookingBusy, setBookingBusy] = useState(false);
   const [modalDoctorSearch, setModalDoctorSearch] = useState("");
   const [modalSpecialtyFilter, setModalSpecialtyFilter] = useState("all");
+  const [paramDoctorName, setParamDoctorName] = useState("");
 
   // Meeting Link Management (Doctors / Admins)
   const [meetingLinkModalOpen, setMeetingLinkModalOpen] = useState(false);
@@ -89,6 +90,8 @@ export default function AppointmentsPage() {
       setBookModalOpen(true);
       const docId = params.get("doctorId");
       if (docId && docId !== "undefined" && docId !== "null") setSelectedDoctorId(docId);
+      const docName = params.get("doctorName");
+      if (docName) setParamDoctorName(docName);
       const shareDocId = params.get("shareDoc");
       if (shareDocId) {
         setSelectedDocIds([shareDocId]);
@@ -97,13 +100,24 @@ export default function AppointmentsPage() {
     }
   }, []);
 
-  // Selected doctor lookup
+  // Selected doctor lookup with instant fallback
   const selectedDoctor = useMemo(() => {
-    if (!selectedDoctorId || !doctorsList.data?.items) return null;
-    return doctorsList.data.items.find(
+    if (!selectedDoctorId) return null;
+    const found = doctorsList.data?.items?.find(
       (d: any) => d.id === selectedDoctorId || d.user_id === selectedDoctorId
     );
-  }, [doctorsList.data, selectedDoctorId]);
+    if (found) return found;
+    if (paramDoctorName) {
+      return {
+        id: selectedDoctorId,
+        user_id: selectedDoctorId,
+        full_name: paramDoctorName,
+        specialty: "Online Specialist",
+        chambers: [{ fee_label: "Confirmed Telehealth Fee", facility_name: "MediBridge Virtual Care" }]
+      };
+    }
+    return null;
+  }, [doctorsList.data, selectedDoctorId, paramDoctorName]);
 
   // Modal filtered doctors
   const filteredModalDoctors = useMemo(() => {
