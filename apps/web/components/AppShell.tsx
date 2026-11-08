@@ -41,6 +41,7 @@ import { api, clearSession, getRole, getToken, homeFor, setSession } from "@/lib
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/components/ThemeProvider";
 import { Badge, Tooltip, useToast } from "@/components/ui";
+import { ArtisticAmbientCanvas } from "@/components/ArtisticAmbientCanvas";
 
 type NavItem = {
   href: string;
@@ -246,7 +247,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-bg text-ink md:flex">
+    <div className="min-h-screen bg-bg text-ink md:flex relative overflow-x-hidden">
+      <ArtisticAmbientCanvas />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-input focus:bg-primary focus:px-3 focus:py-2 focus:text-onprimary font-semibold"
