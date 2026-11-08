@@ -91,6 +91,28 @@ export default function AdminDashboardPage() {
   const [evidenceReference, setEvidenceReference] = useState("");
   const [actingEntityId, setActingEntityId] = useState<string | null>(null);
 
+  // Action & Audit Reason Dialog State
+  const [actionModal, setActionModal] = useState<{
+    open: boolean;
+    type: "verify" | "application" | "user_status";
+    kind?: "doctors" | "facilities";
+    id: string;
+    name: string;
+    subtext?: string;
+    decision?: "approve" | "reject" | "need_more_evidence";
+    targetStatus?: "active" | "suspended";
+    reason: string;
+    evidence: string;
+  }>({
+    open: false,
+    type: "verify",
+    id: "",
+    name: "",
+    reason: "",
+    evidence: "",
+  });
+  const [modalSubmitting, setModalSubmitting] = useState(false);
+
   // Doctor status directory filters
   const [docSearchQuery, setDocSearchQuery] = useState("");
   const [docStatusFilter, setDocStatusFilter] = useState("all");
@@ -217,6 +239,176 @@ export default function AdminDashboardPage() {
       addToast("error", "User Update Failed", e.message);
     } finally {
       setStatusUpdatingId(null);
+    }
+  };
+
+  // Interactive Action Modal Openers
+  const openVerifyModal = (
+    kind: "doctors" | "facilities",
+    entityId: string,
+    name: string,
+    meta: string,
+    decision: "approve" | "reject" | "need_more_evidence",
+    existingEvidence?: string
+  ) => {
+    let defaultReason = "";
+    let defaultEvidence = existingEvidence || (meta ? `Ref: ${meta}` : "BMDC registry check");
+
+    if (decision === "approve") {
+      defaultReason =
+        kind === "doctors"
+          ? "BMDC registration verified and clinical credentials approved."
+          : "Healthcare facility licensing and regulatory clearance confirmed.";
+    } else if (decision === "reject") {
+      defaultReason =
+        kind === "doctors"
+          ? "Credentials could not be validated or accreditation revoked by medical board."
+          : "Facility accreditation revoked or compliance criteria not met.";
+      defaultEvidence = "";
+    } else {
+      defaultReason = "Additional medical council documentation or license renewal required.";
+    }
+
+    setActionModal({
+      open: true,
+      type: "verify",
+      kind,
+      id: entityId,
+      name,
+      subtext: meta,
+      decision,
+      reason: decisionReason.trim() || defaultReason,
+      evidence: evidenceReference.trim() || defaultEvidence,
+    });
+  };
+
+  const openApplicationModal = (
+    appId: string,
+    applicantName: string,
+    roleMeta: string,
+    decision: "approve" | "reject" | "need_more_evidence",
+    evidenceRefs?: string[]
+  ) => {
+    let defaultReason = "";
+    const ev =
+      evidenceRefs && evidenceRefs.length > 0
+        ? evidenceRefs.join(", ")
+        : roleMeta
+        ? `Ref: ${roleMeta}`
+        : "BMDC registry verified";
+
+    if (decision === "approve") {
+      defaultReason = "Application verified against BMDC / DGHS official registry.";
+    } else if (decision === "reject") {
+      defaultReason = "Application rejected due to invalid or unverified clinical accreditation.";
+    } else {
+      defaultReason = "Insufficient documentation submitted; please provide updated BMDC registration certificate.";
+    }
+
+    setActionModal({
+      open: true,
+      type: "application",
+      id: appId,
+      name: applicantName,
+      subtext: roleMeta,
+      decision,
+      reason: decisionReason.trim() || defaultReason,
+      evidence: evidenceReference.trim() || ev,
+    });
+  };
+
+  const openUserStatusModal = (
+    userId: string,
+    email: string,
+    role: string,
+    newStatus: "active" | "suspended"
+  ) => {
+    const defaultReason =
+      newStatus === "suspended"
+        ? "Account suspended by administrator for clinical policy compliance review."
+        : "Account reactivated following administrator review and identity confirmation.";
+
+    setActionModal({
+      open: true,
+      type: "user_status",
+      id: userId,
+      name: email,
+      subtext: `Role: ${role}`,
+      targetStatus: newStatus,
+      reason: userStatusReason.trim() || defaultReason,
+      evidence: "",
+    });
+  };
+
+  const handleConfirmModalAction = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!actionModal.reason.trim()) {
+      addToast("error", "Reason Mandatory", "Please provide a clinical audit reason for this action.");
+      return;
+    }
+
+    setModalSubmitting(true);
+    setActingEntityId(actionModal.id);
+    try {
+      if (actionModal.type === "verify" && actionModal.kind && actionModal.decision) {
+        if (actionModal.decision === "approve" && !actionModal.evidence.trim()) {
+          addToast("error", "Evidence Mandatory", "Attach medical council registration or verification reference.");
+          setModalSubmitting(false);
+          setActingEntityId(null);
+          return;
+        }
+        await api(`/admin/${actionModal.kind}/${actionModal.id}/verify`, {
+          method: "PATCH",
+          body: {
+            decision: actionModal.decision,
+            reason: actionModal.reason.trim(),
+            evidence: actionModal.evidence.trim() ? [actionModal.evidence.trim()] : [],
+          },
+        });
+        queue.reload();
+        overview.reload();
+        doctorsStatusApi.reload();
+        const actionLabel =
+          actionModal.decision === "approve"
+            ? "Verified"
+            : actionModal.decision === "reject"
+            ? "Revoked / Rejected"
+            : "Review Requested";
+        addToast("success", `Decision Logged (${actionLabel})`, `${actionModal.name} status updated in registry.`);
+      } else if (actionModal.type === "application" && actionModal.decision) {
+        await api(`/admin/role-applications/${actionModal.id}`, {
+          method: "PATCH",
+          body: {
+            decision: actionModal.decision,
+            reason: actionModal.reason.trim(),
+            evidence: actionModal.evidence.trim() ? [actionModal.evidence.trim()] : ["BMDC registry validated"],
+          },
+        });
+        queue.reload();
+        overview.reload();
+        doctorsStatusApi.reload();
+        addToast("success", "Application Decided", `${actionModal.name} marked as ${actionModal.decision}.`);
+      } else if (actionModal.type === "user_status" && actionModal.targetStatus) {
+        await api(`/admin/users/${actionModal.id}/status`, {
+          method: "PATCH",
+          body: {
+            status: actionModal.targetStatus,
+            reason: actionModal.reason.trim(),
+          },
+        });
+        usersList.reload();
+        addToast(
+          "success",
+          `User ${actionModal.targetStatus === "active" ? "Reactivated" : "Suspended"}`,
+          `${actionModal.name} account status updated.`
+        );
+      }
+      setActionModal((prev) => ({ ...prev, open: false }));
+    } catch (err: any) {
+      addToast("error", "Action Failed", err.message || "Failed to execute administrative decision.");
+    } finally {
+      setModalSubmitting(false);
+      setActingEntityId(null);
     }
   };
 
@@ -452,18 +644,23 @@ export default function AdminDashboardPage() {
         <div className="space-y-4">
           {/* Reason & Evidence Control Strip */}
           <Card className="space-y-3 border-primary/30">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted">
-              Clinical Verification Form (Required for All Approvals)
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted">
+                Clinical Audit Defaults (Optional Preset)
+              </h3>
+              <span className="text-[11px] text-muted">
+                Tip: Clicking any "Verify", "Revoke", or "Review" button below opens an interactive prompt to write or confirm your reason.
+              </span>
+            </div>
             <div className="grid gap-3 md:grid-cols-2">
               <Input
-                label="Audit Decision Reason *"
+                label="Default Audit Reason (Optional)"
                 value={decisionReason}
                 onChange={(e) => setDecisionReason(e.target.value)}
                 placeholder="e.g. Validated against BMDC registry portal records"
               />
               <Input
-                label="Evidence Reference (Gazette / BMDC URL) *"
+                label="Default Evidence Reference (Optional)"
                 value={evidenceReference}
                 onChange={(e) => setEvidenceReference(e.target.value)}
                 placeholder="e.g. BMDC Reg #A-48219 verified on 2026-11-05"
@@ -537,7 +734,17 @@ export default function AdminDashboardPage() {
                               size="xs"
                               variant="primary"
                               busy={actingEntityId === app.id}
-                              onClick={() => handleDecideApplication(app.id, "approve")}
+                              onClick={() =>
+                                openApplicationModal(
+                                  app.id,
+                                  d.full_name || d.facility_name || "Applicant",
+                                  isDoctor
+                                    ? `Doctor • BMDC: ${d.bmdc_number || "N/A"}`
+                                    : "Healthcare Facility Applicant",
+                                  "approve",
+                                  app.evidence_refs
+                                )
+                              }
                             >
                               Approve & Verify
                             </Button>
@@ -545,7 +752,17 @@ export default function AdminDashboardPage() {
                               size="xs"
                               variant="secondary"
                               busy={actingEntityId === app.id}
-                              onClick={() => handleDecideApplication(app.id, "need_more_evidence")}
+                              onClick={() =>
+                                openApplicationModal(
+                                  app.id,
+                                  d.full_name || d.facility_name || "Applicant",
+                                  isDoctor
+                                    ? `Doctor • BMDC: ${d.bmdc_number || "N/A"}`
+                                    : "Healthcare Facility Applicant",
+                                  "need_more_evidence",
+                                  app.evidence_refs
+                                )
+                              }
                             >
                               Need Evidence
                             </Button>
@@ -553,7 +770,17 @@ export default function AdminDashboardPage() {
                               size="xs"
                               variant="danger"
                               busy={actingEntityId === app.id}
-                              onClick={() => handleDecideApplication(app.id, "reject")}
+                              onClick={() =>
+                                openApplicationModal(
+                                  app.id,
+                                  d.full_name || d.facility_name || "Applicant",
+                                  isDoctor
+                                    ? `Doctor • BMDC: ${d.bmdc_number || "N/A"}`
+                                    : "Healthcare Facility Applicant",
+                                  "reject",
+                                  app.evidence_refs
+                                )
+                              }
                             >
                               Reject
                             </Button>
@@ -651,7 +878,16 @@ export default function AdminDashboardPage() {
                               size="xs"
                               variant="primary"
                               busy={actingEntityId === d.id}
-                              onClick={() => handleVerify("doctors", d.id, "approve")}
+                              onClick={() =>
+                                openVerifyModal(
+                                  "doctors",
+                                  d.id,
+                                  d.full_name,
+                                  d.bmdc_number ? `BMDC Reg #${d.bmdc_number}` : d.specialty || "Registered Practitioner",
+                                  "approve",
+                                  d.bmdc_number ? `BMDC Reg #${d.bmdc_number}` : "Medical Council Registry"
+                                )
+                              }
                             >
                               Verify Doctor
                             </Button>
@@ -660,7 +896,15 @@ export default function AdminDashboardPage() {
                               size="xs"
                               variant="secondary"
                               busy={actingEntityId === d.id}
-                              onClick={() => handleVerify("doctors", d.id, "need_more_evidence")}
+                              onClick={() =>
+                                openVerifyModal(
+                                  "doctors",
+                                  d.id,
+                                  d.full_name,
+                                  d.bmdc_number ? `BMDC Reg #${d.bmdc_number}` : d.specialty || "Registered Practitioner",
+                                  "need_more_evidence"
+                                )
+                              }
                             >
                               Audit Review
                             </Button>
@@ -669,7 +913,15 @@ export default function AdminDashboardPage() {
                             size="xs"
                             variant="danger"
                             busy={actingEntityId === d.id}
-                            onClick={() => handleVerify("doctors", d.id, "reject")}
+                            onClick={() =>
+                              openVerifyModal(
+                                "doctors",
+                                d.id,
+                                d.full_name,
+                                d.bmdc_number ? `BMDC Reg #${d.bmdc_number}` : d.specialty || "Registered Practitioner",
+                                "reject"
+                              )
+                            }
                           >
                             Revoke
                           </Button>
@@ -710,7 +962,16 @@ export default function AdminDashboardPage() {
                           size="xs"
                           variant="primary"
                           busy={actingEntityId === f.id}
-                          onClick={() => handleVerify("facilities", f.id, "approve")}
+                          onClick={() =>
+                            openVerifyModal(
+                              "facilities",
+                              f.id,
+                              f.name,
+                              `District: ${f.district || "Dhaka"} · ID: ${f.id}`,
+                              "approve",
+                              `Directorate General of Health Services (DGHS) License / ${f.district || "Dhaka"}`
+                            )
+                          }
                         >
                           Approve Hospital
                         </Button>
@@ -718,7 +979,15 @@ export default function AdminDashboardPage() {
                           size="xs"
                           variant="danger"
                           busy={actingEntityId === f.id}
-                          onClick={() => handleVerify("facilities", f.id, "reject")}
+                          onClick={() =>
+                            openVerifyModal(
+                              "facilities",
+                              f.id,
+                              f.name,
+                              `District: ${f.district || "Dhaka"} · ID: ${f.id}`,
+                              "reject"
+                            )
+                          }
                         >
                           Reject
                         </Button>
@@ -748,13 +1017,16 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Action Reason Input */}
-          <div className="rounded-input border border-line bg-s2/50 p-3">
+          <div className="rounded-input border border-line bg-s2/50 p-3 space-y-1">
             <Input
-              label="Action Reason (Mandatory for suspend/reactivate) *"
+              label="Default Action Reason (Optional Preset)"
               value={userStatusReason}
               onChange={(e) => setUserStatusReason(e.target.value)}
               placeholder="e.g. Terms violation or requested account reactivation"
             />
+            <p className="text-[11px] text-muted">
+              Tip: Clicking Suspend or Reactivate on any user below opens an instant reason confirmation prompt.
+            </p>
           </div>
 
           {/* Search & Role Filter */}
@@ -828,7 +1100,7 @@ export default function AdminDashboardPage() {
                             variant="secondary"
                             className="text-danger hover:bg-danger/10"
                             busy={isBusy}
-                            onClick={() => handleSetUserStatus(u.id, "suspended")}
+                            onClick={() => openUserStatusModal(u.id, u.email, u.role, "suspended")}
                           >
                             Suspend
                           </Button>
@@ -837,7 +1109,7 @@ export default function AdminDashboardPage() {
                             size="xs"
                             variant="primary"
                             busy={isBusy}
-                            onClick={() => handleSetUserStatus(u.id, "active")}
+                            onClick={() => openUserStatusModal(u.id, u.email, u.role, "active")}
                           >
                             Reactivate
                           </Button>
@@ -1040,6 +1312,134 @@ export default function AdminDashboardPage() {
           </Async>
         </Card>
       )}
+
+      {/* =========================================================
+         ACTION & CLINICAL AUDIT REASON DIALOG MODAL
+         ========================================================= */}
+      <Dialog
+        open={actionModal.open}
+        title={
+          actionModal.type === "user_status"
+            ? actionModal.targetStatus === "suspended"
+              ? "Suspend User Account"
+              : "Reactivate User Account"
+            : actionModal.decision === "reject"
+            ? actionModal.kind === "facilities"
+              ? "Reject Facility Verification"
+              : "Revoke Doctor Verification"
+            : actionModal.decision === "approve"
+            ? actionModal.kind === "facilities"
+              ? "Verify Healthcare Facility"
+              : "Verify Doctor Credentials"
+            : "Request Additional Evidence & Audit Review"
+        }
+        onClose={() => setActionModal((prev) => ({ ...prev, open: false }))}
+      >
+        <form onSubmit={handleConfirmModalAction} className="space-y-4 pt-1">
+          {/* Target Entity Summary Box */}
+          <div className="rounded-card border border-line bg-s2/60 p-3.5 space-y-1.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="font-bold text-sm text-ink">{actionModal.name}</span>
+              <Chip
+                kind={
+                  actionModal.decision === "reject" || actionModal.targetStatus === "suspended"
+                    ? "failed"
+                    : actionModal.decision === "approve" || actionModal.targetStatus === "active"
+                    ? "verified"
+                    : "pending"
+                }
+              >
+                {actionModal.decision === "reject"
+                  ? "Revoke / Reject"
+                  : actionModal.decision === "approve"
+                  ? "Approve & Verify"
+                  : actionModal.decision === "need_more_evidence"
+                  ? "Need Evidence"
+                  : actionModal.targetStatus === "suspended"
+                  ? "Suspend Account"
+                  : "Reactivate Account"}
+              </Chip>
+            </div>
+            {actionModal.subtext && (
+              <p className="text-xs text-muted font-mono">{actionModal.subtext}</p>
+            )}
+          </div>
+
+          {/* Clinical Audit Reason Input (Mandatory) */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-ink flex items-center justify-between">
+              <span>
+                Audit Reason (অডিট ও ভেরিফিকেশন কারণ) <strong className="text-danger">*</strong>
+              </span>
+              <span className="text-[11px] text-muted font-normal">Mandatory for compliance</span>
+            </label>
+            <textarea
+              required
+              rows={3}
+              value={actionModal.reason}
+              onChange={(e) => setActionModal((prev) => ({ ...prev, reason: e.target.value }))}
+              placeholder="State governance or clinical reason (e.g. BMDC registry verified / credentials revoked)..."
+              className="w-full rounded-input border border-line bg-s1 px-3 py-2 text-xs text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition resize-y min-h-[80px]"
+            />
+            <p className="text-[11px] text-muted">
+              This reason is permanently recorded in the immutable MediBridge clinical audit log.
+            </p>
+          </div>
+
+          {/* Evidence Reference Input (Required for Approvals) */}
+          {(actionModal.type === "verify" || actionModal.type === "application") && (
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-ink flex items-center justify-between">
+                <span>
+                  Evidence Reference (প্রমাণ ও গেজেট সূত্র)
+                  {actionModal.decision === "approve" && <strong className="text-danger"> *</strong>}
+                </span>
+                <span className="text-[11px] text-muted font-normal">
+                  {actionModal.decision === "approve" ? "Required for approvals" : "Optional for revocations"}
+                </span>
+              </label>
+              <Input
+                value={actionModal.evidence}
+                onChange={(e) => setActionModal((prev) => ({ ...prev, evidence: e.target.value }))}
+                placeholder="e.g. BMDC Reg #A-48219 or verification registry portal link"
+              />
+            </div>
+          )}
+
+          {/* Action Footer Buttons */}
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-line">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setActionModal((prev) => ({ ...prev, open: false }))}
+              disabled={modalSubmitting}
+            >
+              Cancel (বাতিল)
+            </Button>
+            <Button
+              type="submit"
+              variant={
+                actionModal.decision === "reject" || actionModal.targetStatus === "suspended"
+                  ? "danger"
+                  : "primary"
+              }
+              busy={modalSubmitting}
+              disabled={
+                !actionModal.reason.trim() ||
+                (actionModal.decision === "approve" && !actionModal.evidence.trim())
+              }
+            >
+              {actionModal.decision === "reject"
+                ? "Confirm Revoke (বাতিল নিশ্চিত করুন)"
+                : actionModal.targetStatus === "suspended"
+                ? "Confirm Suspend (স্থগিত নিশ্চিত করুন)"
+                : actionModal.decision === "need_more_evidence"
+                ? "Request Evidence (প্রমাণপত্র চান)"
+                : "Confirm Verification (ভেরিফাই নিশ্চিত করুন)"}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
     </div>
   );
 }
