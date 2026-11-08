@@ -63,6 +63,7 @@ const ALLOWED_EXTS = [".pdf", ".jpg", ".jpeg", ".png"];
 export default function OcrScannerPage() {
   useGuard(["patient"]);
   const { t, locale } = useI18n();
+  const isBn = locale === "bn";
   const router = useRouter();
   const { addToast } = useToast();
 
