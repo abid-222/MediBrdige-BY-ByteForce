@@ -1,28 +1,28 @@
-/* MediBridge design tokens: Midnight, Ivory, Neon (Dark-first by default) */
-:root, :root[data-theme="dark"] {
-  --bg: #07090B;
-  --surface-1: #0D1114;
-  --surface-2: #141A1F;
-  --border: #232C33;
-  --text: #F3EFE6;
-  --text-muted: #8E9AA3;
-  --accent: #39FF88;
-  --accent-ink: #04140B;
-  --accent-glow: rgba(57, 255, 136, 0.18);
-  --info: #5BC0FF;
-  --warn: #FFC857;
-  --danger: #FF5C6C;
+/* MediBridge design tokens: Clean Light Medical (Default) */
+:root, :root[data-theme="light"] {
+  --bg: #F8FAFC;
+  --surface-1: #FFFFFF;
+  --surface-2: #F1F5F9;
+  --border: #E2E8F0;
+  --text: #0F172A;
+  --text-muted: #64748B;
+  --accent: #0F9D58;
+  --accent-ink: #FFFFFF;
+  --accent-glow: rgba(15, 157, 88, 0.12);
+  --info: #0284C7;
+  --warn: #D97706;
+  --danger: #DC2626;
 
-  /* Aliases for backwards compatibility with existing UI components */
+  /* Aliases */
   --primary: var(--accent);
   --on-primary: var(--accent-ink);
   --primary-text: var(--accent);
-  --primary-soft: rgba(57, 255, 136, 0.12);
+  --primary-soft: rgba(15, 157, 88, 0.08);
   --warning: var(--warn);
 
-  --glow: 0 0 0 1px var(--accent), 0 0 24px var(--accent-glow);
-  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.7), 0 2px 6px -1px rgba(0, 0, 0, 0.5);
-  --shadow-card-hover: 0 12px 32px -4px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(57, 255, 136, 0.25);
+  --glow: 0 0 0 1px var(--accent), 0 0 14px var(--accent-glow);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
   --radius-card: 14px;
   --radius-input: 10px;
   --radius-pill: 999px;
@@ -30,34 +30,33 @@
   --font-heading: "Playfair Display", "Fraunces", Georgia, serif;
   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
-:root[data-theme="light"] {
-  --bg: #FAF7F0;
-  --surface-1: #FFFFFF;
-  --surface-2: #F3EFE5;
-  --border: #E4DECF;
-  --text: #14181B;
-  --text-muted: #5E676E;
-  --accent: #0F9D58;
-  --accent-ink: #FFFFFF;
-  --accent-glow: rgba(15, 157, 88, 0.14);
-  --info: #1B72C8;
-  --warn: #B7791F;
-  --danger: #C62F3E;
+:root[data-theme="dark"] {
+  --bg: #0B0F13;
+  --surface-1: #131920;
+  --surface-2: #1B232C;
+  --border: #283542;
+  --text: #E6EDF3;
+  --text-muted: #8B98A5;
+  --accent: #22C55E;
+  --accent-ink: #04140B;
+  --accent-glow: rgba(34, 197, 94, 0.14);
+  --info: #38BDF8;
+  --warn: #FBBF24;
+  --danger: #F87171;
 
-  /* Aliases */
   --primary: var(--accent);
   --on-primary: var(--accent-ink);
   --primary-text: var(--accent);
-  --primary-soft: rgba(15, 157, 88, 0.12);
+  --primary-soft: rgba(34, 197, 94, 0.12);
   --warning: var(--warn);
 
   --glow: 0 0 0 1px var(--accent), 0 0 18px var(--accent-glow);
-  --shadow-card: 0 2px 10px rgba(20, 32, 27, 0.06), 0 1px 3px rgba(20, 32, 27, 0.04);
-  --shadow-card-hover: 0 8px 24px rgba(20, 32, 27, 0.12), 0 0 0 1px rgba(15, 157, 88, 0.3);
-  color-scheme: light;
+  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.6), 0 2px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 12px 32px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(34, 197, 94, 0.25);
+  color-scheme: dark;
 }
 
 /* Bangla locale: Bangla-capable font only here, taller line height. */

@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 
 type Theme = "dark" | "light" | "system";
 const Ctx = createContext<{ theme: Theme; setTheme: (t: Theme) => void }>({
-  theme: "dark",
+  theme: "light",
   setTheme: () => {},
 });
 
@@ -15,10 +15,10 @@ function apply(t: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setT] = useState<Theme>("dark");
+  const [theme, setT] = useState<Theme>("light");
 
   useEffect(() => {
-    let saved: Theme = "dark";
+    let saved: Theme = "light";
     try {
       const stored = localStorage.getItem("mb_theme") as Theme;
       if (stored) saved = stored;

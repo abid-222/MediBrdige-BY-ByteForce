@@ -13,7 +13,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ThemeProvider>
           <I18nProvider>
             <ToastProvider>
-              <AppLoadingScreen minDurationMs={450}>
+              <AppLoadingScreen minDurationMs={250}>
                 <AppShell>{children}</AppShell>
               </AppLoadingScreen>
             </ToastProvider>
