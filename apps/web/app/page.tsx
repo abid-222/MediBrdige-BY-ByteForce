@@ -29,6 +29,7 @@ import {
   Stethoscope,
   UploadCloud,
   Users,
+  Video,
 } from "lucide-react";
 import { api, getRole, getToken, homeFor } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -40,6 +41,7 @@ import { ManusBentoGrid } from "@/components/ManusBentoGrid";
 import { WatermelonBrowserDemo } from "@/components/watermelon/WatermelonBrowserDemo";
 import { CommunityMarquee } from "@/components/watermelon/CommunityMarquee";
 import { Spotlight3DCard } from "@/components/Spotlight3DCard";
+import { CardSplitAccordion, type AccordionItemData } from "@/components/watermelon/card-split-accordian";
 
 export default function Home() {
   const { t, locale } = useI18n();
@@ -56,6 +58,49 @@ export default function Home() {
   }, []);
 
   const isBn = locale === "bn";
+
+  const bnFaqItems: AccordionItemData[] = [
+    {
+      id: 1,
+      title: "ডুয়াল-গেট ক্লিনিক্যাল সেফটি গার্ড কীভাবে জীবন রক্ষা করে?",
+      icon: <ShieldCheck className="h-5 w-5 text-primary" />,
+      tag: "CLINICAL GATE",
+      content:
+        "রোগীর প্রতিটি ইনপুট এআই মডেলের কাছে যাওয়ার আগে একটি কঠোর অ্যালগরিদমিক নিয়মে যাচাই হয়। বুকে তীব্র ব্যথা, শ্বাসকষ্ট বা আত্মঘাতী ভাবনার মতো রেড-ফ্ল্যাগ উপসর্গ দেখা দিলে এটি সাথে সাথে সাধারণ বুকিং বাতিল করে ৯৯৯ জরুরি সেবা এবং নিকটবর্তী জরুরি হাসপাতালের পথ দেখায়।",
+    },
+    {
+      id: 2,
+      title: "দ্বিভাষিক প্রেসক্রিপশন ও ল্যাব OCR কীভাবে মান এক্সট্রাক্ট করে?",
+      icon: <FileSearch className="h-5 w-5 text-info" />,
+      tag: "OCR VISION",
+      content:
+        "হাতে লেখা বা প্রিন্টেড বাংলা ও ইংরেজি প্রেসক্রিপশন স্ক্যান করে হিমোগ্লোবিন, প্লেটলেট, ক্রিয়েটিনিন বা সুগারের মতো মূল প্যারামিটারগুলো চিহ্নিত করা হয়। প্রতিটি মানের জন্য কনফিডেন্স স্কোর থাকে যাতে ডাক্তার সহজেই মূল স্ক্যানের সাথে মিলিয়ে ভেরিফাই করতে পারেন।",
+    },
+    {
+      id: 3,
+      title: "১০০% অনলাইন টেলিহেলথ ও অটোমেটেড গুগল মিট সিস্টেম কীভাবে কাজ করে?",
+      icon: <Video className="h-5 w-5 text-primary" />,
+      tag: "TELEHEALTH",
+      content:
+        "আমাদের সকল কনসাল্টেশন সম্পূর্ণ অনলাইনে পরিচালিত হয়। কোনো ফিজিক্যাল হসপিটাল ভিজিটের ঝামেলা নেই। অ্যাপয়েন্টমেন্ট কনফার্ম হওয়ার সাথে সাথে অটোমেটিক গুগল মিট লিংক তৈরি হয় এবং ডাক্তার নির্ধারিত সময়ে রোগীর সাথে অনলাইনে সরাসরি মিটিংয়ে অংশ নেন।",
+    },
+    {
+      id: 4,
+      title: "বিএমডিসি (BMDC) রেজিস্ট্রির মাধ্যমে কীভাবে ডাক্তারদের লাইসেন্স অডিট হয়?",
+      icon: <Stethoscope className="h-5 w-5 text-warn" />,
+      tag: "VERIFICATION",
+      content:
+        "সকল চিকিৎসককে বাংলাদেশ মেডিকেল অ্যান্ড ডেন্টাল কাউন্সিল (BMDC) এর বৈধ রেজিস্ট্রেশন নম্বর দিয়ে নিবন্ধন করতে হয়। সুপার অ্যাডমিনরা সরকারি রেকর্ডের সাথে মিলিয়ে যাচাই সাপেক্ষে ব্লু-ব্যাজ অনুমোদন দেন। ভুয়া তথ্য দিলে কারণ দর্শিয়ে অ্যাকাউন্ট স্থগিত করা হয়।",
+    },
+    {
+      id: 5,
+      title: "রোগীর কনসেন্ট ও অপরিবর্তনীয় অডিট ট্রেইল কীভাবে কাজ করে?",
+      icon: <Lock className="h-5 w-5 text-danger" />,
+      tag: "DATA PRIVACY",
+      content:
+        "রোগী তার মেডিক্যাল তথ্যের একক মালিক। যতক্ষণ না রোগী সক্রিয় সম্মতি (Consent) দিচ্ছেন, ততক্ষণ কোনো ডাক্তার তার চার্ট দেখতে পারেন না। প্রতিটি অ্যাকশন (লগইন, ফাইল খোলা, এআই ড্রাফট এডিট) ক্রিপ্টোগ্রাফিকভাবে সাইন হয়ে অপরিবর্তনীয় অডিট লগে সংরক্ষিত থাকে।",
+    },
+  ];
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-bg text-ink font-sans selection:bg-primary/20 selection:text-primary">
@@ -474,7 +519,37 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 9. Community Feedback Marquee */}
+      {/* 9. Card Split Accordion (Watermelon UI Registry Component) */}
+      <section className="relative z-10 py-16 md:py-24 font-mono">
+        <div className="container mx-auto px-4 md:px-8 lg:px-12 max-w-4xl">
+          <div className="mb-10 flex flex-col items-start md:items-center text-left md:text-center">
+            <div className="text-primary mb-3 inline-flex items-center text-xs font-bold tracking-widest uppercase">
+              <span className="mr-3 opacity-70">{"//"}</span>
+              CARD SPLIT ACCORDION ARCHITECTURE
+            </div>
+            <h2 className="font-heading text-2xl sm:text-4xl font-bold tracking-tight text-ink font-sans">
+              {isBn ? (
+                <>
+                  প্রোটোকল ও প্রায়শই জিজ্ঞাসিত <span className="text-primary">প্রশ্নোত্তর</span>
+                </>
+              ) : (
+                <>
+                  Clinical Protocols & <span className="text-primary">System Mechanics</span>
+                </>
+              )}
+            </h2>
+            <p className="mt-3 text-xs sm:text-sm text-muted font-mono tracking-wider uppercase max-w-xl">
+              {isBn
+                ? "কার্ড স্প্লিট অ্যাকর্ডিয়ন এ ক্লিক করে সিস্টেম মেকানিক্স ও প্রোটোকলগুলো বিস্তারিত জানুন।"
+                : "Interactive morphing split cards revealing core clinical logic and safeguards."}
+            </p>
+          </div>
+
+          <CardSplitAccordion items={isBn ? bnFaqItems : undefined} />
+        </div>
+      </section>
+
+      {/* 10. Community Feedback Marquee */}
       <CommunityMarquee isBn={isBn} />
 
       {/* 10. Technical Watermelon UI Footer */}
