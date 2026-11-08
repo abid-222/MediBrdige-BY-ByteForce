@@ -75,6 +75,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     setRole(activeRole);
   }, [path]);
 
+  const isLanding = path === "/";
+
   // Read collapsed state from localStorage
   useEffect(() => {
     try {
@@ -259,113 +261,115 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* =========================================================
          DESKTOP SIDEBAR
          ========================================================= */}
-      <aside
-        className={`hidden shrink-0 flex-col border-r border-line bg-s1 transition-all duration-300 md:flex ${
-          collapsed ? "w-20" : "w-64"
-        }`}
-        aria-label="Sidebar Navigation"
-      >
-        {/* Brand / Logo & Toggle */}
-        <div className="flex h-16 items-center justify-between px-4 border-b border-line">
-          <Link href="/" className="flex items-center gap-3 font-heading text-lg font-bold tracking-tight">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-onprimary shadow-[0_0_16px_var(--accent-glow)]">
-              <HeartPulse className="h-5 w-5" aria-hidden />
-            </span>
-            {!collapsed && (
-              <span className="fade-in font-bold">
-                MediBridge <span className="text-ptext">AI</span>
+      {!isLanding && (
+        <aside
+          className={`hidden shrink-0 flex-col border-r border-line bg-s1 transition-all duration-300 md:flex ${
+            collapsed ? "w-20" : "w-64"
+          }`}
+          aria-label="Sidebar Navigation"
+        >
+          {/* Brand / Logo & Toggle */}
+          <div className="flex h-16 items-center justify-between px-4 border-b border-line">
+            <Link href="/" className="flex items-center gap-3 font-heading text-lg font-bold tracking-tight">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-onprimary shadow-[0_0_16px_var(--accent-glow)]">
+                <HeartPulse className="h-5 w-5" aria-hidden />
               </span>
-            )}
-          </Link>
-          <button
-            onClick={toggleSidebar}
-            aria-label={collapsed ? t("common.expandSidebar") || "Expand" : t("common.collapseSidebar") || "Collapse"}
-            title={collapsed ? t("common.expandSidebar") || "Expand" : t("common.collapseSidebar") || "Collapse"}
-            className="hidden lg:flex h-8 w-8 items-center justify-center rounded-lg border border-line text-muted hover:bg-s2 hover:text-ink transition"
-          >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </button>
-        </div>
-
-        {/* Navigation list */}
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Main menu">
-          {!collapsed && (
-            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-muted">
-              {role === "none" ? "Main Navigation" : `${role.replace("_", " ")} Navigation`}
-            </div>
-          )}
-          <div className="space-y-1">
-            {roleNavItems.map(({ href, labelKey, fallbackLabel, icon: Icon, badge }) => {
-              const active = isActive(href);
-              const label = getNavLabel(labelKey, fallbackLabel);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  aria-current={active ? "page" : undefined}
-                  className={`group flex min-h-[42px] items-center gap-3 rounded-input px-3 text-xs font-semibold transition ${
-                    active
-                      ? "border border-primary/40 bg-psoft text-ptext shadow-[0_0_12px_var(--accent-glow)] font-bold"
-                      : "text-muted hover:bg-s2 hover:text-ink"
-                  }`}
-                >
-                  <Icon className={`h-4 w-4 shrink-0 transition-transform group-hover:scale-110 ${active ? "text-ptext" : "text-muted group-hover:text-ink"}`} />
-                  {!collapsed && (
-                    <div className="flex flex-1 items-center justify-between">
-                      <span className="truncate">{label}</span>
-                      {badge !== undefined && badge > 0 && <Badge count={badge} />}
-                    </div>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-
-        {/* Sidebar Footer / User Profile summary */}
-        <div className="border-t border-line p-3">
-          {role !== "none" ? (
-            <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} gap-2`}>
               {!collapsed && (
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-bold text-ink capitalize">{role.replace("_", " ")}</p>
-                  <p className="text-[11px] text-muted font-mono">Online</p>
-                </div>
+                <span className="fade-in font-bold">
+                  MediBridge <span className="text-ptext">AI</span>
+                </span>
               )}
-              <button
-                onClick={logout}
-                aria-label={t("nav.logout") || "Log out"}
-                title={t("nav.logout") || "Log out"}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-input border border-line text-muted hover:bg-s2 hover:text-danger transition"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
+            </Link>
+            <button
+              onClick={toggleSidebar}
+              aria-label={collapsed ? t("common.expandSidebar") || "Expand" : t("common.collapseSidebar") || "Collapse"}
+              title={collapsed ? t("common.expandSidebar") || "Expand" : t("common.collapseSidebar") || "Collapse"}
+              className="hidden lg:flex h-8 w-8 items-center justify-center rounded-lg border border-line text-muted hover:bg-s2 hover:text-ink transition"
+            >
+              {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </button>
+          </div>
+
+          {/* Navigation list */}
+          <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Main menu">
+            {!collapsed && (
+              <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-muted">
+                {role === "none" ? "Main Navigation" : `${role.replace("_", " ")} Navigation`}
+              </div>
+            )}
+            <div className="space-y-1">
+              {roleNavItems.map(({ href, labelKey, fallbackLabel, icon: Icon, badge }) => {
+                const active = isActive(href);
+                const label = getNavLabel(labelKey, fallbackLabel);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    aria-current={active ? "page" : undefined}
+                    className={`group flex min-h-[42px] items-center gap-3 rounded-input px-3 text-xs font-semibold transition ${
+                      active
+                        ? "border border-primary/40 bg-psoft text-ptext shadow-[0_0_12px_var(--accent-glow)] font-bold"
+                        : "text-muted hover:bg-s2 hover:text-ink"
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 shrink-0 transition-transform group-hover:scale-110 ${active ? "text-ptext" : "text-muted group-hover:text-ink"}`} />
+                    {!collapsed && (
+                      <div className="flex flex-1 items-center justify-between">
+                        <span className="truncate">{label}</span>
+                        {badge !== undefined && badge > 0 && <Badge count={badge} />}
+                      </div>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
-          ) : (
-            <div className="flex flex-col gap-1.5">
-              <Link href="/login" className="w-full">
-                <button className="flex min-h-[38px] w-full items-center justify-center gap-2 rounded-input border border-primary/50 bg-psoft text-xs font-semibold text-ptext hover:bg-primary hover:text-onprimary transition">
-                  <LogIn className="h-3.5 w-3.5 shrink-0" />
-                  {!collapsed && <span>{t("auth.login") || "Log in"}</span>}
+          </nav>
+
+          {/* Sidebar Footer / User Profile summary */}
+          <div className="border-t border-line p-3">
+            {role !== "none" ? (
+              <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} gap-2`}>
+                {!collapsed && (
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-bold text-ink capitalize">{role.replace("_", " ")}</p>
+                    <p className="text-[11px] text-muted font-mono">Online</p>
+                  </div>
+                )}
+                <button
+                  onClick={logout}
+                  aria-label={t("nav.logout") || "Log out"}
+                  title={t("nav.logout") || "Log out"}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-input border border-line text-muted hover:bg-s2 hover:text-danger transition"
+                >
+                  <LogOut className="h-4 w-4" />
                 </button>
-              </Link>
-              {!collapsed && (
-                <Link href="/register" className="w-full">
-                  <button className="flex min-h-[34px] w-full items-center justify-center gap-2 rounded-input border border-line text-xs font-medium text-muted hover:bg-s2 hover:text-ink transition">
-                    <UserPlus className="h-3.5 w-3.5 shrink-0" />
-                    <span>{t("auth.register") || "Register"}</span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <Link href="/login" className="w-full">
+                  <button className="flex min-h-[38px] w-full items-center justify-center gap-2 rounded-input border border-primary/50 bg-psoft text-xs font-semibold text-ptext hover:bg-primary hover:text-onprimary transition">
+                    <LogIn className="h-3.5 w-3.5 shrink-0" />
+                    {!collapsed && <span>{t("auth.login") || "Log in"}</span>}
                   </button>
                 </Link>
-              )}
-            </div>
-          )}
-        </div>
-      </aside>
+                {!collapsed && (
+                  <Link href="/register" className="w-full">
+                    <button className="flex min-h-[34px] w-full items-center justify-center gap-2 rounded-input border border-line text-xs font-medium text-muted hover:bg-s2 hover:text-ink transition">
+                      <UserPlus className="h-3.5 w-3.5 shrink-0" />
+                      <span>{t("auth.register") || "Register"}</span>
+                    </button>
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+        </aside>
+      )}
 
       {/* =========================================================
          MOBILE DRAWER (SLIDE-IN)
          ========================================================= */}
-      {mobileOpen && (
+      {!isLanding && mobileOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm fade-in"
@@ -447,8 +451,9 @@ export function AppShell({ children }: { children: ReactNode }) {
          MAIN APPLICATION AREA
          ========================================================= */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top Header */}
-        <header className="sticky top-0 z-20 flex min-h-[60px] items-center justify-between gap-3 border-b border-line bg-s1/90 px-4 py-2 backdrop-blur-md">
+        {/* Top Header (App Pages Only) */}
+        {!isLanding && (
+          <header className="sticky top-0 z-20 flex min-h-[60px] items-center justify-between gap-3 border-b border-line bg-s1/90 px-4 py-2 backdrop-blur-md">
           {/* Mobile hamburger menu */}
           <button
             onClick={() => setMobileOpen(true)}
@@ -634,10 +639,18 @@ export function AppShell({ children }: { children: ReactNode }) {
             )}
           </div>
         </header>
+        )}
 
-        {/* Main Content Body with responsive max width */}
-        <main id="main" className="mx-auto w-full max-w-6xl flex-1 space-y-6 p-4 pb-24 md:p-6 md:pb-12">
-          {breadcrumbs.length > 1 && (
+        {/* Main Content Body */}
+        <main
+          id="main"
+          className={
+            isLanding
+              ? "w-full flex-1 p-0 overflow-x-hidden"
+              : "mx-auto w-full max-w-6xl flex-1 space-y-6 p-4 pb-24 md:p-6 md:pb-12"
+          }
+        >
+          {!isLanding && breadcrumbs.length > 1 && (
             <div className="hidden sm:block">
               <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-muted">
                 {breadcrumbs.map((crumb, idx) => (
@@ -658,7 +671,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </main>
 
-        {/* Mobile Bottom Navigation Bar */}
+        {/* Mobile Bottom Navigation Bar (Internal App Pages Only) */}
+        {!isLanding && (
         <nav
           className="fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-line bg-s1/95 backdrop-blur pb-[env(safe-area-inset-bottom)] md:hidden shadow-2xl"
           aria-label="Mobile Navigation"
@@ -721,6 +735,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           )}
         </nav>
+        )}
       </div>
     </div>
   );

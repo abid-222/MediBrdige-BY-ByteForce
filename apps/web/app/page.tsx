@@ -1,6 +1,6 @@
 "use client";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Activity,
@@ -15,6 +15,7 @@ import {
   FileCheck2,
   FileSearch,
   FileText,
+  FlaskConical,
   HeartPulse,
   KeyRound,
   LineChart,
@@ -29,12 +30,16 @@ import {
   UploadCloud,
   Users,
 } from "lucide-react";
-import { api, getRole, getToken, homeFor, setSession } from "@/lib/api";
+import { api, getRole, getToken, homeFor } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { Button, Card, Chip } from "@/components/ui";
-import { InteractiveTelemetry3D } from "@/components/InteractiveTelemetry3D";
-import { Spotlight3DCard } from "@/components/Spotlight3DCard";
+import { Button } from "@/components/ui";
+import { WatermelonNavbar } from "@/components/watermelon/WatermelonNavbar";
+import { WatermelonHero } from "@/components/watermelon/WatermelonHero";
+import { TelemetryStats } from "@/components/watermelon/TelemetryStats";
 import { ManusBentoGrid } from "@/components/ManusBentoGrid";
+import { WatermelonBrowserDemo } from "@/components/watermelon/WatermelonBrowserDemo";
+import { CommunityMarquee } from "@/components/watermelon/CommunityMarquee";
+import { Spotlight3DCard } from "@/components/Spotlight3DCard";
 
 export default function Home() {
   const { t, locale } = useI18n();
@@ -53,423 +58,460 @@ export default function Home() {
   const isBn = locale === "bn";
 
   return (
-    <div className="hero-glow-bg relative -mt-4 space-y-16 pb-16 pt-6">
-      {/* Logged In Quick Return Banner */}
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-bg text-ink font-sans selection:bg-primary/20 selection:text-primary">
+      {/* 1. Technical Watermelon Header / Navbar */}
+      <WatermelonNavbar />
+
+      {/* Logged In Quick Return Workspace Banner (if active session) */}
       {currentRole !== "none" && (
-        <div className="mx-auto max-w-4xl rounded-xl border border-primary/40 bg-psoft/70 px-4 py-3 shadow-[0_0_15px_var(--accent-glow)] flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
-            <span className="text-xs sm:text-sm font-semibold text-ink">
-              {isBn ? "আপনি বর্তমানে লগইন আছেন:" : "You are currently signed in as:"}
-              <strong className="ml-1.5 capitalize text-ptext">{currentRole.replace("_", " ")}</strong>
-            </span>
+        <div className="container mx-auto px-4 pt-20">
+          <div className="mx-auto max-w-5xl rounded-xl border border-primary/40 bg-psoft/70 px-4 py-3 shadow-[0_0_20px_var(--accent-glow)] flex flex-wrap items-center justify-between gap-3 backdrop-blur-md">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
+              <span className="text-xs sm:text-sm font-semibold text-ink font-mono">
+                {isBn ? "আপনি বর্তমানে লগইন আছেন:" : "CURRENT ACTIVE WORKSPACE:"}
+                <strong className="ml-1.5 uppercase text-primary font-bold">
+                  [{currentRole.replace("_", " ")}]
+                </strong>
+              </span>
+            </div>
+            <Link href={homeFor(currentRole)}>
+              <Button size="sm" className="btn-primary-neon text-xs font-mono">
+                {isBn ? "আমার ড্যাশবোর্ডে প্রবেশ করুন" : "ENTER WORKSPACE"}
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              </Button>
+            </Link>
           </div>
-          <Link href={homeFor(currentRole)}>
-            <Button size="sm" className="btn-primary-neon text-xs">
-              {isBn ? "আমার ড্যাশবোর্ডে প্রবেশ করুন" : "Enter My Workspace"}
-              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-            </Button>
-          </Link>
         </div>
       )}
 
-      {/* 1. Hero Section */}
-      <section className="relative z-10 mx-auto max-w-4xl text-center">
-        {/* Hackathon Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-medium text-ptext shadow-[0_0_15px_var(--accent-glow)]">
-          <span className="flex h-2 w-2 rounded-full bg-accent animate-ping" />
-          <span>{isBn ? "🇧🇩 বাংলাদেশের জন্য স্বাস্থ্য সমন্বয় প্ল্যাটফর্ম · ঢাকা সংস্করণ" : "🇧🇩 Healthcare Coordination for Bangladesh · Dhaka Prototype"}</span>
-        </div>
+      {/* 2. Hero Section with 3D Visual Radar & Telemetry */}
+      <WatermelonHero isBn={isBn} currentRole={currentRole} />
 
-        {/* Main Majestic Title */}
-        <h1 className="mt-6 font-heading text-4xl font-bold tracking-tight text-ink sm:text-6xl md:text-7xl">
-          MediBridge <span className="text-ptext">AI</span>
-        </h1>
+      {/* 3. Telemetry Stats Counters with Technical Crosshairs */}
+      <TelemetryStats isBn={isBn} />
 
-        {/* Design Principle / Tagline */}
-        <p className="mx-auto mt-4 max-w-2xl text-xl font-medium text-ink/90 sm:text-2xl">
-          {isBn ? "এআই সহযোগিতা করবে। সিদ্ধান্ত নেবেন ডাক্তার। নিয়ন্ত্রণে থাকবেন রোগী।" : "AI assists. Doctors decide. Patients stay in control."}
-        </p>
+      {/* 4. Artistic 3D Bento Grid (Watermelon / Hyphen / Manus Style Architecture) */}
+      <section className="relative z-10 py-16 md:py-24">
+        <div className="container mx-auto px-4 md:px-8 lg:px-12">
+          <div className="mb-12 flex flex-col items-start md:items-center text-left md:text-center max-w-3xl mx-auto">
+            <div className="text-primary mb-3 inline-flex items-center text-xs font-bold tracking-widest uppercase font-mono">
+              <span className="mr-3 opacity-70">{"//"}</span>
+              CORE CLINICAL ARCHITECTURE
+            </div>
+            <h2 className="font-heading text-2xl sm:text-4xl font-bold tracking-tight text-ink">
+              {isBn ? (
+                <>
+                  প্রযুক্তি যা রোগীদের রক্ষা করে, <span className="text-primary">বিভ্রান্ত করে না</span>
+                </>
+              ) : (
+                <>
+                  Engineered for safety, <span className="text-primary">grounded in evidence</span>
+                </>
+              )}
+            </h2>
+            <p className="mt-3 text-xs sm:text-sm text-muted font-mono tracking-wider uppercase">
+              {isBn
+                ? "ডুয়াল-গেট ট্রায়াজ, দ্বিভাষিক ওসিআর ভিশন এবং সম্পূর্ণ অনলাইন টেলিহেলথ কনসালট্যান্সি।"
+                : "Dual-gate triage, OCR lab parsing, online-only video teleconsultation, and tamper-proof audit trails."}
+            </p>
+          </div>
 
-        {/* 3D Interactive Medical Telemetry Visual */}
-        <InteractiveTelemetry3D />
-
-        <p className="mx-auto mt-1 max-w-2xl text-base text-muted sm:text-lg">
-          {isBn
-            ? "বাংলাদেশি রোগীদের জন্য ক্লিনিক্যালভাবে সঠিক ও সাশ্রয়ী স্বাস্থ্যসেবা অনুসন্ধান, ল্যাব রিপোর্ট ডিজিটাইজেশন এবং চিকিৎসকদের জন্য অডিটেবল ওয়ার্কস্পেস।"
-            : "Helping Bangladeshi patients find clinically eligible, affordability-aware care while giving doctors and hospitals a secure, source-linked AI workspace."}
-        </p>
-
-        {/* Action Buttons */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/navigator">
-            <Button className="btn-primary-neon h-12 px-6 text-base">
-              <Compass className="mr-2 h-5 w-5" />
-              {isBn ? "স্মার্টকেয়ার নেভিগেটর চালান" : "Start SmartCare Navigator"}
-            </Button>
-          </Link>
-          <Link href={currentRole === "patient" ? "/reports/scan" : "/login?next=%2Freports%2Fscan"}>
-            <Button variant="secondary" className="h-12 px-6 text-base border-primary/50 bg-psoft/30 hover:bg-primary hover:text-onprimary transition">
-              <UploadCloud className="mr-2 h-5 w-5 text-ptext" />
-              {isBn ? "মেডিকেল রিপোর্ট স্ক্যান (OCR)" : "Scan Medical Report (OCR)"}
-            </Button>
-          </Link>
-          <Link href="/directory">
-            <Button variant="secondary" className="h-12 px-6 text-base">
-              <Users className="mr-2 h-5 w-5" />
-              {isBn ? "ডাক্তার ও হাসপাতাল ডিরেক্টরি" : "Browse Dhaka Directory"}
-            </Button>
-          </Link>
-          <Link href="/ml-lab">
-            <Button variant="ghost" className="h-12 px-5 text-base border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
-              <Sparkles className="mr-2 h-4 w-4" />
-              {isBn ? "এমএল ল্যাব পরিদর্শন" : "Research ML Lab"}
-            </Button>
-          </Link>
-          <Link href="/login">
-            <Button variant="ghost" className="h-12 px-5 text-base">
-              {isBn ? "লগইন করুন" : "Sign In"} <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-
-        {/* Emergency disclaimer banner */}
-        <div className="mx-auto mt-8 flex max-w-xl items-center justify-center gap-2 rounded-lg border border-border/60 bg-s1/60 px-4 py-2 text-xs text-muted backdrop-blur-sm">
-          <ShieldAlert className="h-4 w-4 text-danger shrink-0" />
-          <span>
-            {isBn
-              ? "জরুরি পরিস্থিতিতে সরাসরি ৯৯৯ কল করুন। কৃত্রিম বুদ্ধিমত্তা কোনো প্রেসক্রিপশন বা ক্লিনিক্যাল ডায়াগনোসিস দেয় না।"
-              : "In medical emergencies, call 999 immediately. AI never diagnoses or prescribes medication."}
-          </span>
+          <ManusBentoGrid isBn={isBn} />
         </div>
       </section>
 
-      {/* 2. Role-Based Portals Showcase */}
-      <section className="relative z-10 mx-auto max-w-5xl">
-        <div className="rounded-2xl border border-primary/30 bg-gradient-to-b from-s1 to-s2/70 p-6 shadow-2xl backdrop-blur-md">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
-            <div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-ptext">
-                <HeartPulse className="h-4 w-4" />
-                <span>{isBn ? "প্ল্যাটফর্মের ভূমিকাভিত্তিক পোর্টালসমূহ" : "Role-Based Healthcare Portals"}</span>
+      {/* 5. Watermelon Browser Demo Console */}
+      <WatermelonBrowserDemo isBn={isBn} />
+
+      {/* 6. Role-Based Portals Showcase (Technical 3D Spotlight Cards) */}
+      <section className="relative z-10 py-16 md:py-24 font-mono">
+        <div className="container mx-auto px-4 md:px-8 lg:px-12 max-w-6xl">
+          <div className="rounded-2xl border border-line bg-s1/80 p-6 md:p-8 shadow-2xl backdrop-blur-md relative overflow-hidden">
+            {/* Corner Accents */}
+            <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary" />
+            <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-primary" />
+            <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-primary" />
+            <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary" />
+
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-5">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold text-primary tracking-wider uppercase">
+                  <HeartPulse className="h-4 w-4" />
+                  <span>{isBn ? "প্ল্যাটফর্মের ভূমিকাভিত্তিক পোর্টালসমূহ" : "[ ROLE-BASED HEALTHCARE PORTALS ]"}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted font-mono">
+                  {isBn
+                    ? "নিরাপদ ভূমিকাভিত্তিক অথরাইজেশন (RBAC) ও নিয়ন্ত্রিত ক্লিনিক্যাল অ্যাক্সেস ব্যবস্থা"
+                    : "Cryptographically verified RBAC engineered for zero-trust clinical workflows."}
+                </p>
               </div>
-              <p className="mt-0.5 text-xs text-muted">
-                {isBn
-                  ? "নিরাপদ ভূমিকাভিত্তিক অথরাইজেশন ও নিয়ন্ত্রিত অ্যাক্সেস ব্যবস্থা"
-                  : "Strict role-based access control (RBAC) engineered for clinical workflows."}
-              </p>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-mono text-primary font-bold">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> RBAC ENFORCED
+                </span>
+              </div>
             </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Link
+                href={currentRole === "patient" ? "/dashboard" : "/login"}
+                className="block group"
+              >
+                <Spotlight3DCard className="p-5 h-full border-line hover:border-primary/50 transition">
+                  <div className="flex w-full items-center justify-between">
+                    <span className="rounded-md bg-primary/10 p-2.5 text-primary">
+                      <HeartPulse className="h-5 w-5" />
+                    </span>
+                    <span className="text-[10px] text-muted font-mono group-hover:text-primary transition uppercase tracking-widest">
+                      ENTER // 01 →
+                    </span>
+                  </div>
+                  <span className="mt-4 block text-sm font-bold text-ink tracking-tight font-sans">
+                    {isBn ? "রোগী পোর্টাল" : "Patient Portal"}
+                  </span>
+                  <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                    {isBn
+                      ? "রিপোর্ট স্টোরেজ, লংগিচিউডিনাল টাইমলাইন, অনলাইন বুকিং ও ইমার্জেন্সি কার্ড।"
+                      : "Reports, Longitudinal Timeline, Online Bookings & Emergency QR Card."}
+                  </p>
+                </Spotlight3DCard>
+              </Link>
+
+              <Link
+                href={currentRole === "doctor" ? "/doctor" : "/login"}
+                className="block group"
+              >
+                <Spotlight3DCard className="p-5 h-full border-line hover:border-info/50 transition">
+                  <div className="flex w-full items-center justify-between">
+                    <span className="rounded-md bg-info/10 p-2.5 text-info">
+                      <Stethoscope className="h-5 w-5" />
+                    </span>
+                    <span className="text-[10px] text-muted font-mono group-hover:text-info transition uppercase tracking-widest">
+                      ENTER // 02 →
+                    </span>
+                  </div>
+                  <span className="mt-4 block text-sm font-bold text-ink tracking-tight font-sans">
+                    {isBn ? "ডাক্তার ওয়ার্কস্পেস" : "Doctor Workspace"}
+                  </span>
+                  <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                    {isBn
+                      ? "বিএমডিসি ভেরিফায়েড প্রোফাইল, প্রেসক্রিপশন নিশ্চিতকরণ ও ক্রিপ্টোগ্রাফিক সাইন।"
+                      : "BMDC Verified Registry, OCR Verification, Clinical Note Signing & Meet Links."}
+                  </p>
+                </Spotlight3DCard>
+              </Link>
+
+              <Link
+                href={currentRole === "facility_admin" ? "/facility" : "/login"}
+                className="block group"
+              >
+                <Spotlight3DCard className="p-5 h-full border-line hover:border-warn/50 transition">
+                  <div className="flex w-full items-center justify-between">
+                    <span className="rounded-md bg-warn/10 p-2.5 text-warn">
+                      <Building2 className="h-5 w-5" />
+                    </span>
+                    <span className="text-[10px] text-muted font-mono group-hover:text-warn transition uppercase tracking-widest">
+                      ENTER // 03 →
+                    </span>
+                  </div>
+                  <span className="mt-4 block text-sm font-bold text-ink tracking-tight font-sans">
+                    {isBn ? "হাসপাতাল কমান্ড" : "Hospital Command"}
+                  </span>
+                  <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                    {isBn
+                      ? "রিয়েল-টাইম আইসিইউ/জেনারেল সিট ক্যাপাসিটি এবং কনসালট্যান্ট রোস্টার।"
+                      : "Real-time ICU/General Bed Availability & Specialist Shift Rostering."}
+                  </p>
+                </Spotlight3DCard>
+              </Link>
+
+              <Link
+                href={currentRole === "super_admin" || currentRole === "reviewer" ? "/admin" : "/login"}
+                className="block group"
+              >
+                <Spotlight3DCard className="p-5 h-full border-line hover:border-danger/50 transition">
+                  <div className="flex w-full items-center justify-between">
+                    <span className="rounded-md bg-danger/10 p-2.5 text-danger">
+                      <ShieldCheck className="h-5 w-5" />
+                    </span>
+                    <span className="text-[10px] text-muted font-mono group-hover:text-danger transition uppercase tracking-widest">
+                      ENTER // 04 →
+                    </span>
+                  </div>
+                  <span className="mt-4 block text-sm font-bold text-ink tracking-tight font-sans">
+                    {isBn ? "অ্যাডমিন সেন্টার" : "Admin Center"}
+                  </span>
+                  <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                    {isBn
+                      ? "বিএমডিসি ভেরিফিকেশন কিউ, সিস্টেম রোল সুইচ এবং অপরিবর্তনীয় অডিট লগ।"
+                      : "Access Roles, Doctor Verification Queue & System Tamper Logs."}
+                  </p>
+                </Spotlight3DCard>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 7. Master Workflow & User Journeys Walkthrough */}
+      <section className="relative z-10 py-16 md:py-24 font-mono">
+        <div className="container mx-auto px-4 md:px-8 lg:px-12 max-w-6xl">
+          <div className="rounded-card border border-line bg-s1/90 p-6 md:p-8 backdrop-blur-md relative">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-5">
+              <div>
+                <h3 className="font-heading text-xl font-bold text-ink font-sans">
+                  {isBn ? "মাস্টার ওয়ার্কফ্লো ও ইউজার জার্নি" : "Master Workflow & User Journeys"}
+                </h3>
+                <p className="text-xs text-muted sm:text-sm font-mono mt-1">
+                  {isBn
+                    ? "একটি প্ল্যাটফর্ম, চারটি আলাদা সুরক্ষিত পোর্টাল — পাবলিক ল্যান্ডিং থেকে হিউম্যান-রিভিউড আউটকাম"
+                    : "One product, four role-based portals. Every journey ends in a human-reviewed outcome."}
+                </p>
+              </div>
+
+              {/* Tab switchers */}
+              <div className="flex rounded-lg border border-line bg-s2/80 p-1">
+                {(["patient", "doctor", "hospital", "admin"] as const).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setActiveTab(r)}
+                    className={`rounded-md px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
+                      activeTab === r ? "bg-primary text-onprimary shadow-md" : "text-muted hover:text-ink"
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6">
+              {activeTab === "patient" && (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-xl border border-line bg-s2/50 p-5 relative overflow-hidden">
+                    <span className="num text-xs font-bold text-primary font-mono">// STEP 01</span>
+                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "রেজিস্টার ও প্রোফাইল" : "Register & Profile"}</h4>
+                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                      {isBn
+                        ? "ইমেইল ওটিপি, স্বাস্থ্য তথ্য ও আলাদা কনসেন্ট টগল (ডাক্তার শেয়ারিং ঐচ্ছিক)।"
+                        : "Instant email verification, health profile, budget band and granular consent toggles."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-line bg-s2/50 p-5 relative overflow-hidden">
+                    <span className="num text-xs font-bold text-primary font-mono">// STEP 02</span>
+                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "রিপোর্ট আপলোড ও টাইমলাইন" : "Upload & Timeline"}</h4>
+                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                      {isBn
+                        ? "প্রেসক্রিপশন/রিপোর্ট ড্রপ করুন। OCR মান বের করবে এবং আগের রিপোর্টের সাথে ট্রেন্ড চার্ট দেখাবে।"
+                        : "Drag & drop report. OCR parses lab values with confidence badges and plots historical trends."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-line bg-s2/50 p-5 relative overflow-hidden">
+                    <span className="num text-xs font-bold text-primary font-mono">// STEP 03</span>
+                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "স্মার্টকেয়ার ও বুকিং" : "Navigator & Booking"}</h4>
+                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                      {isBn
+                        ? "সমস্যা উল্লেখ করুন। রেড-ফ্ল্যাগ চেক শেষে উপযুক্ত ডাক্তার ম্যাচ ও সরাসরি অনলাইন মিট বুকিং।"
+                        : "Input symptoms. Emergency checks first, then get matched with verified Dhaka specialists online."}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "doctor" && (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-xl border border-line bg-s2/50 p-5">
+                    <span className="num text-xs font-bold text-info font-mono">// CLINICAL 01</span>
+                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "কনসেন্ট যাচাই" : "Consent Verification"}</h4>
+                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                      {isBn
+                        ? "শুধুমাত্র কেয়ার রিলেশনশিপ ও সক্রিয় সম্মতি থাকলেই রোগীর চার্ট অ্যাক্সেস সম্ভব।"
+                        : "Checks active care relationship and patient consent before unlocking medical chart."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-line bg-s2/50 p-5">
+                    <span className="num text-xs font-bold text-info font-mono">// CLINICAL 02</span>
+                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "AI সামারি ও মান নিশ্চিতকরণ" : "AI Summary & Extractions"}</h4>
+                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                      {isBn
+                        ? "মূল রিপোর্টের পাশাপাশি এআই প্রস্তুতকৃত ফ্যাক্ট-ভিত্তিক সামারি পড়ে মানগুলো অনুমোদন দিন।"
+                        : "Compare extracted OCR values with original scans and read dated, source-linked AI summaries."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-line bg-s2/50 p-5">
+                    <span className="num text-xs font-bold text-info font-mono">// CLINICAL 03</span>
+                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "নোট এডিট ও স্বাক্ষর" : "Edit & Sign Note"}</h4>
+                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                      {isBn
+                        ? "ড্রাফট নোট পরিবর্তন করে স্থায়ী ডিজিটাল স্বাক্ষর দিন। স্বাক্ষরিত নোট অপরিবর্তনীয়।"
+                        : "Review AI draft clinical note, make edits, and sign. Signed versions become immutable records."}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "hospital" && (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-xl border border-line bg-s2/50 p-5">
+                    <span className="num text-xs font-bold text-warn font-mono">// FACILITY 01</span>
+                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "প্রোফাইল ও কনফার্মড মূল্য" : "Profile & Verified Pricing"}</h4>
+                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                      {isBn
+                        ? "হাসপাতালের সেবাসমূহ এবং কনফার্মড টেস্ট ফির তালিকা হালনাগাদ রাখুন।"
+                        : "Maintain transparent test and consultation pricing with last-confirmed dates."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-line bg-s2/50 p-5">
+                    <span className="num text-xs font-bold text-warn font-mono">// FACILITY 02</span>
+                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "ডাক্তার রোস্টার" : "Doctor Rostering"}</h4>
+                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                      {isBn
+                        ? "বিএমডিসি নম্বরসহ স্পেশালিস্ট ডাক্তারদের উপস্থিতি ও চেম্বার শিডিউল পরিচালনা।"
+                        : "Manage affiliated physicians with BMDC license verification and visiting schedules."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-line bg-s2/50 p-5">
+                    <span className="num text-xs font-bold text-warn font-mono">// FACILITY 03</span>
+                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "অ্যাপয়েন্টমেন্ট কিউ" : "Appointment Queue"}</h4>
+                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                      {isBn
+                        ? "রোগীদের ভিজিট রিকোয়েস্ট চেক-ইন, সম্পন্ন বা রিশিডিউল করার সুবিধা।"
+                        : "Manage incoming visit requests through a state machine: requested → confirmed → check-in."}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "admin" && (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-xl border border-line bg-s2/50 p-5">
+                    <span className="num text-xs font-bold text-danger font-mono">// GOVERNANCE 01</span>
+                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "ভেরিফিকেশন কিউ" : "Verification Queue"}</h4>
+                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                      {isBn
+                        ? "ডাক্তার ও ডায়াগনস্টিক সেন্টারের কাগজপত্র যাচাই করে ভেরিফায়েড ব্যাজ প্রদান।"
+                        : "Validate BMDC registration and facility licenses with explicit proof citations."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-line bg-s2/50 p-5">
+                    <span className="num text-xs font-bold text-danger font-mono">// GOVERNANCE 02</span>
+                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "অপরিবর্তনীয় অডিট লগ" : "Append-Only Audit Log"}</h4>
+                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                      {isBn
+                        ? "প্রতিটি সংবেদনশীল অ্যাকশন (লগইন, ফাইল দেখা, কনসেন্ট প্রত্যাহার) রেকর্ড হয়।"
+                        : "Real-time tamper-proof logging of logins, chart opens, OCR corrections, and consent revokes."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-line bg-s2/50 p-5">
+                    <span className="num text-xs font-bold text-danger font-mono">// GOVERNANCE 03</span>
+                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "মডেল রেজিস্ট্রি ও সেফটি" : "Model Registry & Safety"}</h4>
+                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
+                      {isBn
+                        ? "ডকুমেন্ট ক্লাসিফায়ার ML মডেল কার্ড, ম্যাক্রো-F1 মেট্রিক্স ও সেফটি গেট স্ট্যাটাস।"
+                        : "Monitor document classifier accuracy, macro-F1 score, and safety gate triggers."}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. Key Safety Principles Bar (3D Spotlight Cards) */}
+      <section className="relative z-10 py-12">
+        <div className="container mx-auto px-4 md:px-8 lg:px-12 max-w-6xl">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Spotlight3DCard className="p-5 border-danger/30">
+              <div className="flex items-start gap-3.5">
+                <span className="rounded-lg bg-danger/10 p-2.5 text-danger shrink-0">
+                  <ShieldAlert className="h-5 w-5" />
+                </span>
+                <div>
+                  <h4 className="text-sm font-bold text-ink font-mono">{isBn ? "ক্লিনিক্যাল গেট প্রথম" : "CLINICAL GATES FIRST"}</h4>
+                  <p className="mt-1 text-xs text-muted leading-relaxed">
+                    {isBn
+                      ? "সাশ্রয়ী হওয়ার চেয়ে জীবন রক্ষা আগে। কোনো বিপজ্জনক উপসর্গ থাকলে তাৎক্ষণিক ৯৯৯ নির্দেশিকা।"
+                      : "Clinical eligibility checked before cost; emergency signals strictly override ranking."}
+                  </p>
+                </div>
+              </div>
+            </Spotlight3DCard>
+
+            <Spotlight3DCard className="p-5 border-primary/30">
+              <div className="flex items-start gap-3.5">
+                <span className="rounded-lg bg-primary/10 p-2.5 text-primary shrink-0">
+                  <BadgeCheck className="h-5 w-5" />
+                </span>
+                <div>
+                  <h4 className="text-sm font-bold text-ink font-mono">{isBn ? "স্বচ্ছ তথ্য ও প্রুভেন্যান্স" : "PROVENANCE & AUDIT"}</h4>
+                  <p className="mt-1 text-xs text-muted leading-relaxed">
+                    {isBn
+                      ? "প্রত্যেক ডাক্তার তালিকার তথ্য সংগ্রহের উৎস, সর্বশেষ যাচাইয়ের তারিখ ও কনফিডেন্স প্রদর্শিত।"
+                      : "Every provider listing shows verification status, source, date, and data confidence level."}
+                  </p>
+                </div>
+              </div>
+            </Spotlight3DCard>
+
+            <Spotlight3DCard className="p-5 border-info/30">
+              <div className="flex items-start gap-3.5">
+                <span className="rounded-lg bg-info/10 p-2.5 text-info shrink-0">
+                  <Bot className="h-5 w-5" />
+                </span>
+                <div>
+                  <h4 className="text-sm font-bold text-ink font-mono">{isBn ? "হিউম্যান-ইন-দ্য-লুপ" : "ASSIST, NOT REPLACE"}</h4>
+                  <p className="mt-1 text-xs text-muted leading-relaxed">
+                    {isBn
+                      ? "সকল এআই আউটপুট ড্রাফট হিসেবে লেবেলযুক্ত। কোনো কৃত্রিম প্রেসক্রিপশন প্রদান করা হয় না।"
+                      : "AI output is explicitly marked as draft assistance; clinicians make 100% of medical decisions."}
+                  </p>
+                </div>
+              </div>
+            </Spotlight3DCard>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. Community Feedback Marquee */}
+      <CommunityMarquee isBn={isBn} />
+
+      {/* 10. Technical Watermelon UI Footer */}
+      <footer className="relative z-10 border-t border-line py-12 text-center text-xs text-muted font-mono bg-s1/50 backdrop-blur-md">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-6">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-psoft px-2.5 py-1 text-xs font-mono text-ptext">
-                <CheckCircle2 className="h-3 w-3" /> RBAC Enforced
-              </span>
+              <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+              <span className="text-ink font-bold tracking-wider">MEDIBRIDGE.SYS</span>
+              <span className="text-muted text-[10px]">v2.6.4-dhaka</span>
             </div>
+            <span className="text-line">|</span>
+            <Link href="/emergency" className="text-danger hover:underline font-bold flex items-center gap-1.5">
+              <PhoneCall className="h-3.5 w-3.5" />
+              {isBn ? "জরুরি হটলাইন (৯৯৯)" : "EMERGENCY HOTLINE (999)"}
+            </Link>
+            <span className="text-line">|</span>
+            <Link href="/ml-lab" className="text-emerald-400 hover:underline flex items-center gap-1.5">
+              <FlaskConical className="h-3.5 w-3.5" />
+              {isBn ? "এমএল ল্যাব কার্ড" : "ML LAB / METRICS"}
+            </Link>
+            <span className="text-line">|</span>
+            <a href="http://localhost:8000/docs" target="_blank" rel="noreferrer" className="text-info hover:underline flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              {isBn ? "ফাস্টএপিআই ব্যাকএন্ড ডক্স" : "FASTAPI OPENAPI (/docs)"}
+            </a>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Link
-              href={currentRole === "patient" ? "/dashboard" : "/login"}
-              className="block group"
-            >
-              <Spotlight3DCard className="p-4 h-full border-border hover:border-primary/50 transition">
-                <div className="flex w-full items-center justify-between">
-                  <span className="rounded-md bg-psoft p-2 text-ptext">
-                    <HeartPulse className="h-4 w-4" />
-                  </span>
-                  <span className="text-[10px] text-muted font-mono group-hover:text-ptext transition">Access →</span>
-                </div>
-                <span className="mt-3 block text-sm font-semibold text-ink">{isBn ? "রোগী পোর্টাল" : "Patient Portal"}</span>
-                <p className="mt-1 text-xs text-muted">Reports, Longitudinal Timeline, Bookings & Emergency Card</p>
-              </Spotlight3DCard>
-            </Link>
+          <p className="text-muted leading-relaxed text-[11px] max-w-2xl mx-auto">
+            {isBn
+              ? "মেডিব্রিজ এআই একটি হ্যাকাথন প্রোটোটাইপ। সকল রোগীর তথ্য সিন্থেটিক। এটি কোনো মেডিকেল ডিভাইস নয় এবং রোগ নির্ণয় বা চিকিৎসা প্রদান করে না।"
+              : "MediBridge AI is a clinical architecture prototype. All sample patient data and directory entries are synthetic. AI operates under human clinician supervision."}
+          </p>
 
-            <Link
-              href={currentRole === "doctor" ? "/doctor" : "/login"}
-              className="block group"
-            >
-              <Spotlight3DCard className="p-4 h-full border-border hover:border-info/50 transition">
-                <div className="flex w-full items-center justify-between">
-                  <span className="rounded-md bg-info/10 p-2 text-info">
-                    <Stethoscope className="h-4 w-4" />
-                  </span>
-                  <span className="text-[10px] text-muted font-mono group-hover:text-info transition">Access →</span>
-                </div>
-                <span className="mt-3 block text-sm font-semibold text-ink">{isBn ? "ডাক্তার ওয়ার্কস্পেস" : "Doctor Workspace"}</span>
-                <p className="mt-1 text-xs text-muted">BMDC Verified Registry, OCR Verification, Clinical Note Signing</p>
-              </Spotlight3DCard>
-            </Link>
-
-            <Link
-              href={currentRole === "facility_admin" ? "/facility" : "/login"}
-              className="block group"
-            >
-              <Spotlight3DCard className="p-4 h-full border-border hover:border-warn/50 transition">
-                <div className="flex w-full items-center justify-between">
-                  <span className="rounded-md bg-warn/10 p-2 text-warn">
-                    <Building2 className="h-4 w-4" />
-                  </span>
-                  <span className="text-[10px] text-muted font-mono group-hover:text-warn transition">Access →</span>
-                </div>
-                <span className="mt-3 block text-sm font-semibold text-ink">{isBn ? "হাসপাতাল কমান্ড" : "Hospital Command"}</span>
-                <p className="mt-1 text-xs text-muted">Real-time ICU/General Bed Availability & Specialist Shift Roster</p>
-              </Spotlight3DCard>
-            </Link>
-
-            <Link
-              href={currentRole === "super_admin" || currentRole === "reviewer" ? "/admin" : "/login"}
-              className="block group"
-            >
-              <Spotlight3DCard className="p-4 h-full border-border hover:border-danger/50 transition">
-                <div className="flex w-full items-center justify-between">
-                  <span className="rounded-md bg-danger/10 p-2 text-danger">
-                    <ShieldCheck className="h-4 w-4" />
-                  </span>
-                  <span className="text-[10px] text-muted font-mono group-hover:text-danger transition">Access →</span>
-                </div>
-                <span className="mt-3 block text-sm font-semibold text-ink">{isBn ? "অ্যাডমিন সেন্টার" : "Admin Center"}</span>
-                <p className="mt-1 text-xs text-muted">Access Roles, Doctor Verification Queue & System Audit Logs</p>
-              </Spotlight3DCard>
-            </Link>
+          <div className="mt-6 text-[10px] text-muted/60 tracking-widest uppercase">
+            © 2026 MEDIBRIDGE AI · DHAKA RESEARCH CONSORTIUM · ALL RIGHTS RESERVED
           </div>
-        </div>
-      </section>
-
-      {/* 3. The Artistic 3D Bento Grid (Hyphen / Manus Style Architecture) */}
-      <section className="relative z-10 mx-auto max-w-6xl">
-        <ManusBentoGrid isBn={isBn} />
-      </section>
-
-      {/* 4. Live Workflow Walkthrough Tabs */}
-      <section className="relative z-10 mx-auto max-w-5xl">
-        <div className="rounded-card border border-border bg-s1 p-6 md:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-5">
-            <div>
-              <h3 className="font-heading text-xl font-bold text-ink">
-                {isBn ? "মাস্টার ওয়ার্কফ্লো ও ইউজার জার্নি" : "Master Workflow & User Journeys"}
-              </h3>
-              <p className="text-xs text-muted sm:text-sm">
-                {isBn
-                  ? "একটি প্ল্যাটফর্ম, চারটি আলাদা সুরক্ষিত পোর্টাল — পাবলিক ল্যান্ডিং থেকে হিউম্যান-রিভিউড আউটকাম"
-                  : "One product, four role-based portals. Every journey ends in a human-reviewed outcome."}
-              </p>
-            </div>
-
-            {/* Tab switchers */}
-            <div className="flex rounded-input border border-border bg-s2/70 p-1">
-              {(["patient", "doctor", "hospital", "admin"] as const).map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setActiveTab(r)}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold capitalize transition ${
-                    activeTab === r ? "bg-primary text-onprimary shadow-sm" : "text-muted hover:text-ink"
-                  }`}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6">
-            {activeTab === "patient" && (
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-xl border border-border/80 bg-s2/50 p-4">
-                  <span className="num text-xs font-bold text-ptext">STEP 01</span>
-                  <h4 className="mt-1 font-semibold text-ink">{isBn ? "রেজিস্টার ও প্রোফাইল" : "Register & Profile"}</h4>
-                  <p className="mt-1 text-xs text-muted">
-                    {isBn
-                      ? "৬ ডিজিটের ইমেইল ওটিপি, স্বাস্থ্য তথ্য ও আলাদা কনসেন্ট টগল (ডাক্তার শেয়ারিং ঐচ্ছিক)।"
-                      : "Email OTP verification, health profile, budget band and granular consent toggles."}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border/80 bg-s2/50 p-4">
-                  <span className="num text-xs font-bold text-ptext">STEP 02</span>
-                  <h4 className="mt-1 font-semibold text-ink">{isBn ? "রিপোর্ট আপলোড ও টাইমলাইন" : "Upload & Timeline"}</h4>
-                  <p className="mt-1 text-xs text-muted">
-                    {isBn
-                      ? "প্রেসক্রিপশন/রিপোর্ট ড্রপ করুন। OCR মান বের করবে এবং আগের রিপোর্টের সাথে ট্রেন্ড চার্ট দেখাবে।"
-                      : "Drag & drop report. OCR parses lab values with confidence badges and plots historical trends."}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border/80 bg-s2/50 p-4">
-                  <span className="num text-xs font-bold text-ptext">STEP 03</span>
-                  <h4 className="mt-1 font-semibold text-ink">{isBn ? "স্মার্টকেয়ার ও বুকিং" : "Navigator & Booking"}</h4>
-                  <p className="mt-1 text-xs text-muted">
-                    {isBn
-                      ? "সমস্যা উল্লেখ করুন। রেড-ফ্ল্যাগ চেক শেষে উপযুক্ত ডাক্তার ম্যাচ ও সরাসরি অ্যাপয়েন্টমেন্ট।"
-                      : "Input symptoms. Emergency checks first, then get matched with verified Dhaka specialists."}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "doctor" && (
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-xl border border-border/80 bg-s2/50 p-4">
-                  <span className="num text-xs font-bold text-info">CLINICAL 01</span>
-                  <h4 className="mt-1 font-semibold text-ink">{isBn ? "কনসেন্ট যাচাই" : "Consent Verification"}</h4>
-                  <p className="mt-1 text-xs text-muted">
-                    {isBn
-                      ? "শুধুমাত্র কেয়ার রিলেশনশিপ ও সক্রিয় সম্মতি থাকলেই রোগীর চার্ট অ্যাক্সেস সম্ভব।"
-                      : "Checks active care relationship and patient consent before unlocking medical chart."}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border/80 bg-s2/50 p-4">
-                  <span className="num text-xs font-bold text-info">CLINICAL 02</span>
-                  <h4 className="mt-1 font-semibold text-ink">{isBn ? "AI সামারি ও মান নিশ্চিতকরণ" : "AI Summary & Extractions"}</h4>
-                  <p className="mt-1 text-xs text-muted">
-                    {isBn
-                      ? "মূল রিপোর্টের পাশাপাশি এআই প্রস্তুতকৃত ফ্যাক্ট-ভিত্তিক সামারি পড়ে মানগুলো অনুমোদন দিন।"
-                      : "Compare extracted OCR values with original scans and read dated, source-linked AI summaries."}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border/80 bg-s2/50 p-4">
-                  <span className="num text-xs font-bold text-info">CLINICAL 03</span>
-                  <h4 className="mt-1 font-semibold text-ink">{isBn ? "নোট এডিট ও স্বাক্ষর" : "Edit & Sign Note"}</h4>
-                  <p className="mt-1 text-xs text-muted">
-                    {isBn
-                      ? "ড্রাফট নোট পরিবর্তন করে স্থায়ী ডিজিটাল স্বাক্ষর দিন। স্বাক্ষরিত নোট অপরিবর্তনীয়।"
-                      : "Review AI draft clinical note, make edits, and sign. Signed versions become immutable records."}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "hospital" && (
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-xl border border-border/80 bg-s2/50 p-4">
-                  <span className="num text-xs font-bold text-warn">FACILITY 01</span>
-                  <h4 className="mt-1 font-semibold text-ink">{isBn ? "প্রোফাইল ও কনফার্মড মূল্য" : "Profile & Verified Pricing"}</h4>
-                  <p className="mt-1 text-xs text-muted">
-                    {isBn
-                      ? "হাসপাতালের সেবাসমূহ এবং কনফার্মড টেস্ট ফির তালিকা হালনাগাদ রাখুন।"
-                      : "Maintain transparent test and consultation pricing with last-confirmed dates."}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border/80 bg-s2/50 p-4">
-                  <span className="num text-xs font-bold text-warn">FACILITY 02</span>
-                  <h4 className="mt-1 font-semibold text-ink">{isBn ? "ডাক্তার রোস্টার" : "Doctor Rostering"}</h4>
-                  <p className="mt-1 text-xs text-muted">
-                    {isBn
-                      ? "বিএমডিসি নম্বরসহ স্পেশালিস্ট ডাক্তারদের উপস্থিতি ও চেম্বার শিডিউল পরিচালনা।"
-                      : "Manage affiliated physicians with BMDC license verification and visiting schedules."}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border/80 bg-s2/50 p-4">
-                  <span className="num text-xs font-bold text-warn">FACILITY 03</span>
-                  <h4 className="mt-1 font-semibold text-ink">{isBn ? "অ্যাপয়েন্টমেন্ট কিউ" : "Appointment Queue"}</h4>
-                  <p className="mt-1 text-xs text-muted">
-                    {isBn
-                      ? "রোগীদের ভিজিট রিকোয়েস্ট চেক-ইন, সম্পন্ন বা রিশিডিউল করার সুবিধা।"
-                      : "Manage incoming visit requests through a state machine: requested → confirmed → check-in."}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "admin" && (
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-xl border border-border/80 bg-s2/50 p-4">
-                  <span className="num text-xs font-bold text-danger">GOVERNANCE 01</span>
-                  <h4 className="mt-1 font-semibold text-ink">{isBn ? "ভেরিফিকেশন কিউ" : "Verification Queue"}</h4>
-                  <p className="mt-1 text-xs text-muted">
-                    {isBn
-                      ? "ডাক্তার ও ডায়াগনস্টিক সেন্টারের কাগজপত্র যাচাই করে ভেরিফায়েড ব্যাজ প্রদান।"
-                      : "Validate BMDC registration and facility licenses with explicit proof citations."}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border/80 bg-s2/50 p-4">
-                  <span className="num text-xs font-bold text-danger">GOVERNANCE 02</span>
-                  <h4 className="mt-1 font-semibold text-ink">{isBn ? "অপরিবর্তনীয় অডিট লগ" : "Append-Only Audit Log"}</h4>
-                  <p className="mt-1 text-xs text-muted">
-                    {isBn
-                      ? "প্রতিটি সংবেদনশীল অ্যাকশন (লগইন, ফাইল দেখা, কনসেন্ট প্রত্যাহার) রেকর্ড হয়।"
-                      : "Real-time tamper-proof logging of logins, chart opens, OCR corrections, and consent revokes."}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border/80 bg-s2/50 p-4">
-                  <span className="num text-xs font-bold text-danger">GOVERNANCE 03</span>
-                  <h4 className="mt-1 font-semibold text-ink">{isBn ? "মডেল রেজিস্ট্রি ও সেফটি" : "Model Registry & Safety"}</h4>
-                  <p className="mt-1 text-xs text-muted">
-                    {isBn
-                      ? "ডকুমেন্ট ক্লাসিফায়ার ML মডেল কার্ড, ম্যাক্রো-F1 মেট্রিক্স ও সেফটি গেট স্ট্যাটাস।"
-                      : "Monitor document classifier accuracy, macro-F1 score, and safety gate triggers."}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* 5. Key Safety Principles Bar (3D Spotlight Cards) */}
-      <section className="relative z-10 mx-auto max-w-5xl">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Spotlight3DCard className="p-4 border-danger/30">
-            <div className="flex items-start gap-3">
-              <span className="rounded-md bg-danger/10 p-2 text-danger">
-                <ShieldAlert className="h-5 w-5" />
-              </span>
-              <div>
-                <h4 className="text-sm font-semibold text-ink">{isBn ? "ক্লিনিক্যাল গেট প্রথম" : "Clinical Gates First"}</h4>
-                <p className="mt-0.5 text-xs text-muted">
-                  {isBn
-                    ? "সাশ্রয়ী হওয়ার চেয়ে জীবন রক্ষা আগে। কোনো বিপজ্জনক উপসর্গ থাকলে তাৎক্ষণিক ৯৯৯ নির্দেশিকা।"
-                    : "Clinical eligibility checked before cost; emergency signals strictly override ranking."}
-                </p>
-              </div>
-            </div>
-          </Spotlight3DCard>
-
-          <Spotlight3DCard className="p-4 border-primary/30">
-            <div className="flex items-start gap-3">
-              <span className="rounded-md bg-psoft p-2 text-ptext">
-                <BadgeCheck className="h-5 w-5" />
-              </span>
-              <div>
-                <h4 className="text-sm font-semibold text-ink">{isBn ? "স্বচ্ছ তথ্য ও প্রুভেন্যান্স" : "Provenance & Confidence"}</h4>
-                <p className="mt-0.5 text-xs text-muted">
-                  {isBn
-                    ? "প্রত্যেক ডাক্তার তালিকার তথ্য সংগ্রহের উৎস, সর্বশেষ যাচাইয়ের তারিখ ও কনফিডেন্স প্রদর্শিত।"
-                    : "Every provider listing shows verification status, source, date, and data confidence level."}
-                </p>
-              </div>
-            </div>
-          </Spotlight3DCard>
-
-          <Spotlight3DCard className="p-4 border-info/30">
-            <div className="flex items-start gap-3">
-              <span className="rounded-md bg-info/10 p-2 text-info">
-                <Bot className="h-5 w-5" />
-              </span>
-              <div>
-                <h4 className="text-sm font-semibold text-ink">{isBn ? "হিউম্যান-ইন-দ্য-লুপ" : "Assistance, Not Diagnosis"}</h4>
-                <p className="mt-0.5 text-xs text-muted">
-                  {isBn
-                    ? "সকল এআই আউটপুট ড্রাফট হিসেবে লেবেলযুক্ত। কোনো কৃত্রিম প্রেসক্রিপশন প্রদান করা হয় না।"
-                    : "AI output is explicitly marked as draft assistance; clinicians make 100% of medical decisions."}
-                </p>
-              </div>
-            </div>
-          </Spotlight3DCard>
-        </div>
-      </section>
-
-      {/* 6. Footer Disclaimer */}
-      <footer className="relative z-10 mx-auto max-w-3xl border-t border-border/60 pt-8 text-center text-xs text-muted">
-        <p>
-          {isBn
-            ? "মেডিব্রিজ এআই একটি হ্যাকাথন প্রোটোটাইপ। সকল রোগীর তথ্য সিন্থেটিক। এটি কোনো মেডিকেল ডিভাইস নয়।"
-            : "MediBridge AI is a research prototype. All patient records and directory listings are synthetic samples for Dhaka city."}
-        </p>
-        <div className="mt-3 flex items-center justify-center gap-4">
-          <Link href="/emergency" className="text-danger hover:underline">
-            {isBn ? "জরুরি সহায়তা (৯৯৯)" : "Emergency Hotline (999)"}
-          </Link>
-          <span>·</span>
-          <a href="http://localhost:8000/docs" target="_blank" rel="noreferrer" className="text-info hover:underline">
-            {isBn ? "ব্যাকএন্ড সোয়াগার ডক্স (/docs)" : "FastAPI Docs (/docs)"}
-          </a>
         </div>
       </footer>
     </div>

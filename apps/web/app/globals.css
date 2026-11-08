@@ -547,3 +547,18 @@ a.btn-link {
   transform: translateY(-3px) scale(1.01);
   box-shadow: 0 16px 36px -8px var(--accent-glow), 0 0 0 1px var(--accent);
 }
+
+/* Watermelon UI Marquee Animation */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 38s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
