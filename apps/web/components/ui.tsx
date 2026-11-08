@@ -244,7 +244,7 @@ export function Input({ label, hint, error, icon: Icon, id: explicitId, classNam
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
           {...props}
-          className={`w-full rounded-input border bg-s1 px-3 text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition ${
+          className={`w-full rounded-input border bg-s1 px-3 py-2.5 min-h-[42px] text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition ${
             Icon ? "pl-9" : ""
           } ${error ? "border-danger focus-visible:ring-danger/40" : "border-line"} ${className}`}
         />
@@ -364,7 +364,7 @@ export function Select({
         <select
           id={id}
           {...props}
-          className={`w-full appearance-none rounded-input border bg-s1 px-3 pr-8 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition ${
+          className={`w-full appearance-none rounded-input border bg-s1 px-3 py-2.5 min-h-[42px] pr-8 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition ${
             error ? "border-danger focus-visible:ring-danger/40" : "border-line"
           } ${className}`}
         >

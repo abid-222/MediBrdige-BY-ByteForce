@@ -455,7 +455,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top Header (App Pages Only) */}
         {!isLanding && (
-          <header className="sticky top-0 z-20 flex min-h-[60px] items-center justify-between gap-3 border-b border-line bg-white/98 dark:bg-[#0E131A]/98 px-4 py-2 backdrop-blur-xl shadow-xs">
+          <header className="sticky top-0 z-20 flex min-h-[60px] items-center justify-between gap-3 border-b border-line bg-s1/95 px-4 py-2 backdrop-blur-xl shadow-xs">
           {/* Mobile hamburger menu */}
           <button
             onClick={() => setMobileOpen(true)}

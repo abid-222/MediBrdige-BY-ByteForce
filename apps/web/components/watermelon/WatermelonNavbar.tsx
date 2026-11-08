@@ -65,7 +65,7 @@ export function WatermelonNavbar() {
         className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 font-mono ${
           scrolled
             ? "bg-[#06080D]/98 border-b-2 border-emerald-500/40 shadow-[0_10px_35px_rgba(0,0,0,0.85)] py-0"
-            : "bg-white/70 dark:bg-[#07090D]/70 backdrop-blur-xl border-b border-slate-200/60 dark:border-white/10 shadow-xs py-0"
+            : "bg-[#07090D]/85 backdrop-blur-xl border-b border-white/10 shadow-xs py-0"
         }`}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
@@ -340,7 +340,7 @@ export function WatermelonNavbar() {
             className={`xl:hidden border-b-2 border-emerald-500/40 p-4 sm:p-5 flex flex-col gap-2.5 shadow-2xl transition-all ${
               scrolled
                 ? "bg-[#06080D] text-white"
-                : "bg-white/95 dark:bg-[#07090D]/95 backdrop-blur-2xl"
+                : "bg-[#07090D]/95 text-white backdrop-blur-2xl"
             }`}
           >
             <Link
