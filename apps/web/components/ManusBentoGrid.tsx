@@ -160,8 +160,8 @@ export function ManusBentoGrid({ isBn }: { isBn: boolean }) {
           </div>
 
           <div className="mt-5 pt-3 border-t border-line/60">
-            <Link href="/reports" className="text-xs font-bold text-info hover:underline inline-flex items-center gap-1">
-              <span>{isBn ? "রিপোর্ট স্ক্যান দেখুন" : "Explore Report OCR"}</span>
+            <Link href="/reports/scan" className="text-xs font-bold text-info hover:underline inline-flex items-center gap-1">
+              <span>{isBn ? "রিপোর্ট স্ক্যানার চালান" : "Start OCR Report Scanner"}</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>

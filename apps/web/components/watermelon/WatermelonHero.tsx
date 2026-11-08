@@ -2,97 +2,24 @@
 import React from "react";
 import Link from "next/link";
 import {
+  Activity,
   ArrowRight,
+  CheckCircle2,
   Compass,
+  FileSearch,
   FileText,
   FlaskConical,
   HeartPulse,
+  Lock,
   PhoneCall,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
   Stethoscope,
   UploadCloud,
-  Users,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui";
-import { InteractiveTelemetry3D } from "@/components/InteractiveTelemetry3D";
-
-function TechnicalVisualRadar() {
-  return (
-    <div
-      className="pointer-events-none absolute top-0 right-0 bottom-0 hidden w-full items-center justify-end overflow-hidden opacity-40 dark:opacity-35 md:flex md:w-1/2 select-none"
-      style={{
-        WebkitMaskImage: "linear-gradient(to right, transparent, black 25%)",
-        maskImage: "linear-gradient(to right, transparent, black 25%)",
-      }}
-      aria-hidden
-    >
-      <div className="relative flex h-[360px] w-[360px] items-center justify-end">
-        <svg className="absolute right-0 h-[360px] w-[360px]" viewBox="0 0 360 360">
-          {/* Subtle grid background */}
-          <pattern id="watermelon-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-          </pattern>
-          <rect width="360" height="360" fill="url(#watermelon-grid)" />
-
-          {/* Vertical axis line on the left side of the visual */}
-          <line x1="60" y1="0" x2="60" y2="360" stroke="var(--border)" strokeWidth="1" strokeOpacity="0.6" />
-          {/* Horizontal axis line */}
-          <line x1="0" y1="180" x2="360" y2="180" stroke="var(--border)" strokeWidth="1" strokeOpacity="0.4" />
-
-          {/* Coordinate labels */}
-          <text x="65" y="16" fill="var(--primary)" fontSize="10" fontFamily="monospace" fontWeight="bold">
-            GATE.01
-          </text>
-          <text x="280" y="174" fill="var(--text-muted)" fontSize="9" fontFamily="monospace">
-            BMDC.VERIFIED
-          </text>
-
-          {/* Glowing origin / crosshair */}
-          <line x1="45" y1="180" x2="75" y2="180" stroke="var(--primary)" strokeWidth="2" />
-          <line x1="60" y1="165" x2="60" y2="195" stroke="var(--primary)" strokeWidth="2" />
-
-          {/* Radiating Half-Circles with dashed paths */}
-          {[1, 2, 3, 4].map((i) => (
-            <path
-              key={`circle-${i}`}
-              d={`M 60,${180 - i * 55} A ${i * 55},${i * 55} 0 0,1 60,${180 + i * 55}`}
-              fill="none"
-              stroke="var(--primary)"
-              strokeOpacity={0.25 - i * 0.04}
-              strokeWidth="1.2"
-              strokeDasharray={i % 2 === 0 ? "2 6" : "1 4"}
-            />
-          ))}
-
-          {/* Orbiting Telemetry Dots */}
-          {[
-            { angle: -45, r: 55 },
-            { angle: 30, r: 110 },
-            { angle: -20, r: 165 },
-            { angle: 50, r: 220 },
-            { angle: -65, r: 220 },
-          ].map((dot, idx) => {
-            const rad = (dot.angle * Math.PI) / 180;
-            const x = 60 + Math.cos(rad) * dot.r;
-            const y = 180 + Math.sin(rad) * dot.r;
-            return (
-              <circle
-                key={`dot-${idx}`}
-                cx={x}
-                cy={y}
-                r="2.5"
-                fill="var(--primary)"
-                className="animate-pulse"
-              />
-            );
-          })}
-        </svg>
-      </div>
-    </div>
-  );
-}
 
 export function WatermelonHero({
   isBn,
@@ -102,23 +29,23 @@ export function WatermelonHero({
   currentRole: string;
 }) {
   return (
-    <section className="relative pt-8 pb-12 sm:pt-12 sm:pb-16 md:pt-14 md:pb-20 overflow-hidden font-mono select-none">
-      {/* Visual Technical Radar on Right Side (Watermelon / Hyphen Signature) */}
-      <TechnicalVisualRadar />
+    <section className="relative pt-10 pb-12 sm:pt-16 sm:pb-16 md:pt-18 md:pb-20 overflow-hidden font-mono select-none">
+      {/* Background radial glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-primary/10 blur-[120px] pointer-events-none rounded-full" />
 
       <div className="container relative z-10 mx-auto px-4 md:px-8 lg:px-12 text-center max-w-4xl">
         {/* Technical Sub-Tag */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 sm:px-4 sm:py-1.5 text-[11px] sm:text-xs font-bold text-ptext shadow-[0_0_15px_var(--accent-glow)]">
+        <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-bold text-ptext shadow-[0_0_15px_var(--accent-glow)]">
           <span className="flex h-2 w-2 rounded-full bg-accent animate-ping" />
-          <span className="truncate max-w-[280px] sm:max-w-none">
+          <span className="truncate max-w-[300px] sm:max-w-none">
             {isBn
               ? "🇧🇩 বাংলাদেশের জন্য স্বাস্থ্য সমন্বয় আর্কিটেকচার · ঢাকা ২০২৬"
-              : "🇧🇩 HEALTHCARE COORDINATION ARCHITECTURE · DHAKA PROTOTYPE"}
+              : "🇧🇩 HEALTHCARE COORDINATION ARCHITECTURE · DHAKA 2026"}
           </span>
         </div>
 
-        {/* Hero Title with Watermelon UI High-Contrast Focus */}
-        <h1 className="mt-4 sm:mt-6 font-heading text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-ink break-words">
+        {/* Hero Title with High-Contrast Focus */}
+        <h1 className="mt-5 sm:mt-7 font-heading text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-ink break-words">
           Healthcare that <br className="hidden sm:block" />
           is <span className="text-primary drop-shadow-[0_0_24px_var(--accent-glow)]">engineered for trust</span>
         </h1>
@@ -131,21 +58,21 @@ export function WatermelonHero({
         </p>
 
         {/* Action Buttons - DIRECTLY VISIBLE ON SCREEN ABOVE THE FOLD */}
-        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full max-w-3xl mx-auto">
+        <div className="mt-7 sm:mt-9 flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-3xl mx-auto">
           <Link href="/navigator" className="w-full sm:w-auto">
-            <Button className="btn-primary-neon w-full sm:w-auto min-h-[46px] px-6 text-xs sm:text-sm uppercase tracking-widest font-bold shadow-[0_0_18px_var(--accent-glow)] group">
+            <Button className="btn-primary-neon w-full sm:w-auto min-h-[48px] px-6 text-xs sm:text-sm uppercase tracking-widest font-bold shadow-[0_0_20px_var(--accent-glow)] group">
               <Compass className="mr-2 h-4 w-4 group-hover:rotate-45 transition-transform" />
               <span>{isBn ? "স্মার্টকেয়ার নেভিগেটর চালান" : "Start SmartCare Navigator"}</span>
             </Button>
           </Link>
 
           <Link
-            href={currentRole === "patient" ? "/reports/scan" : "/login?next=%2Freports%2Fscan"}
+            href={currentRole === "patient" ? "/reports/scan" : "/reports/scan"}
             className="w-full sm:w-auto"
           >
             <Button
               variant="secondary"
-              className="w-full sm:w-auto min-h-[46px] px-5 text-xs sm:text-sm uppercase tracking-widest font-bold border-primary/40 bg-s1 hover:bg-s2 hover:border-primary transition group shadow-xs"
+              className="w-full sm:w-auto min-h-[48px] px-6 text-xs sm:text-sm uppercase tracking-widest font-bold border-primary/40 bg-s1 hover:bg-s2 hover:border-primary transition group shadow-xs"
             >
               <UploadCloud className="mr-2 h-4 w-4 text-ptext group-hover:-translate-y-0.5 transition-transform" />
               <span>{isBn ? "মেডিকেল রিপোর্ট ওসিআর" : "Scan Medical Report"}</span>
@@ -155,9 +82,9 @@ export function WatermelonHero({
           <Link href="/directory" className="w-full sm:w-auto">
             <Button
               variant="secondary"
-              className="w-full sm:w-auto min-h-[46px] px-5 text-xs uppercase tracking-widest font-bold border-line bg-s1 hover:bg-s2 transition shadow-xs"
+              className="w-full sm:w-auto min-h-[48px] px-5 text-xs sm:text-sm uppercase tracking-widest font-bold border-line bg-s1 hover:bg-s2 transition shadow-xs"
             >
-              <Stethoscope className="mr-1.5 h-3.5 w-3.5 text-muted" />
+              <Stethoscope className="mr-1.5 h-4 w-4 text-muted" />
               <span>{isBn ? "ডাক্তার ডিরেক্টরি" : "Browse Doctors"}</span>
             </Button>
           </Link>
@@ -166,33 +93,103 @@ export function WatermelonHero({
             <Link href="/ml-lab" className="w-full sm:w-auto">
               <Button
                 variant="ghost"
-                className="w-full sm:w-auto min-h-[46px] px-4 text-xs uppercase tracking-widest font-bold border border-primary/20 text-ptext hover:bg-primary/10 transition"
+                className="w-full sm:w-auto min-h-[48px] px-4 text-xs uppercase tracking-widest font-bold border border-primary/20 text-ptext hover:bg-primary/10 transition"
               >
                 <FlaskConical className="mr-1.5 h-3.5 w-3.5" />
-                <span>{isBn ? "এমএল ল্যাব" : "ML Studio"}</span>
+                <span>{isBn ? "এমএল স্টুডিও" : "ML Studio"}</span>
               </Button>
             </Link>
           )}
         </div>
 
-        {/* 3D Medical Telemetry Card */}
-        <div className="mt-8 px-1">
-          <InteractiveTelemetry3D />
+        {/* 4 Core Pillars Strip - High Trust & Fully Responsive */}
+        <div className="mt-8 sm:mt-10 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 text-left">
+          <Link
+            href="/navigator"
+            className="group rounded-2xl border border-line bg-s1/80 p-3.5 sm:p-4 hover:border-primary/50 transition backdrop-blur-md shadow-xs flex flex-col justify-between"
+          >
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/20 text-ptext">
+                <ShieldCheck className="h-4 w-4" />
+              </span>
+              <span className="text-[10px] font-mono font-bold text-ptext uppercase">Zero Hallucination</span>
+            </div>
+            <p className="mt-2 text-xs font-bold text-ink group-hover:text-ptext transition">
+              {isBn ? "ডুয়াল-গেট ট্রায়াজ" : "Dual-Gate Triage"}
+            </p>
+            <p className="text-[10px] text-muted leading-tight mt-0.5">
+              {isBn ? "জরুরি উপসর্গ শনাক্তকরণ ও নিরাপত্তা" : "Clinical eligibility & 999 guardrails"}
+            </p>
+          </Link>
+
+          <Link
+            href="/reports/scan"
+            className="group rounded-2xl border border-line bg-s1/80 p-3.5 sm:p-4 hover:border-info/50 transition backdrop-blur-md shadow-xs flex flex-col justify-between"
+          >
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-info/20 text-info">
+                <FileSearch className="h-4 w-4" />
+              </span>
+              <span className="text-[10px] font-mono font-bold text-info uppercase">PyMuPDF + Vision</span>
+            </div>
+            <p className="mt-2 text-xs font-bold text-ink group-hover:text-info transition">
+              {isBn ? "স্মার্ট রিপোর্ট ওসিআর" : "Neural OCR Engine"}
+            </p>
+            <p className="text-[10px] text-muted leading-tight mt-0.5">
+              {isBn ? "স্বয়ংক্রিয় টেবিল ও টেস্ট মান নিষ্কাশন" : "Multiline PDF lab extraction"}
+            </p>
+          </Link>
+
+          <Link
+            href="/directory"
+            className="group rounded-2xl border border-line bg-s1/80 p-3.5 sm:p-4 hover:border-warn/50 transition backdrop-blur-md shadow-xs flex flex-col justify-between"
+          >
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-warn/20 text-warn">
+                <Video className="h-4 w-4" />
+              </span>
+              <span className="text-[10px] font-mono font-bold text-warn uppercase">BMDC Verified</span>
+            </div>
+            <p className="mt-2 text-xs font-bold text-ink group-hover:text-warn transition">
+              {isBn ? "১০০% অনলাইন টেলিহেলথ" : "100% Online Consult"}
+            </p>
+            <p className="text-[10px] text-muted leading-tight mt-0.5">
+              {isBn ? "সরাসরি গুগল মিট লিংক ও বিশেষজ্ঞ ডাক্তার" : "Instant video consult & clear fees"}
+            </p>
+          </Link>
+
+          <Link
+            href="/emergency"
+            className="group rounded-2xl border border-line bg-s1/80 p-3.5 sm:p-4 hover:border-danger/50 transition backdrop-blur-md shadow-xs flex flex-col justify-between"
+          >
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-danger/20 text-danger">
+                <Lock className="h-4 w-4" />
+              </span>
+              <span className="text-[10px] font-mono font-bold text-danger uppercase">Zero-Trust</span>
+            </div>
+            <p className="mt-2 text-xs font-bold text-ink group-hover:text-danger transition">
+              {isBn ? "রোগীর কনসেন্ট ও অডিট" : "Patient Consent"}
+            </p>
+            <p className="text-[10px] text-muted leading-tight mt-0.5">
+              {isBn ? "অপরিবর্তনীয় ক্রিপ্টোগ্রাফিক সুরক্ষা" : "Cryptographically signed records"}
+            </p>
+          </Link>
         </div>
 
-        <p className="mt-3 text-xs sm:text-sm text-muted max-w-xl mx-auto uppercase tracking-wider leading-relaxed px-3">
-          {isBn
-            ? "কাগজে আটকে থাকা বিভ্রান্তি দূর করে রোগীকে সঠিক চিকিৎসকের কাছে পৌঁছে দেওয়া এবং প্রেসক্রিপশন ডিজিটাইজেশনের সম্পূর্ণ নিরাপদ ব্যবস্থা।"
-            : "Zero-hallucination dual-gate clinical pipeline, bilingual OCR extraction, and 100% online telehealth booking."}
-        </p>
-
         {/* Emergency Disclaimer Banner */}
-        <div className="mx-auto mt-6 sm:mt-8 flex max-w-xl items-center justify-center gap-2.5 rounded-lg border border-danger/30 bg-danger/5 px-3.5 py-2.5 text-xs text-muted backdrop-blur-sm">
+        <div className="mx-auto mt-7 sm:mt-9 flex max-w-xl items-center justify-center gap-3 rounded-2xl border border-danger/30 bg-danger/5 px-4 py-3 text-xs text-muted backdrop-blur-sm shadow-xs">
           <ShieldAlert className="h-4 w-4 text-danger shrink-0 animate-pulse" />
           <span className="text-[11px] font-mono leading-tight text-left sm:text-center">
-            {isBn
-              ? "জরুরি পরিস্থিতিতে সরাসরি ৯৯৯ কল করুন। কৃত্রিম বুদ্ধিমত্তা কোনো প্রেসক্রিপশন বা ক্লিনিক্যাল ডায়াগনোসিস দেয় না।"
-              : "In medical emergencies, call 999 immediately. AI never diagnoses or prescribes medication."}
+            {isBn ? (
+              <>
+                জরুরি পরিস্থিতিতে সরাসরি <a href="tel:999" className="text-danger font-bold hover:underline">৯৯৯ কল করুন</a>। কৃত্রিম বুদ্ধিমত্তা কোনো চূড়ান্ত প্রেসক্রিপশন বা ডায়াগনোসিস দেয় না।
+              </>
+            ) : (
+              <>
+                In medical emergencies, <a href="tel:999" className="text-danger font-bold hover:underline">call 999 immediately</a>. AI never diagnoses or prescribes medication without a doctor.
+              </>
+            )}
           </span>
         </div>
       </div>

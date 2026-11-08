@@ -17,11 +17,8 @@ import {
   FileText,
   FlaskConical,
   HeartPulse,
-  KeyRound,
-  LineChart,
   Lock,
   PhoneCall,
-  Scale,
   Shield,
   ShieldAlert,
   ShieldCheck,
@@ -31,22 +28,19 @@ import {
   Users,
   Video,
 } from "lucide-react";
-import { api, getRole, getToken, homeFor } from "@/lib/api";
+import { getRole, getToken, homeFor } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui";
 import { WatermelonNavbar } from "@/components/watermelon/WatermelonNavbar";
 import { WatermelonHero } from "@/components/watermelon/WatermelonHero";
 import { TelemetryStats } from "@/components/watermelon/TelemetryStats";
 import { ManusBentoGrid } from "@/components/ManusBentoGrid";
-import { WatermelonBrowserDemo } from "@/components/watermelon/WatermelonBrowserDemo";
-import { CommunityMarquee } from "@/components/watermelon/CommunityMarquee";
 import { Spotlight3DCard } from "@/components/Spotlight3DCard";
 import { CardSplitAccordion, type AccordionItemData } from "@/components/watermelon/card-split-accordian";
 
 export default function Home() {
   const { t, locale } = useI18n();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"patient" | "doctor" | "hospital" | "admin">("patient");
   const [currentRole, setCurrentRole] = useState<string>("none");
 
   useEffect(() => {
@@ -104,13 +98,13 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen w-full overflow-x-clip bg-bg text-ink font-sans selection:bg-primary/20 selection:text-primary">
-      {/* 1. Technical Watermelon Header / Navbar */}
+      {/* 1. Technical Navbar */}
       <WatermelonNavbar />
 
       {/* Logged In Quick Return Workspace Banner (if active session) */}
       {currentRole !== "none" && (
         <div className="container mx-auto px-4 pt-6">
-          <div className="mx-auto max-w-5xl rounded-xl border border-primary/40 bg-psoft/70 p-3.5 sm:px-4 sm:py-3 shadow-[0_0_20px_var(--accent-glow)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 backdrop-blur-md">
+          <div className="mx-auto max-w-5xl rounded-2xl border border-primary/40 bg-psoft/70 p-4 shadow-[0_0_20px_var(--accent-glow)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 backdrop-blur-md">
             <div className="flex items-center gap-2.5">
               <span className="flex h-2.5 w-2.5 rounded-full bg-accent animate-pulse shrink-0" />
               <span className="text-xs sm:text-sm font-semibold text-ink font-mono">
@@ -130,14 +124,14 @@ export default function Home() {
         </div>
       )}
 
-      {/* 2. Hero Section with 3D Visual Radar & Telemetry */}
+      {/* 2. Hero Section with Direct Above-the-Fold Action Buttons */}
       <WatermelonHero isBn={isBn} currentRole={currentRole} />
 
-      {/* 3. Telemetry Stats Counters with Technical Crosshairs */}
+      {/* 3. Telemetry Stats Counters */}
       <TelemetryStats isBn={isBn} />
 
-      {/* 4. Artistic 3D Bento Grid (Watermelon / Hyphen / Manus Style Architecture) */}
-      <section className="relative z-10 py-10 sm:py-16 md:py-24">
+      {/* 4. Core Clinical Architecture Bento Grid */}
+      <section className="relative z-10 py-10 sm:py-16 md:py-20">
         <div className="container mx-auto px-4 md:px-8 lg:px-12">
           <div className="mb-8 sm:mb-12 flex flex-col items-start md:items-center text-left md:text-center max-w-3xl mx-auto">
             <div className="text-primary mb-2 sm:mb-3 inline-flex items-center text-xs font-bold tracking-widest uppercase font-mono">
@@ -158,7 +152,7 @@ export default function Home() {
             <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm text-muted font-mono tracking-wider uppercase">
               {isBn
                 ? "ডুয়াল-গেট ট্রায়াজ, দ্বিভাষিক ওসিআর ভিশন এবং সম্পূর্ণ অনলাইন টেলিহেলথ কনসালট্যান্সি।"
-                : "Dual-gate triage, OCR lab parsing, online-only video teleconsultation, and tamper-proof audit trails."}
+                : "Dual-gate triage, OCR lab parsing, online video teleconsultation, and tamper-proof audit trails."}
             </p>
           </div>
 
@@ -166,13 +160,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. Watermelon Browser Demo Console */}
-      <WatermelonBrowserDemo isBn={isBn} />
-
-      {/* 6. Role-Based Portals Showcase (Technical 3D Spotlight Cards) */}
-      <section className="relative z-10 py-10 sm:py-16 md:py-24 font-mono">
+      {/* 5. Role-Based Portals Showcase (Technical 3D Spotlight Cards) */}
+      <section className="relative z-10 py-10 sm:py-16 md:py-20 font-mono">
         <div className="container mx-auto px-4 md:px-8 lg:px-12 max-w-6xl">
-          <div className="rounded-2xl border border-line bg-s1/80 p-4 sm:p-6 md:p-8 shadow-2xl backdrop-blur-md relative overflow-hidden">
+          <div className="rounded-3xl border border-line bg-s1/80 p-5 sm:p-7 md:p-9 shadow-2xl backdrop-blur-md relative overflow-hidden">
             {/* Corner Accents */}
             <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary" />
             <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-primary" />
@@ -183,7 +174,7 @@ export default function Home() {
               <div>
                 <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-primary tracking-wider uppercase">
                   <HeartPulse className="h-4 w-4" />
-                  <span>{isBn ? "প্ল্যাটফর্মের ভূমিকাভিত্তিক পোর্টালসমূহ" : "[ ROLE-BASED HEALTHCARE PORTALS ]"}</span>
+                  <span>{isBn ? "ভূমিকাভিত্তিক স্বাস্থ্য পোর্টালসমূহ" : "[ ROLE-BASED HEALTHCARE PORTALS ]"}</span>
                 </div>
                 <p className="mt-1 text-[11px] sm:text-xs text-muted font-mono">
                   {isBn
@@ -205,14 +196,14 @@ export default function Home() {
               >
                 <Spotlight3DCard className="p-4 sm:p-5 h-full border-line hover:border-primary/50 transition">
                   <div className="flex w-full items-center justify-between">
-                    <span className="rounded-md bg-primary/10 p-2 sm:p-2.5 text-primary">
-                      <HeartPulse className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="rounded-xl bg-primary/10 p-2.5 text-primary">
+                      <HeartPulse className="h-5 w-5" />
                     </span>
-                    <span className="text-[10px] text-muted font-mono group-hover:text-primary transition uppercase tracking-widest">
+                    <span className="text-[10px] text-muted font-mono group-hover:text-primary transition uppercase tracking-widest font-bold">
                       ENTER // 01 →
                     </span>
                   </div>
-                  <span className="mt-3 sm:mt-4 block text-sm font-bold text-ink tracking-tight font-sans">
+                  <span className="mt-4 block text-sm font-bold text-ink tracking-tight font-sans group-hover:text-ptext transition">
                     {isBn ? "রোগী পোর্টাল" : "Patient Portal"}
                   </span>
                   <p className="mt-1 text-xs text-muted leading-relaxed font-sans">
@@ -229,14 +220,14 @@ export default function Home() {
               >
                 <Spotlight3DCard className="p-4 sm:p-5 h-full border-line hover:border-info/50 transition">
                   <div className="flex w-full items-center justify-between">
-                    <span className="rounded-md bg-info/10 p-2 sm:p-2.5 text-info">
-                      <Stethoscope className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="rounded-xl bg-info/10 p-2.5 text-info">
+                      <Stethoscope className="h-5 w-5" />
                     </span>
-                    <span className="text-[10px] text-muted font-mono group-hover:text-info transition uppercase tracking-widest">
+                    <span className="text-[10px] text-muted font-mono group-hover:text-info transition uppercase tracking-widest font-bold">
                       ENTER // 02 →
                     </span>
                   </div>
-                  <span className="mt-3 sm:mt-4 block text-sm font-bold text-ink tracking-tight font-sans">
+                  <span className="mt-4 block text-sm font-bold text-ink tracking-tight font-sans group-hover:text-info transition">
                     {isBn ? "ডাক্তার ওয়ার্কস্পেস" : "Doctor Workspace"}
                   </span>
                   <p className="mt-1 text-xs text-muted leading-relaxed font-sans">
@@ -253,14 +244,14 @@ export default function Home() {
               >
                 <Spotlight3DCard className="p-4 sm:p-5 h-full border-line hover:border-warn/50 transition">
                   <div className="flex w-full items-center justify-between">
-                    <span className="rounded-md bg-warn/10 p-2 sm:p-2.5 text-warn">
-                      <Building2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="rounded-xl bg-warn/10 p-2.5 text-warn">
+                      <Building2 className="h-5 w-5" />
                     </span>
-                    <span className="text-[10px] text-muted font-mono group-hover:text-warn transition uppercase tracking-widest">
+                    <span className="text-[10px] text-muted font-mono group-hover:text-warn transition uppercase tracking-widest font-bold">
                       ENTER // 03 →
                     </span>
                   </div>
-                  <span className="mt-3 sm:mt-4 block text-sm font-bold text-ink tracking-tight font-sans">
+                  <span className="mt-4 block text-sm font-bold text-ink tracking-tight font-sans group-hover:text-warn transition">
                     {isBn ? "হাসপাতাল কমান্ড" : "Hospital Command"}
                   </span>
                   <p className="mt-1 text-xs text-muted leading-relaxed font-sans">
@@ -277,14 +268,14 @@ export default function Home() {
               >
                 <Spotlight3DCard className="p-4 sm:p-5 h-full border-line hover:border-danger/50 transition">
                   <div className="flex w-full items-center justify-between">
-                    <span className="rounded-md bg-danger/10 p-2 sm:p-2.5 text-danger">
-                      <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="rounded-xl bg-danger/10 p-2.5 text-danger">
+                      <ShieldCheck className="h-5 w-5" />
                     </span>
-                    <span className="text-[10px] text-muted font-mono group-hover:text-danger transition uppercase tracking-widest">
+                    <span className="text-[10px] text-muted font-mono group-hover:text-danger transition uppercase tracking-widest font-bold">
                       ENTER // 04 →
                     </span>
                   </div>
-                  <span className="mt-3 sm:mt-4 block text-sm font-bold text-ink tracking-tight font-sans">
+                  <span className="mt-4 block text-sm font-bold text-ink tracking-tight font-sans group-hover:text-danger transition">
                     {isBn ? "অ্যাডমিন সেন্টার" : "Admin Center"}
                   </span>
                   <p className="mt-1 text-xs text-muted leading-relaxed font-sans">
@@ -299,233 +290,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. Master Workflow & User Journeys Walkthrough */}
-      <section className="relative z-10 py-10 sm:py-16 md:py-24 font-mono">
-        <div className="container mx-auto px-4 md:px-8 lg:px-12 max-w-6xl">
-          <div className="rounded-card border border-line bg-s1/90 p-4 sm:p-6 md:p-8 backdrop-blur-md relative">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-4 sm:pb-5">
-              <div>
-                <h3 className="font-heading text-lg sm:text-xl font-bold text-ink font-sans">
-                  {isBn ? "মাস্টার ওয়ার্কফ্লো ও ইউজার জার্নি" : "Master Workflow & User Journeys"}
-                </h3>
-                <p className="text-[11px] sm:text-xs text-muted font-mono mt-1">
-                  {isBn
-                    ? "একটি প্ল্যাটফর্ম, চারটি আলাদা সুরক্ষিত পোর্টাল — পাবলিক ল্যান্ডিং থেকে হিউম্যান-রিভিউড আউটকাম"
-                    : "One product, four role-based portals. Every journey ends in a human-reviewed outcome."}
-                </p>
-              </div>
-
-              {/* Tab switchers */}
-              <div className="grid grid-cols-4 sm:flex rounded-lg border border-line bg-s2/80 p-1 w-full sm:w-auto">
-                {(["patient", "doctor", "hospital", "admin"] as const).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setActiveTab(r)}
-                    className={`rounded-md px-1.5 py-1.5 sm:px-3.5 sm:py-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-center transition ${
-                      activeTab === r ? "bg-primary text-onprimary shadow-md" : "text-muted hover:text-ink"
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-6">
-              {activeTab === "patient" && (
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-xl border border-line bg-s2/50 p-5 relative overflow-hidden">
-                    <span className="num text-xs font-bold text-primary font-mono">// STEP 01</span>
-                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "রেজিস্টার ও প্রোফাইল" : "Register & Profile"}</h4>
-                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
-                      {isBn
-                        ? "ইমেইল ওটিপি, স্বাস্থ্য তথ্য ও আলাদা কনসেন্ট টগল (ডাক্তার শেয়ারিং ঐচ্ছিক)।"
-                        : "Instant email verification, health profile, budget band and granular consent toggles."}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-line bg-s2/50 p-5 relative overflow-hidden">
-                    <span className="num text-xs font-bold text-primary font-mono">// STEP 02</span>
-                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "রিপোর্ট আপলোড ও টাইমলাইন" : "Upload & Timeline"}</h4>
-                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
-                      {isBn
-                        ? "প্রেসক্রিপশন/রিপোর্ট ড্রপ করুন। OCR মান বের করবে এবং আগের রিপোর্টের সাথে ট্রেন্ড চার্ট দেখাবে।"
-                        : "Drag & drop report. OCR parses lab values with confidence badges and plots historical trends."}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-line bg-s2/50 p-5 relative overflow-hidden">
-                    <span className="num text-xs font-bold text-primary font-mono">// STEP 03</span>
-                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "স্মার্টকেয়ার ও বুকিং" : "Navigator & Booking"}</h4>
-                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
-                      {isBn
-                        ? "সমস্যা উল্লেখ করুন। রেড-ফ্ল্যাগ চেক শেষে উপযুক্ত ডাক্তার ম্যাচ ও সরাসরি অনলাইন মিট বুকিং।"
-                        : "Input symptoms. Emergency checks first, then get matched with verified Dhaka specialists online."}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "doctor" && (
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-xl border border-line bg-s2/50 p-5">
-                    <span className="num text-xs font-bold text-info font-mono">// CLINICAL 01</span>
-                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "কনসেন্ট যাচাই" : "Consent Verification"}</h4>
-                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
-                      {isBn
-                        ? "শুধুমাত্র কেয়ার রিলেশনশিপ ও সক্রিয় সম্মতি থাকলেই রোগীর চার্ট অ্যাক্সেস সম্ভব।"
-                        : "Checks active care relationship and patient consent before unlocking medical chart."}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-line bg-s2/50 p-5">
-                    <span className="num text-xs font-bold text-info font-mono">// CLINICAL 02</span>
-                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "AI সামারি ও মান নিশ্চিতকরণ" : "AI Summary & Extractions"}</h4>
-                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
-                      {isBn
-                        ? "মূল রিপোর্টের পাশাপাশি এআই প্রস্তুতকৃত ফ্যাক্ট-ভিত্তিক সামারি পড়ে মানগুলো অনুমোদন দিন।"
-                        : "Compare extracted OCR values with original scans and read dated, source-linked AI summaries."}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-line bg-s2/50 p-5">
-                    <span className="num text-xs font-bold text-info font-mono">// CLINICAL 03</span>
-                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "নোট এডিট ও স্বাক্ষর" : "Edit & Sign Note"}</h4>
-                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
-                      {isBn
-                        ? "ড্রাফট নোট পরিবর্তন করে স্থায়ী ডিজিটাল স্বাক্ষর দিন। স্বাক্ষরিত নোট অপরিবর্তনীয়।"
-                        : "Review AI draft clinical note, make edits, and sign. Signed versions become immutable records."}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "hospital" && (
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-xl border border-line bg-s2/50 p-5">
-                    <span className="num text-xs font-bold text-warn font-mono">// FACILITY 01</span>
-                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "প্রোফাইল ও কনফার্মড মূল্য" : "Profile & Verified Pricing"}</h4>
-                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
-                      {isBn
-                        ? "হাসপাতালের সেবাসমূহ এবং কনফার্মড টেস্ট ফির তালিকা হালনাগাদ রাখুন।"
-                        : "Maintain transparent test and consultation pricing with last-confirmed dates."}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-line bg-s2/50 p-5">
-                    <span className="num text-xs font-bold text-warn font-mono">// FACILITY 02</span>
-                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "ডাক্তার রোস্টার" : "Doctor Rostering"}</h4>
-                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
-                      {isBn
-                        ? "বিএমডিসি নম্বরসহ স্পেশালিস্ট ডাক্তারদের উপস্থিতি ও চেম্বার শিডিউল পরিচালনা।"
-                        : "Manage affiliated physicians with BMDC license verification and visiting schedules."}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-line bg-s2/50 p-5">
-                    <span className="num text-xs font-bold text-warn font-mono">// FACILITY 03</span>
-                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "অ্যাপয়েন্টমেন্ট কিউ" : "Appointment Queue"}</h4>
-                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
-                      {isBn
-                        ? "রোগীদের ভিজিট রিকোয়েস্ট চেক-ইন, সম্পন্ন বা রিশিডিউল করার সুবিধা।"
-                        : "Manage incoming visit requests through a state machine: requested → confirmed → check-in."}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "admin" && (
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-xl border border-line bg-s2/50 p-5">
-                    <span className="num text-xs font-bold text-danger font-mono">// GOVERNANCE 01</span>
-                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "ভেরিফিকেশন কিউ" : "Verification Queue"}</h4>
-                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
-                      {isBn
-                        ? "ডাক্তার ও ডায়াগনস্টিক সেন্টারের কাগজপত্র যাচাই করে ভেরিফায়েড ব্যাজ প্রদান।"
-                        : "Validate BMDC registration and facility licenses with explicit proof citations."}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-line bg-s2/50 p-5">
-                    <span className="num text-xs font-bold text-danger font-mono">// GOVERNANCE 02</span>
-                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "অপরিবর্তনীয় অডিট লগ" : "Append-Only Audit Log"}</h4>
-                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
-                      {isBn
-                        ? "প্রতিটি সংবেদনশীল অ্যাকশন (লগইন, ফাইল দেখা, কনসেন্ট প্রত্যাহার) রেকর্ড হয়।"
-                        : "Real-time tamper-proof logging of logins, chart opens, OCR corrections, and consent revokes."}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-line bg-s2/50 p-5">
-                    <span className="num text-xs font-bold text-danger font-mono">// GOVERNANCE 03</span>
-                    <h4 className="mt-2 font-bold text-ink font-sans">{isBn ? "মডেল রেজিস্ট্রি ও সেফটি" : "Model Registry & Safety"}</h4>
-                    <p className="mt-1.5 text-xs text-muted leading-relaxed font-sans">
-                      {isBn
-                        ? "ডকুমেন্ট ক্লাসিফায়ার ML মডেল কার্ড, ম্যাক্রো-F1 মেট্রিক্স ও সেফটি গেট স্ট্যাটাস।"
-                        : "Monitor document classifier accuracy, macro-F1 score, and safety gate triggers."}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 8. Key Safety Principles Bar (3D Spotlight Cards) */}
-      <section className="relative z-10 py-12">
-        <div className="container mx-auto px-4 md:px-8 lg:px-12 max-w-6xl">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Spotlight3DCard className="p-5 border-danger/30">
-              <div className="flex items-start gap-3.5">
-                <span className="rounded-lg bg-danger/10 p-2.5 text-danger shrink-0">
-                  <ShieldAlert className="h-5 w-5" />
-                </span>
-                <div>
-                  <h4 className="text-sm font-bold text-ink font-mono">{isBn ? "ক্লিনিক্যাল গেট প্রথম" : "CLINICAL GATES FIRST"}</h4>
-                  <p className="mt-1 text-xs text-muted leading-relaxed">
-                    {isBn
-                      ? "সাশ্রয়ী হওয়ার চেয়ে জীবন রক্ষা আগে। কোনো বিপজ্জনক উপসর্গ থাকলে তাৎক্ষণিক ৯৯৯ নির্দেশিকা।"
-                      : "Clinical eligibility checked before cost; emergency signals strictly override ranking."}
-                  </p>
-                </div>
-              </div>
-            </Spotlight3DCard>
-
-            <Spotlight3DCard className="p-5 border-primary/30">
-              <div className="flex items-start gap-3.5">
-                <span className="rounded-lg bg-primary/10 p-2.5 text-primary shrink-0">
-                  <BadgeCheck className="h-5 w-5" />
-                </span>
-                <div>
-                  <h4 className="text-sm font-bold text-ink font-mono">{isBn ? "স্বচ্ছ তথ্য ও প্রুভেন্যান্স" : "PROVENANCE & AUDIT"}</h4>
-                  <p className="mt-1 text-xs text-muted leading-relaxed">
-                    {isBn
-                      ? "প্রত্যেক ডাক্তার তালিকার তথ্য সংগ্রহের উৎস, সর্বশেষ যাচাইয়ের তারিখ ও কনফিডেন্স প্রদর্শিত।"
-                      : "Every provider listing shows verification status, source, date, and data confidence level."}
-                  </p>
-                </div>
-              </div>
-            </Spotlight3DCard>
-
-            <Spotlight3DCard className="p-5 border-info/30">
-              <div className="flex items-start gap-3.5">
-                <span className="rounded-lg bg-info/10 p-2.5 text-info shrink-0">
-                  <Bot className="h-5 w-5" />
-                </span>
-                <div>
-                  <h4 className="text-sm font-bold text-ink font-mono">{isBn ? "হিউম্যান-ইন-দ্য-লুপ" : "ASSIST, NOT REPLACE"}</h4>
-                  <p className="mt-1 text-xs text-muted leading-relaxed">
-                    {isBn
-                      ? "সকল এআই আউটপুট ড্রাফট হিসেবে লেবেলযুক্ত। কোনো কৃত্রিম প্রেসক্রিপশন প্রদান করা হয় না।"
-                      : "AI output is explicitly marked as draft assistance; clinicians make 100% of medical decisions."}
-                  </p>
-                </div>
-              </div>
-            </Spotlight3DCard>
-          </div>
-        </div>
-      </section>
-
-      {/* 9. Card Split Accordion (Watermelon UI Registry Component) */}
-      <section className="relative z-10 py-16 md:py-24 font-mono">
+      {/* 6. Clinical Protocols & FAQ (Clean Split Accordion) */}
+      <section className="relative z-10 py-12 sm:py-16 md:py-20 font-mono">
         <div className="container mx-auto px-4 md:px-8 lg:px-12 max-w-4xl">
           <div className="mb-10 flex flex-col items-start md:items-center text-left md:text-center">
             <div className="text-primary mb-3 inline-flex items-center text-xs font-bold tracking-widest uppercase">
               <span className="mr-3 opacity-70">{"//"}</span>
-              CARD SPLIT ACCORDION ARCHITECTURE
+              CLINICAL FAQ & ARCHITECTURE
             </div>
             <h2 className="font-heading text-2xl sm:text-4xl font-bold tracking-tight text-ink font-sans">
               {isBn ? (
@@ -540,8 +311,8 @@ export default function Home() {
             </h2>
             <p className="mt-3 text-xs sm:text-sm text-muted font-mono tracking-wider uppercase max-w-xl">
               {isBn
-                ? "কার্ড স্প্লিট অ্যাকর্ডিয়ন এ ক্লিক করে সিস্টেম মেকানিক্স ও প্রোটোকলগুলো বিস্তারিত জানুন।"
-                : "Interactive morphing split cards revealing core clinical logic and safeguards."}
+                ? "সিস্টেম মেকানিক্স ও ক্লিনিক্যাল সুরক্ষা বিধি সম্পর্কে বিস্তারিত জানুন।"
+                : "Directly explore the core algorithmic safeguards and patient privacy standards."}
             </p>
           </div>
 
@@ -549,10 +320,47 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 10. Community Feedback Marquee */}
-      <CommunityMarquee isBn={isBn} />
+      {/* 7. Action-Oriented Bottom CTA Banner */}
+      <section className="relative z-10 py-12 sm:py-16">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="relative overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-s1 via-s1 to-psoft/30 p-8 sm:p-12 text-center shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6),0_0_25px_var(--accent-glow)]">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/20 text-ptext mx-auto mb-4 shadow-sm">
+              <Sparkles className="h-7 w-7" />
+            </div>
+            <h2 className="font-heading text-2xl sm:text-4xl font-bold text-ink tracking-tight">
+              {isBn ? "স্বাস্থ্যসেবা শুরু করতে প্রস্তুত?" : "Ready to Coordinate Your Care?"}
+            </h2>
+            <p className="mt-3 text-xs sm:text-sm text-muted max-w-xl mx-auto leading-relaxed">
+              {isBn
+                ? "আমাদের স্মার্টকেয়ার নেভিগেটর বা ওসিআর স্ক্যানার দিয়ে এখনই সেকেন্ডের মধ্যে উপসর্গ বিশ্লেষণ বা ল্যাব টেস্ট ডিজিটাইজ করুন।"
+                : "Try the SmartCare symptom triage or upload your clinical test report to generate an instant plain-language summary and specialist recommendation."}
+            </p>
 
-      {/* 10. Technical Watermelon UI Footer */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link href="/navigator">
+                <Button className="btn-primary-neon min-h-[46px] px-6 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-[0_0_20px_var(--accent-glow)]">
+                  <Compass className="mr-2 h-4 w-4" />
+                  <span>{isBn ? "স্মার্টকেয়ার নেভিগেটর" : "Start SmartCare"}</span>
+                </Button>
+              </Link>
+              <Link href="/reports/scan">
+                <Button variant="secondary" className="min-h-[46px] px-6 text-xs sm:text-sm font-bold uppercase tracking-wider border-primary/40 bg-s1 hover:bg-s2">
+                  <UploadCloud className="mr-2 h-4 w-4 text-ptext" />
+                  <span>{isBn ? "রিপোর্ট ওসিআর স্ক্যান" : "Scan Medical Report"}</span>
+                </Button>
+              </Link>
+              <Link href="/directory">
+                <Button variant="outline" className="min-h-[46px] px-5 text-xs sm:text-sm font-bold uppercase tracking-wider">
+                  <Stethoscope className="mr-2 h-4 w-4" />
+                  <span>{isBn ? "ডাক্তার তালিকা" : "Find Doctors"}</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. Technical Footer */}
       <footer className="relative z-10 border-t border-line py-8 sm:py-12 text-center text-xs text-muted font-mono bg-s1/50 backdrop-blur-md">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2.5 mb-6">
@@ -578,13 +386,13 @@ export default function Home() {
             <span className="hidden sm:inline text-line">|</span>
             <a href="http://localhost:8000/docs" target="_blank" rel="noreferrer" className="text-info hover:underline flex items-center gap-1.5">
               <FileText className="h-3.5 w-3.5" />
-              {isBn ? "ফাস্টএপিআই ব্যাকএন্ড ডক্স" : "FASTAPI OPENAPI (/docs)"}
+              <span>FASTAPI OPENAPI (/docs)</span>
             </a>
           </div>
 
           <p className="text-muted leading-relaxed text-[11px] max-w-2xl mx-auto">
             {isBn
-              ? "মেডিব্রিজ এআই একটি হ্যাকাথন প্রোটোটাইপ। সকল রোগীর তথ্য সিন্থেটিক। এটি কোনো মেডিকেল ডিভাইস নয় এবং রোগ নির্ণয় বা চিকিৎসা প্রদান করে না।"
+              ? "মেডিব্রিজ এআই একটি হ্যাকাথন প্রোটোটাইপ। সকল রোগীর তথ্য সিন্থেটিক। এটি কোনো স্বয়ংক্রিয় মেডিকেল ডিভাইস নয় এবং চিকিৎসকের সম্মতি ছাড়া প্রেসক্রিপশন প্রদান করে না।"
               : "MediBridge AI is a clinical architecture prototype. All sample patient data and directory entries are synthetic. AI operates under human clinician supervision."}
           </p>
 
