@@ -42,6 +42,7 @@ import { WatermelonBrowserDemo } from "@/components/watermelon/WatermelonBrowser
 import { CommunityMarquee } from "@/components/watermelon/CommunityMarquee";
 import { Spotlight3DCard } from "@/components/Spotlight3DCard";
 import { CardSplitAccordion, type AccordionItemData } from "@/components/watermelon/card-split-accordian";
+import { LandingPage3DBoot } from "@/components/LandingPage3DBoot";
 
 export default function Home() {
   const { t, locale } = useI18n();
@@ -104,6 +105,9 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-bg text-ink font-sans selection:bg-primary/20 selection:text-primary">
+      {/* 0. High-Tech 3D Medical Hologram Opening Sequence */}
+      <LandingPage3DBoot />
+
       {/* 1. Technical Watermelon Header / Navbar */}
       <WatermelonNavbar />
 
@@ -566,16 +570,33 @@ export default function Home() {
               <PhoneCall className="h-3.5 w-3.5" />
               {isBn ? "জরুরি হটলাইন (৯৯৯)" : "EMERGENCY HOTLINE (999)"}
             </Link>
-            <span className="hidden sm:inline text-line">|</span>
-            <Link href="/ml-lab" className="text-emerald-400 hover:underline flex items-center gap-1.5">
-              <FlaskConical className="h-3.5 w-3.5" />
-              {isBn ? "এমএল ল্যাব কার্ড" : "ML LAB / METRICS"}
-            </Link>
+            {currentRole === "super_admin" && (
+              <>
+                <span className="hidden sm:inline text-line">|</span>
+                <Link href="/ml-lab" className="text-emerald-400 hover:underline flex items-center gap-1.5">
+                  <FlaskConical className="h-3.5 w-3.5" />
+                  <span>{isBn ? "এমএল ল্যাব কার্ড" : "ML LAB / METRICS"}</span>
+                </Link>
+              </>
+            )}
             <span className="hidden sm:inline text-line">|</span>
             <a href="http://localhost:8000/docs" target="_blank" rel="noreferrer" className="text-info hover:underline flex items-center gap-1.5">
               <FileText className="h-3.5 w-3.5" />
               {isBn ? "ফাস্টএপিআই ব্যাকএন্ড ডক্স" : "FASTAPI OPENAPI (/docs)"}
             </a>
+            <span className="hidden sm:inline text-line">|</span>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined" && typeof (window as any).__replayMediBridge3D === "function") {
+                  (window as any).__replayMediBridge3D();
+                }
+              }}
+              className="text-ptext hover:text-primary hover:underline flex items-center gap-1.5 cursor-pointer font-semibold"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{isBn ? "৩ডি ওপেনিং অ্যানিমেশন" : "3D OPENING INTRO"}</span>
+            </button>
           </div>
 
           <p className="text-muted leading-relaxed text-[11px] max-w-2xl mx-auto">

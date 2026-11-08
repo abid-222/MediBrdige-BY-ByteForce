@@ -112,17 +112,19 @@ export function WatermelonNavbar() {
             <FileText className="w-3.5 h-3.5 text-primary" />
             <span>{isBn ? "রিপোর্ট ওসিআর" : "Report OCR"}</span>
           </Link>
-          <Link
-            href="/ml-lab"
-            className={`px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 font-medium ${
-              pathname === "/ml-lab"
-                ? "bg-primary/10 text-primary font-bold border border-primary/30"
-                : "text-ink/80 hover:text-primary hover:bg-s2"
-            }`}
-          >
-            <FlaskConical className="w-3.5 h-3.5 text-primary" />
-            <span>{isBn ? "এমএল স্টুডিও" : "Research ML"}</span>
-          </Link>
+          {role === "super_admin" && (
+            <Link
+              href="/ml-lab"
+              className={`px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 font-medium ${
+                pathname === "/ml-lab"
+                  ? "bg-primary/10 text-primary font-bold border border-primary/30"
+                  : "text-ink/80 hover:text-primary hover:bg-s2"
+              }`}
+            >
+              <FlaskConical className="w-3.5 h-3.5 text-primary" />
+              <span>{isBn ? "এমএল স্টুডিও" : "Research ML"}</span>
+            </Link>
+          )}
         </nav>
 
         {/* Right Desktop Actions (Visible on 1100px+) */}
@@ -290,18 +292,20 @@ export function WatermelonNavbar() {
             <FileText className="w-4 h-4 text-primary shrink-0" />
             <span>{isBn ? "মেডিকেল রিপোর্ট ওসিআর স্ক্যান" : "Medical Report OCR"}</span>
           </Link>
-          <Link
-            href="/ml-lab"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`flex items-center gap-3 py-2.5 px-3 rounded-lg text-xs uppercase tracking-wider transition ${
-              pathname === "/ml-lab"
-                ? "bg-primary/10 text-primary font-bold border border-primary/30"
-                : "text-ink hover:text-primary hover:bg-s2"
-            }`}
-          >
-            <FlaskConical className="w-4 h-4 text-primary shrink-0" />
-            <span>{isBn ? "এমএল স্টুডিও ও মেট্রিক্স" : "Research ML Lab"}</span>
-          </Link>
+          {role === "super_admin" && (
+            <Link
+              href="/ml-lab"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-3 py-2.5 px-3 rounded-lg text-xs uppercase tracking-wider transition ${
+                pathname === "/ml-lab"
+                  ? "bg-primary/10 text-primary font-bold border border-primary/30"
+                  : "text-ink hover:text-primary hover:bg-s2"
+              }`}
+            >
+              <FlaskConical className="w-4 h-4 text-primary shrink-0" />
+              <span>{isBn ? "এমএল স্টুডিও ও মেট্রিক্স" : "Research ML Lab"}</span>
+            </Link>
+          )}
 
           <div className="pt-3 mt-1 border-t border-line flex flex-col gap-2">
             {role !== "none" ? (

@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 import { api, getRole, getToken, setSession } from "@/lib/api";
 import { useApi } from "@/lib/useApi";
+import { useGuard } from "@/lib/useGuard";
 import { useI18n } from "@/lib/i18n";
 import {
   ResponsiveContainer,
@@ -286,12 +287,12 @@ export type MlLabTab =
   | "research";
 
 export default function MlLabPage() {
+  useGuard(["super_admin"]);
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<MlLabTab>("overview");
   const [role, setRole] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState(false);
-  const [guestEvaluationMode, setGuestEvaluationMode] = useState(false);
 
   // Live queries
   const { data: overviewData, loading: overviewLoading, error: overviewError, reload: reloadOverview } = useApi("/ml/overview");
@@ -486,43 +487,21 @@ export default function MlLabPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
         {/* =========================================================
-           ACCESS CONTROL GATE
+           ACCESS CONTROL GATE (STRICT SUPER ADMIN ONLY)
            ========================================================= */}
-        {role === "patient" ? (
+        {role !== "super_admin" ? (
           <div className="rounded-2xl border border-red-500/40 bg-gradient-to-br from-[#180a0e] to-[#0c0507] p-8 md:p-12 text-center space-y-5 max-w-2xl mx-auto my-12 shadow-2xl">
-            <div className="h-16 w-16 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center mx-auto border border-red-500/30">
-              <ShieldAlert className="h-8 w-8" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">Patient Access Restricted</h2>
-              <p className="text-xs text-[#94a3b8] mt-2 leading-relaxed">
-                You are currently signed in with a <strong>Patient</strong> account. To protect patient privacy and maintain strict boundary controls, internal machine learning model parameter weights, synthetic training benchmarks, and algorithmic pipelines are restricted to authorized university evaluators, reviewers, and clinical researchers.
-              </p>
-            </div>
-            <div className="pt-2 flex justify-center">
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-3 text-xs transition shadow-lg"
-              >
-                Return to Patient Dashboard
-              </Link>
-            </div>
-          </div>
-        ) : !token && !guestEvaluationMode ? (
-          <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-[#0c1520] to-[#080d14] p-8 md:p-12 text-center space-y-5 max-w-2xl mx-auto my-12 shadow-2xl">
-            <div className="h-16 w-16 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+            <div className="h-16 w-16 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center mx-auto border border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
               <Lock className="h-8 w-8" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">
-                Academic &amp; Research Access Control
-              </h2>
+              <h2 className="text-xl font-bold text-white tracking-tight">Super Admin Clearance Required</h2>
               <p className="text-xs text-[#94a3b8] mt-2 leading-relaxed">
-                The <strong>MediBridge AI ML &amp; Data Science Lab</strong> is a dedicated research environment intended for demonstrating authentic machine learning, OCR, and AI explainability capabilities to university teachers and research supervisors.
+                The <strong>MediBridge AI ML Studio &amp; Model Science Lab</strong> contains protected neural network parameters, TF-IDF feature weights, and algorithmic inspection pipelines. Access is strictly restricted to authenticated <strong>super_admin</strong> personnel only.
               </p>
             </div>
             <div className="p-3 rounded-lg bg-[#060a0e] border border-[#1b2736] text-[11px] font-mono text-[#94a3b8]">
-              Authorized Roles: <span className="text-emerald-400 font-bold">reviewer</span>, <span className="text-emerald-400 font-bold">super_admin</span>, <span className="text-emerald-400 font-bold">doctor</span>
+              Required Role: <span className="text-red-400 font-bold">super_admin</span>
             </div>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
@@ -530,16 +509,14 @@ export default function MlLabPage() {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-2.5 text-xs transition shadow-lg"
               >
                 <Lock className="h-3.5 w-3.5" />
-                Sign In as Reviewer / Researcher
+                Sign In as Super Admin
               </Link>
-              <button
-                type="button"
-                onClick={() => setGuestEvaluationMode(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-semibold px-6 py-2.5 text-xs transition"
+              <Link
+                href="/"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold px-6 py-2.5 text-xs transition"
               >
-                <Eye className="h-3.5 w-3.5" />
-                University Supervisor Preview Mode
-              </button>
+                Return to Home
+              </Link>
             </div>
           </div>
         ) : (

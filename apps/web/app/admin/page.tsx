@@ -526,11 +526,13 @@ export default function AdminDashboardPage() {
         ]}
         actions={
           <div className="flex items-center gap-2">
-            <Link href="/ml-lab">
-              <Button size="sm" variant="outline" icon={FlaskConical}>
-                ML & Data Science Lab
-              </Button>
-            </Link>
+            {isSuperAdmin && (
+              <Link href="/ml-lab">
+                <Button size="sm" variant="outline" icon={FlaskConical}>
+                  ML & Data Science Lab
+                </Button>
+              </Link>
+            )}
             <Button
               size="sm"
               variant="secondary"

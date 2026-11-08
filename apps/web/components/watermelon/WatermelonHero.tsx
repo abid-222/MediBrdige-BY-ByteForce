@@ -107,14 +107,30 @@ export function WatermelonHero({
       <TechnicalVisualRadar />
 
       <div className="container relative z-10 mx-auto px-4 md:px-8 lg:px-12 text-center max-w-4xl">
-        {/* Technical Sub-Tag */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 sm:px-4 sm:py-1.5 text-[11px] sm:text-xs font-bold text-ptext shadow-[0_0_15px_var(--accent-glow)]">
-          <span className="flex h-2 w-2 rounded-full bg-accent animate-ping" />
-          <span className="truncate max-w-[280px] sm:max-w-none">
-            {isBn
-              ? "🇧🇩 বাংলাদেশের জন্য স্বাস্থ্য সমন্বয় আর্কিটেকচার · ঢাকা ২০২৬"
-              : "🇧🇩 HEALTHCARE COORDINATION ARCHITECTURE · DHAKA PROTOTYPE"}
-          </span>
+        {/* Technical Sub-Tag & 3D Hologram Launcher */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 sm:px-4 sm:py-1.5 text-[11px] sm:text-xs font-bold text-ptext shadow-[0_0_15px_var(--accent-glow)]">
+            <span className="flex h-2 w-2 rounded-full bg-accent animate-ping" />
+            <span className="truncate max-w-[280px] sm:max-w-none">
+              {isBn
+                ? "🇧🇩 বাংলাদেশের জন্য স্বাস্থ্য সমন্বয় আর্কিটেকচার · ঢাকা ২০২৬"
+                : "🇧🇩 HEALTHCARE COORDINATION ARCHITECTURE · DHAKA PROTOTYPE"}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== "undefined" && typeof (window as any).__replayMediBridge3D === "function") {
+                (window as any).__replayMediBridge3D();
+              }
+            }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-s1/80 hover:bg-s2 px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-mono font-semibold text-muted hover:text-ink transition hover:border-primary/50 shadow-xs cursor-pointer"
+            title="Replay 3D Intro Hologram Animation"
+          >
+            <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+            <span>{isBn ? "৩ডি হলো ইন্ট্রো" : "3D Hologram"}</span>
+          </button>
         </div>
 
         {/* Hero Title with Watermelon UI High-Contrast Focus */}
@@ -163,26 +179,28 @@ export function WatermelonHero({
             </Button>
           </Link>
 
-          <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center">
+          <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
             <Link href="/directory" className="w-full sm:w-auto">
               <Button
                 variant="secondary"
-                className="w-full sm:w-auto min-h-[44px] px-4 text-xs uppercase tracking-widest font-bold border-line bg-s1/80 hover:bg-s2 transition"
+                className="w-full sm:w-auto min-h-[44px] px-5 text-xs uppercase tracking-widest font-bold border-line bg-s1/80 hover:bg-s2 transition"
               >
                 <Stethoscope className="mr-1.5 h-3.5 w-3.5 text-muted" />
-                <span>{isBn ? "ডিরেক্টরি" : "Doctors"}</span>
+                <span>{isBn ? "ডাক্তার ডিরেক্টরি" : "Browse Doctors"}</span>
               </Button>
             </Link>
 
-            <Link href="/ml-lab" className="w-full sm:w-auto">
-              <Button
-                variant="ghost"
-                className="w-full sm:w-auto min-h-[44px] px-3.5 text-xs uppercase tracking-widest font-bold border border-primary/20 text-ptext hover:bg-primary/10 transition"
-              >
-                <FlaskConical className="mr-1.5 h-3.5 w-3.5" />
-                <span>{isBn ? "এমএল ল্যাব" : "ML Studio"}</span>
-              </Button>
-            </Link>
+            {currentRole === "super_admin" && (
+              <Link href="/ml-lab" className="w-full sm:w-auto">
+                <Button
+                  variant="ghost"
+                  className="w-full sm:w-auto min-h-[44px] px-3.5 text-xs uppercase tracking-widest font-bold border border-primary/20 text-ptext hover:bg-primary/10 transition"
+                >
+                  <FlaskConical className="mr-1.5 h-3.5 w-3.5" />
+                  <span>{isBn ? "এমএল ল্যাব" : "ML Studio"}</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 

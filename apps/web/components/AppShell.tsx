@@ -227,7 +227,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         { href: "/admin?tab=queue", labelKey: "nav.queue", fallbackLabel: "Accreditation Queue", icon: UserCheck },
         { href: "/admin?tab=users", labelKey: "nav.users", fallbackLabel: "User Management", icon: Users },
         { href: "/admin?tab=audit", labelKey: "nav.audit", fallbackLabel: "Immutable Audit Logs", icon: History },
-        { href: "/ml-lab", labelKey: "nav.mllab", fallbackLabel: "AI & ML Studio", icon: FlaskConical },
+        ...(role === "super_admin"
+          ? [{ href: "/ml-lab", labelKey: "nav.mllab", fallbackLabel: "AI & ML Studio", icon: FlaskConical }]
+          : []),
         { href: "/admin?tab=settings", labelKey: "nav.systemSettings", fallbackLabel: "System Configuration", icon: Settings2 },
       ];
     }
@@ -487,15 +489,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="font-semibold text-ptext capitalize">{role.replace("_", " ")} Workspace</span>
             </div>
           ) : (
-            <div className="hidden xl:flex items-center gap-3 text-xs text-muted">
-              <Link
-                href="/ml-lab"
-                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition"
-              >
-                <FlaskConical className="h-3 w-3" />
-                <span>ML Lab</span>
-              </Link>
-              <span className="text-muted/60">·</span>
+            <div className="hidden xl:flex items-center gap-2 text-xs text-muted">
+              <span className="h-2 w-2 rounded-full bg-accent animate-ping" />
               <span className="font-medium text-ink/70">AI assists. Doctors decide. Patients stay in control.</span>
             </div>
           )}
