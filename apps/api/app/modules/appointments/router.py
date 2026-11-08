@@ -48,6 +48,8 @@ def _view(a: Appointment, db: Session, minimal=False):
     out = {"id": a.id, "status": a.status, "slot_start": a.slot_start, "slot_end": a.slot_end, "doctor_id": a.doctor_id,
            "doctor_name": doc.full_name if doc else None, "facility_id": a.facility_id,
            "facility_name": fac.name if fac else None,
+           "meeting_link": getattr(a, "meeting_link", None),
+           "consultation_type": getattr(a, "consultation_type", "online_telehealth") or "online_telehealth",
            "patient_name": pat.full_name if pat else None, "patient_id": a.patient_id}
     if not minimal:
         out["reason"] = a.reason
@@ -200,6 +202,8 @@ def set_status(appt_id: str, body: StatusIn, user: Profile = Depends(get_current
 
 
 def _on_confirm(db: Session, a: Appointment):
+    if not getattr(a, "meeting_link", None):
+        a.meeting_link = f"https://meet.jit.si/medibridge-telehealth-{a.id[:8]}-{a.doctor_id[:6]}"
     rel = db.scalar(select(CareRelationship).where(CareRelationship.patient_id == a.patient_id,
                                                    CareRelationship.doctor_id == a.doctor_id))
     if not rel:
@@ -212,6 +216,26 @@ def _on_confirm(db: Session, a: Appointment):
         db.add(Consent(patient_id=a.patient_id, consent_type="doctor_share", grantee_id=a.doctor_id,
                        scope={"resources": res, "document_ids": a.share_document_ids or None},
                        expires_at=datetime.now(timezone.utc) + timedelta(days=30)))
+
+
+class MeetingLinkIn(BaseModel):
+    meeting_link: str | None = None
+
+
+@router.patch("/appointments/{appt_id}/meeting-link")
+def set_meeting_link(appt_id: str, body: MeetingLinkIn, user: Profile = Depends(get_current_user), db: Session = Depends(get_db)):
+    a = db.get(Appointment, appt_id)
+    if not a:
+        raise AppError(404, "not_found", "Appointment not found")
+    if user.role != "doctor" or a.doctor_id != user.id:
+        raise AppError(403, "forbidden", "Only the assigned doctor can set the video consultation link")
+
+    link = body.meeting_link.strip() if body.meeting_link and body.meeting_link.strip() else f"https://meet.jit.si/medibridge-telehealth-{a.id[:8]}-{user.id[:6]}"
+    a.meeting_link = link
+    db.commit()
+    notify(db, a.patient_id, "meeting_link_ready", {"appointment_id": a.id, "meeting_link": link})
+    audit.log(db, user, "appointments.meeting_link", resource_type="appointment", resource_id=a.id, patient_id=a.patient_id)
+    return _view(a, db)
 
 
 @router.get("/doctors/{doctor_id}/slots")

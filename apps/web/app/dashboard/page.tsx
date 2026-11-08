@@ -19,16 +19,20 @@ import {
   History,
   Info,
   Lock,
+  Moon,
   Pill,
   Plus,
   Search,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
+  Sun,
+  Sunrise,
   TrendingUp,
   UploadCloud,
   User,
   Users,
+  Video,
 } from "lucide-react";
 import { api, getRole, getToken } from "@/lib/api";
 import { useApi } from "@/lib/useApi";
@@ -242,6 +246,176 @@ function AiAssistantCard({
   );
 }
 
+interface MedRoutineItem {
+  name: string;
+  dosage?: string;
+  instructions?: string;
+  doctor?: string;
+}
+
+function DailyMedicineRoutineCard({ prescriptions }: { prescriptions: any[] | undefined }) {
+  const { morningMeds, noonMeds, nightMeds, totalActive } = useMemo<{
+    morningMeds: MedRoutineItem[];
+    noonMeds: MedRoutineItem[];
+    nightMeds: MedRoutineItem[];
+    totalActive: number;
+  }>(() => {
+    const morning: MedRoutineItem[] = [];
+    const noon: MedRoutineItem[] = [];
+    const night: MedRoutineItem[] = [];
+    let count = 0;
+
+    for (const rx of prescriptions || []) {
+      if (rx.status !== "issued") continue;
+      for (const m of rx.medications || []) {
+        count++;
+        const freq = String(m.frequency || "").trim();
+        const parts = freq.split("+");
+        const isMorning = parts[0] === "1" || /morning|সকাল/i.test(freq);
+        const isNoon = parts[1] === "1" || /noon|afternoon|দুপুর/i.test(freq);
+        const isNight =
+          (parts.length > 2 && parts[2] === "1") ||
+          (parts.length === 2 && parts[1] === "1") ||
+          /night|bedtime|রাত/i.test(freq);
+
+        const medObj: MedRoutineItem = {
+          name: m.name,
+          dosage: m.dosage,
+          instructions: m.instructions,
+          doctor: rx.doctor_name,
+        };
+
+        if (isMorning) morning.push(medObj);
+        if (isNoon) noon.push(medObj);
+        if (isNight) night.push(medObj);
+        if (!isMorning && !isNoon && !isNight) morning.push(medObj);
+      }
+    }
+    return { morningMeds: morning, noonMeds: noon, nightMeds: night, totalActive: count };
+  }, [prescriptions]);
+
+  return (
+    <Card className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
+        <div className="flex items-center gap-2">
+          <Pill className="h-5 w-5 text-emerald-500" />
+          <div>
+            <h2 className="text-lg font-bold text-ink">Daily Medicine Routine (দৈনিক ওষুধের রুটিন)</h2>
+            <p className="text-xs text-muted">Active prescriptions organized by morning, noon, and night</p>
+          </div>
+        </div>
+        <Link
+          href="/prescriptions"
+          className="text-xs font-semibold text-ptext hover:underline flex items-center gap-1"
+        >
+          <span>View All Prescriptions</span>
+          <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
+      {totalActive === 0 ? (
+        <div className="rounded-card border border-dashed border-line p-6 text-center space-y-2">
+          <Pill className="h-8 w-8 text-muted mx-auto opacity-50" />
+          <h3 className="font-semibold text-ink text-sm">কোনো সক্রিয় প্রেসক্রিপশন নেই</h3>
+          <p className="text-xs text-muted max-w-md mx-auto">
+            ডাক্তারের অনলাইন ভিডিও কনসালটেশনের পর দেওয়া ডিজিটাল প্রেসক্রিপশন অনুযায়ী আপনার সকাল, দুপুর ও রাতের ওষুধের রুটিন এখানে স্বয়ংক্রিয়ভাবে সাজানো হবে।
+          </p>
+          <div className="pt-1">
+            <Link href="/appointments?book=true">
+              <Button size="xs" variant="primary">
+                Book Video Consultation
+              </Button>
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Morning Slot */}
+          <div className="rounded-card border border-amber-500/30 bg-amber-500/5 p-3.5 space-y-2.5">
+            <div className="flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400 border-b border-amber-500/20 pb-2">
+              <span className="flex items-center gap-1.5">
+                <Sunrise className="h-4 w-4" />
+                সকাল (Morning)
+              </span>
+              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px]">
+                {morningMeds.length} Medicines
+              </span>
+            </div>
+            {morningMeds.length === 0 ? (
+              <p className="text-[11px] text-muted italic py-2">সকালের কোনো ওষুধ নেই</p>
+            ) : (
+              <div className="space-y-2">
+                {morningMeds.map((m: MedRoutineItem, idx: number) => (
+                  <div key={idx} className="rounded-input border border-line bg-s1 p-2 text-xs space-y-0.5">
+                    <p className="font-bold text-ink truncate">
+                      {m.name} <span className="text-[11px] font-normal text-muted">({m.dosage})</span>
+                    </p>
+                    {m.instructions && <p className="text-[10px] text-ptext">{m.instructions}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Noon Slot */}
+          <div className="rounded-card border border-sky-500/30 bg-sky-500/5 p-3.5 space-y-2.5">
+            <div className="flex items-center justify-between text-xs font-bold text-sky-700 dark:text-sky-400 border-b border-sky-500/20 pb-2">
+              <span className="flex items-center gap-1.5">
+                <Sun className="h-4 w-4" />
+                দুপুর (Noon)
+              </span>
+              <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px]">
+                {noonMeds.length} Medicines
+              </span>
+            </div>
+            {noonMeds.length === 0 ? (
+              <p className="text-[11px] text-muted italic py-2">দুপুরের কোনো ওষুধ নেই</p>
+            ) : (
+              <div className="space-y-2">
+                {noonMeds.map((m: MedRoutineItem, idx: number) => (
+                  <div key={idx} className="rounded-input border border-line bg-s1 p-2 text-xs space-y-0.5">
+                    <p className="font-bold text-ink truncate">
+                      {m.name} <span className="text-[11px] font-normal text-muted">({m.dosage})</span>
+                    </p>
+                    {m.instructions && <p className="text-[10px] text-ptext">{m.instructions}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Night Slot */}
+          <div className="rounded-card border border-indigo-500/30 bg-indigo-500/5 p-3.5 space-y-2.5">
+            <div className="flex items-center justify-between text-xs font-bold text-indigo-700 dark:text-indigo-400 border-b border-indigo-500/20 pb-2">
+              <span className="flex items-center gap-1.5">
+                <Moon className="h-4 w-4" />
+                রাত (Night)
+              </span>
+              <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px]">
+                {nightMeds.length} Medicines
+              </span>
+            </div>
+            {nightMeds.length === 0 ? (
+              <p className="text-[11px] text-muted italic py-2">রাতের কোনো ওষুধ নেই</p>
+            ) : (
+              <div className="space-y-2">
+                {nightMeds.map((m: MedRoutineItem, idx: number) => (
+                  <div key={idx} className="rounded-input border border-line bg-s1 p-2 text-xs space-y-0.5">
+                    <p className="font-bold text-ink truncate">
+                      {m.name} <span className="text-[11px] font-normal text-muted">({m.dosage})</span>
+                    </p>
+                    {m.instructions && <p className="text-[10px] text-ptext">{m.instructions}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 /* =========================================================
    MAIN COMPONENT: PATIENT DASHBOARD
    ========================================================= */
@@ -259,6 +433,7 @@ export default function PatientDashboard() {
   const appts = useApi("/appointments");
   const notes = useApi("/notifications");
   const log = useApi("/patients/me/access-log?page_size=8");
+  const rxApi = useApi("/prescriptions/me");
 
   // Local state for interactive filtering & tabs
   const [docSearch, setDocSearch] = useState("");
@@ -505,6 +680,11 @@ export default function PatientDashboard() {
       </Card>
 
       {/* =========================================================
+         DAILY MEDICATION ROUTINE (সকাল / দুপুর / রাত)
+         ========================================================= */}
+      <DailyMedicineRoutineCard prescriptions={rxApi.data?.items} />
+
+      {/* =========================================================
          4. MEDICAL DOCUMENTS SECTION
          ========================================================= */}
       <Card className="space-y-4">
@@ -744,6 +924,25 @@ export default function PatientDashboard() {
                     <p className="mt-2 text-xs text-muted bg-s2/40 p-2 rounded-input">
                       <b>Reason:</b> {a.reason}
                     </p>
+                  )}
+
+                  {/* Telehealth Video Room Join Button */}
+                  {a.meeting_link && (
+                    <div className="mt-2.5 rounded-input border border-emerald-500/30 bg-emerald-500/10 p-2 text-xs flex items-center justify-between gap-2">
+                      <span className="font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 truncate">
+                        <Video className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        <span className="truncate">Online Video Room Ready</span>
+                      </span>
+                      <a
+                        href={a.meeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-md shadow-xs transition-all shrink-0"
+                      >
+                        <Video className="h-3 w-3" />
+                        <span>Join Call</span>
+                      </a>
+                    </div>
                   )}
 
                   <div className="mt-3 flex items-center justify-between border-t border-line/60 pt-2.5">

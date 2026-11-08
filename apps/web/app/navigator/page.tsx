@@ -140,10 +140,48 @@ export default function SmartCareNavigator() {
     }
   };
 
+  // 6 Interactive Quick-Tap Bengali & English Symptom Chips
+  const QUICK_SYMPTOM_CHIPS = [
+    {
+      icon: "🌡️",
+      label: "তীব্র জ্বর ও গা ব্যথা",
+      prompt: "আমার ২ দিন ধরে তীব্র জ্বর আর গা ব্যথা, কী করা উচিত?",
+    },
+    {
+      icon: "🫁",
+      label: "কাশি ও শ্বাসকষ্ট",
+      prompt: "আমার বুকে কফ জমে আছে এবং শ্বাস নিতে কিছুটা কষ্ট হচ্ছে, কী করা উচিত?",
+    },
+    {
+      icon: "🤢",
+      label: "পেট খারাপ ও বুকজ্বালা",
+      prompt: "আমার তীব্র পেট ব্যথা, বদহজম এবং বুকজ্বালা করছে, কী পরামর্শ?",
+    },
+    {
+      icon: "💔",
+      label: "বুকে চাপ বা ব্যথা",
+      prompt: "আমার বুকে ভারী চাপ ও অস্বস্তি লাগছে, এটি কী হৃদরোগের লক্ষণ?",
+    },
+    {
+      icon: "🩸",
+      label: "সুগার বা প্রেশার বৃদ্ধি",
+      prompt: "আমার রক্তচাপ এবং রক্তের সুগার হঠাৎ অনেক বেড়ে গেছে, কী করণীয়?",
+    },
+    {
+      icon: "👶",
+      label: "শিশুর জ্বর বা ডায়রিয়া",
+      prompt: "আমার বাচ্চার তীব্র জ্বর ও পাতলা পায়খানা হচ্ছে, কী প্রাথমিক যত্ন নেব?",
+    },
+  ];
+
   // Handler for Submitting General Health Guidance Query
-  const handleSendGuidance = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const query = chatInput.trim();
+  const handleSendGuidance = async (arg?: string | React.FormEvent) => {
+    let query = chatInput.trim();
+    if (typeof arg === "string") {
+      query = arg.trim();
+    } else if (arg && typeof (arg as any).preventDefault === "function") {
+      (arg as React.FormEvent).preventDefault();
+    }
     if (!query || chatBusy) return;
 
     const userMsgId = `user-${Date.now()}`;
@@ -499,26 +537,31 @@ export default function SmartCareNavigator() {
             </button>
           </div>
 
-          {/* Quick Symptom Starter Chips */}
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-muted font-medium">Quick Examples:</span>
-            {[
-              "Persistent dry cough for 5 days with mild fever",
-              "Severe headache and morning dizziness",
-              "Burning chest sensation and acidity after dinner",
-              "Right knee pain and joint swelling",
-              "Excessive thirst and frequent urination",
-            ].map((symptom) => (
-              <button
-                key={symptom}
-                onClick={() => {
-                  setChatInput(symptom);
-                }}
-                className="rounded-full border border-line bg-s1 px-2.5 py-1 text-xs text-muted hover:border-primary/50 hover:bg-s2 hover:text-ink transition"
-              >
-                {symptom}
-              </button>
-            ))}
+          {/* 6 Interactive Quick-Tap Bengali & English Symptom Chips */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted font-bold flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-ptext" />
+                সরাসরি লক্ষণ সিলেক্ট করুন (Quick Symptom Triage):
+              </span>
+              <span className="text-[11px] text-muted">এক-ক্লিকে তাৎক্ষণিক দিকনির্দেশনা</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {QUICK_SYMPTOM_CHIPS.map((chip, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  disabled={chatBusy}
+                  onClick={() => handleSendGuidance(chip.prompt)}
+                  className="flex items-center gap-2 rounded-xl border border-line bg-s1 p-2.5 text-left text-xs text-ink hover:border-primary hover:bg-psoft/15 transition-all shadow-xs group cursor-pointer disabled:opacity-50"
+                >
+                  <span className="text-base shrink-0 group-hover:scale-110 transition-transform">
+                    {chip.icon}
+                  </span>
+                  <span className="font-semibold truncate">{chip.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Chat Messages Container */}
@@ -575,80 +618,106 @@ export default function SmartCareNavigator() {
                       </div>
                     )}
 
-                    {/* Structured Clinical Guidance Details */}
+                    {/* 4 Structured Patient-Friendly Cards */}
                     {isAssistant && msg.data && !msg.data.emergency && (
-                      <div className="border-t border-line/60 pt-3 space-y-3">
-                        {/* Primary Recommended Department */}
-                        {msg.data.primary_specialty_label && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] uppercase tracking-wider font-bold text-muted">
-                              Recommended Department:
-                            </span>
-                            <span className="rounded-full border border-primary/30 bg-psoft px-2.5 py-0.5 text-xs font-bold text-ptext">
-                              {msg.data.primary_specialty_label}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Pre-Consultation Preparation Tips */}
-                        {msg.data.preparation_tips && msg.data.preparation_tips.length > 0 && (
-                          <div className="space-y-1.5">
-                            <span className="text-[11px] uppercase tracking-wider font-bold text-muted">
-                              Tips Before You See the Doctor:
-                            </span>
-                            <ul className="space-y-1 text-muted pl-4 list-disc">
-                              {msg.data.preparation_tips.map((tip, idx) => (
-                                <li key={idx}>{tip}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Red Flags to Monitor */}
+                      <div className="space-y-3 pt-2">
+                        {/* 1. 🚨 জরুরি সতর্কতা (Red Flags / Emergency Triage) */}
                         {msg.data.red_flags_to_watch && msg.data.red_flags_to_watch.length > 0 && (
-                          <div className="space-y-1.5">
-                            <span className="text-[11px] uppercase tracking-wider font-bold text-warn">
-                              Warning Signs Requiring Urgent Care:
-                            </span>
-                            <ul className="space-y-1 text-muted pl-4 list-disc">
+                          <div className="rounded-xl border border-warn/40 bg-warn/10 p-3 text-xs space-y-1.5">
+                            <div className="flex items-center gap-1.5 font-bold text-warn">
+                              <ShieldAlert className="h-4 w-4 shrink-0" />
+                              <span>১. জরুরি সতর্কতা ও বিপদের লক্ষণ (Red Flags)</span>
+                            </div>
+                            <ul className="space-y-1 text-ink/80 pl-5 list-disc">
                               {msg.data.red_flags_to_watch.map((rf, idx) => (
-                                <li key={idx} className="text-warn/90">
-                                  {rf}
-                                </li>
+                                <li key={idx} className="font-medium">{rf}</li>
+                              ))}
+                            </ul>
+                            <p className="text-[11px] text-muted pt-1">
+                              ⚠️ উপরের কোনো বিপদজনক লক্ষণ দেখা দিলে দেরি না করে তাৎক্ষণিক নিকটস্থ হাসপাতালের ইমার্জেন্সিতে যান অথবা ৯৯৯-এ কল করুন।
+                            </p>
+                          </div>
+                        )}
+
+                        {/* 2. 💡 সম্ভাব্য কারণ ও প্রাথমিক স্বাস্থ্য বিশ্লেষণ (Educational Overview) */}
+                        <div className="rounded-xl border border-line bg-s1 p-3 text-xs space-y-1.5">
+                          <div className="flex items-center gap-1.5 font-bold text-ptext">
+                            <Sparkles className="h-4 w-4 shrink-0" />
+                            <span>২. প্রাথমিক স্বাস্থ্য বিশ্লেষণ ও দিকনির্দেশনা (Educational Overview)</span>
+                          </div>
+                          <p className="text-muted leading-relaxed">
+                            {msg.text}
+                          </p>
+                        </div>
+
+                        {/* 3. 🏠 এখনই করণীয় ও ঘরোয়া যত্ন (Immediate Relief & Home Care) */}
+                        {msg.data.preparation_tips && msg.data.preparation_tips.length > 0 && (
+                          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs space-y-1.5">
+                            <div className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
+                              <CheckCircle2 className="h-4 w-4 shrink-0" />
+                              <span>৩. এখনই করণীয় ও প্রাথমিক ঘরোয়া যত্ন (Home Relief & Prep)</span>
+                            </div>
+                            <ul className="space-y-1 text-ink/80 pl-5 list-disc">
+                              {msg.data.preparation_tips.map((tip, idx) => (
+                                <li key={idx} className="font-medium">{tip}</li>
                               ))}
                             </ul>
                           </div>
                         )}
 
-                        {/* Action Buttons to Transition to Doctor / Booking */}
-                        <div className="pt-2 flex flex-wrap gap-2 border-t border-line/40">
-                          {msg.data.primary_specialty && (
+                        {/* 4. 👨‍⚕️ সঠিক বিশেষজ্ঞ ডাক্তার ও ১-ক্লিক অনলাইন পরামর্শ (Recommended Specialist) */}
+                        <div className="rounded-xl border border-primary/40 bg-psoft/20 p-3 text-xs space-y-2.5">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="flex items-center gap-1.5 font-bold text-ptext">
+                              <Stethoscope className="h-4 w-4 shrink-0" />
+                              <span>৪. সুপারিশকৃত বিশেষজ্ঞ ডাক্তার (Recommended Specialist)</span>
+                            </div>
+                            {msg.data.primary_specialty_label && (
+                              <span className="rounded-full border border-primary/30 bg-primary/20 px-2.5 py-0.5 text-xs font-bold text-ptext">
+                                {msg.data.primary_specialty_label}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 pt-1">
                             <Button
                               size="xs"
-                              variant="secondary"
-                              onClick={() => {
-                                setSelectedSpecialty(msg.data!.primary_specialty!);
-                                setCurrentView("doctors");
-                              }}
+                              variant="primary"
+                              onClick={() =>
+                                handleProtectedAction(
+                                  `/appointments?book=true${
+                                    msg.data?.primary_specialty
+                                      ? `&specialty=${encodeURIComponent(msg.data.primary_specialty)}`
+                                      : ""
+                                  }`,
+                                  "Online Telehealth Consultation"
+                                )
+                              }
                             >
-                              <Stethoscope className="h-3.5 w-3.5 mr-1" />
-                              Find {msg.data.primary_specialty_label} Doctors &rarr;
+                              <Video className="h-3.5 w-3.5 mr-1" />
+                              ১-ক্লিক অনলাইন ভিডিও বুকিং (Book Telehealth) &rarr;
                             </Button>
-                          )}
-                          <Button
-                            size="xs"
-                            variant="primary"
-                            onClick={() => handleProtectedAction("/appointments?book=true", "Appointment Booking")}
-                          >
-                            <CalendarClock className="h-3.5 w-3.5 mr-1" />
-                            Book Consultation &rarr;
-                          </Button>
+
+                            {msg.data.primary_specialty && (
+                              <Button
+                                size="xs"
+                                variant="secondary"
+                                onClick={() => {
+                                  setSelectedSpecialty(msg.data!.primary_specialty!);
+                                  setCurrentView("doctors");
+                                }}
+                              >
+                                <Stethoscope className="h-3.5 w-3.5 mr-1" />
+                                তালিকা থেকে ডাক্তার খুঁজুন &rarr;
+                              </Button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Disclaimer */}
                         {msg.data.disclaimer && (
-                          <p className="text-[10px] text-muted/70 italic pt-1">
-                            {msg.data.disclaimer}
+                          <p className="text-[10px] text-muted italic pt-1">
+                            ℹ️ {msg.data.disclaimer}
                           </p>
                         )}
                       </div>

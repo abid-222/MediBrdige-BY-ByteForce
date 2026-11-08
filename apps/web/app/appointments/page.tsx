@@ -8,13 +8,18 @@ import {
   Check,
   Clock,
   Compass,
+  Copy,
+  ExternalLink,
   FileCheck,
   FileText,
   Filter,
+  Link as LinkIcon,
   Plus,
   Search,
   ShieldCheck,
+  Sparkles,
   Stethoscope,
+  Video,
   X,
   XCircle,
 } from "lucide-react";
@@ -69,6 +74,12 @@ export default function AppointmentsPage() {
   const [bookingBusy, setBookingBusy] = useState(false);
   const [modalDoctorSearch, setModalDoctorSearch] = useState("");
   const [modalSpecialtyFilter, setModalSpecialtyFilter] = useState("all");
+
+  // Meeting Link Management (Doctors / Admins)
+  const [meetingLinkModalOpen, setMeetingLinkModalOpen] = useState(false);
+  const [targetApptForLink, setTargetApptForLink] = useState<any>(null);
+  const [customMeetLinkInput, setCustomMeetLinkInput] = useState("");
+  const [savingMeetLink, setSavingMeetLink] = useState(false);
 
   // Check URL query parameters to auto-open booking modal
   useEffect(() => {
@@ -208,11 +219,31 @@ export default function AppointmentsPage() {
     }
   };
 
+  // Save or Update Doctor Telehealth Meeting Link
+  const handleSaveMeetingLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetApptForLink || !customMeetLinkInput.trim()) return;
+    setSavingMeetLink(true);
+    try {
+      await api(`/appointments/${targetApptForLink.id}/meeting-link`, {
+        method: "PATCH",
+        body: { meeting_link: customMeetLinkInput.trim() },
+      });
+      addToast("success", "Video Link Set", "Telehealth meeting room URL is now accessible to the patient.");
+      setMeetingLinkModalOpen(false);
+      reload();
+    } catch (err: any) {
+      addToast("error", "Update Failed", err.message);
+    } finally {
+      setSavingMeetLink(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t("appt.title") || "Appointments"}
-        subtitle="Manage clinical consultations, appointment statuses, and report sharing."
+        title="Online Telehealth Consultations"
+        subtitle="100% online video appointments. Join virtual consultations and manage doctor meeting rooms."
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Dashboard", href: "/dashboard" },
@@ -221,7 +252,7 @@ export default function AppointmentsPage() {
         actions={
           role === "patient" ? (
             <Button size="sm" icon={Plus} onClick={() => setBookModalOpen(true)}>
-              Request Consultation
+              Book Online Consultation
             </Button>
           ) : undefined
         }
@@ -381,6 +412,93 @@ export default function AppointmentsPage() {
                     </div>
                   )}
 
+                  {/* 100% Online Telehealth Meeting Room Section */}
+                  <div className="rounded-input border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
+                        <Video className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        100% Online Telehealth (অনলাইন ভিডিও কনসালটেশন)
+                      </span>
+                      {a.meeting_link && (
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700 bg-emerald-100 dark:bg-emerald-900/60 dark:text-emerald-200 px-2 py-0.5 rounded-full">
+                          Room Ready
+                        </span>
+                      )}
+                    </div>
+
+                    {a.meeting_link ? (
+                      <div className="space-y-2 pt-1">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                          <a
+                            href={a.meeting_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-2 rounded-button bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 shadow-sm transition-all text-center"
+                          >
+                            <Video className="h-4 w-4 shrink-0" />
+                            <span>Join Video Call (ভিডিও কলে যোগ দিন)</span>
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-80" />
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(a.meeting_link);
+                              addToast("success", "Link Copied", "Video meeting URL copied to clipboard.");
+                            }}
+                            className="text-[11px] text-muted hover:text-ink flex items-center gap-1 justify-center py-1 font-medium"
+                            title="Copy meeting URL"
+                          >
+                            <Copy className="h-3 w-3" /> Copy Link
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-muted font-mono truncate bg-bg/50 px-2 py-1 rounded border border-line/40">
+                          {a.meeting_link}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-muted flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
+                        <span>
+                          {role === "patient"
+                            ? "🕒 ডাক্তার কনফার্ম করার পর বা নির্ধারিত সময়ে এখানে ভিডিও কল লিঙ্ক দেওয়া হবে।"
+                            : "⚠️ এখনো ভিডিও কল লিঙ্ক যুক্ত করা হয়নি। গুগল মিট বা ১-ক্লিক ভিডিও রুম সেট করুন।"}
+                        </span>
+                        {role !== "patient" && (
+                          <Button
+                            size="xs"
+                            variant="secondary"
+                            onClick={() => {
+                              setTargetApptForLink(a);
+                              setCustomMeetLinkInput(
+                                `https://meet.jit.si/medibridge-telehealth-${a.id.slice(0, 8)}-${a.doctor_id?.slice(0, 6) || "room"}`
+                              );
+                              setMeetingLinkModalOpen(true);
+                            }}
+                          >
+                            <LinkIcon className="h-3 w-3 mr-1" />
+                            Set Video Link
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
+                    {role !== "patient" && a.meeting_link && (
+                      <div className="flex justify-end pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTargetApptForLink(a);
+                            setCustomMeetLinkInput(a.meeting_link);
+                            setMeetingLinkModalOpen(true);
+                          }}
+                          className="text-[11px] text-ptext hover:underline flex items-center gap-1 font-medium"
+                        >
+                          <LinkIcon className="h-3 w-3" /> Edit Meeting Link
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Event History Trace */}
                   {a.events?.length > 0 && (
                     <div className="text-[11px] text-muted space-y-0.5 border-t border-line/50 pt-2 font-mono">
@@ -465,10 +583,21 @@ export default function AppointmentsPage() {
       {/* Appointment Booking Dialog */}
       <Dialog
         open={bookModalOpen}
-        title="Request Doctor Consultation"
+        title="Request Online Video Consultation (অনলাইন ভিডিও পরামর্শ)"
         onClose={() => setBookModalOpen(false)}
       >
         <form onSubmit={handleBookSubmit} className="space-y-4 text-sm">
+          {/* Telehealth Notice */}
+          <div className="rounded-input border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-ink space-y-1">
+            <div className="flex items-center gap-2 font-bold text-emerald-800 dark:text-emerald-300">
+              <Video className="h-4 w-4" />
+              <span>100% Online Telehealth Appointment</span>
+            </div>
+            <p className="text-muted text-[11px]">
+              This consultation takes place online via secure video call. The doctor will share the video meeting room link directly in this portal.
+            </p>
+          </div>
+
           {/* Doctor Selection Section */}
           {selectedDoctor ? (
             <div className="rounded-card border-2 border-primary/40 bg-psoft/15 p-3.5 space-y-2.5">
@@ -712,6 +841,69 @@ export default function AppointmentsPage() {
             </Button>
             <Button type="submit" size="sm" busy={bookingBusy}>
               Confirm Request
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+
+      {/* Doctor Video Meeting Link Modal */}
+      <Dialog
+        open={meetingLinkModalOpen}
+        title="Set Telehealth Meeting Link (ভিডিও কল রুম)"
+        onClose={() => setMeetingLinkModalOpen(false)}
+      >
+        <form onSubmit={handleSaveMeetingLink} className="space-y-4 text-sm">
+          <div className="rounded-card border border-primary/30 bg-psoft/15 p-3 space-y-1.5">
+            <h4 className="font-bold text-ink text-xs">
+              Video Consultation with {targetApptForLink?.patient_name || targetApptForLink?.patient_id || "Patient"}
+            </h4>
+            <p className="text-[11px] text-muted">
+              Scheduled for: {targetApptForLink?.slot_start ? fmtDateTime(targetApptForLink.slot_start) : ""}
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block font-medium text-xs uppercase tracking-wider text-muted">
+              Meeting Room URL (Google Meet / Zoom / Jitsi)
+            </label>
+            <input
+              type="url"
+              required
+              value={customMeetLinkInput}
+              onChange={(e) => setCustomMeetLinkInput(e.target.value)}
+              placeholder="https://meet.google.com/xxx-yyyy-zzz or Jitsi URL"
+              className="w-full rounded-input border border-line bg-s1 px-3 py-2 text-ink text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 font-mono"
+            />
+          </div>
+
+          <div className="flex items-center justify-between text-xs pt-1">
+            <span className="text-[11px] text-muted">Auto Preset:</span>
+            <button
+              type="button"
+              onClick={() => {
+                if (targetApptForLink) {
+                  setCustomMeetLinkInput(
+                    `https://meet.jit.si/medibridge-telehealth-${targetApptForLink.id.slice(0, 8)}-${targetApptForLink.doctor_id?.slice(0, 6) || "room"}`
+                  );
+                }
+              }}
+              className="text-xs font-semibold text-ptext hover:underline inline-flex items-center gap-1"
+            >
+              <Sparkles className="h-3.5 w-3.5" /> 1-Click Jitsi Room
+            </button>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-line">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setMeetingLinkModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" size="sm" busy={savingMeetLink}>
+              Save Video Link
             </Button>
           </div>
         </form>

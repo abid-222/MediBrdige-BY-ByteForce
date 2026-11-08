@@ -367,6 +367,8 @@ class Appointment(Base):
     slot_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     slot_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String, default="requested")
+    consultation_type: Mapped[str] = mapped_column(String, default="online_telehealth")
+    meeting_link: Mapped[str | None] = mapped_column(String, nullable=True)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     share_document_ids: Mapped[list] = mapped_column(JSON, default=list)
     share_opt_in: Mapped[bool] = mapped_column(Boolean, default=False)

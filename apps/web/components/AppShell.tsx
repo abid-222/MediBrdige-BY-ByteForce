@@ -189,8 +189,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         { href: "/dashboard", labelKey: "nav.overview", fallbackLabel: "Dashboard", icon: LayoutDashboard },
         { href: "/timeline", labelKey: "nav.myHealth", fallbackLabel: "My Health Profile", icon: LineChart },
         { href: "/reports", labelKey: "nav.documents", fallbackLabel: "Medical Reports & OCR", icon: FileText },
-        { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Appointments", icon: CalendarClock },
-        { href: "/navigator", labelKey: "nav.navigator", fallbackLabel: "Find Care (Navigator)", icon: Compass },
+        { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Online Telehealth", icon: CalendarClock },
+        { href: "/navigator", labelKey: "nav.navigator", fallbackLabel: "AI Symptom & Care Guide", icon: Compass },
         { href: "/consent", labelKey: "nav.settings", fallbackLabel: "Settings & Consent", icon: ShieldCheck },
       ];
     }
@@ -198,9 +198,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       return [
         { href: "/doctor", labelKey: "nav.doctor", fallbackLabel: "Doctor Workspace", icon: Stethoscope },
         { href: "/doctor/patients", labelKey: "nav.patients", fallbackLabel: "My Patients", icon: Users },
-        { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Consultation Schedule", icon: CalendarClock },
+        { href: "/appointments", labelKey: "nav.appointments", fallbackLabel: "Telehealth Schedule", icon: CalendarClock },
         { href: "/directory", labelKey: "nav.directory", fallbackLabel: "Clinical Directory", icon: Compass },
-        { href: "/ml-lab", labelKey: "nav.mllab", fallbackLabel: "ML & Data Science Lab", icon: FlaskConical },
       ];
     }
     if (role === "facility_admin" || role === "facility_staff") {
@@ -223,9 +222,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     // Guest / Logged out visitors
     return [
       { href: "/", labelKey: "nav.home", fallbackLabel: "Home", icon: HomeIcon },
-      { href: "/navigator", labelKey: "nav.navigator", fallbackLabel: "Find Care (Navigator)", icon: Compass },
+      { href: "/navigator", labelKey: "nav.navigator", fallbackLabel: "AI Symptom & Care Guide", icon: Compass },
       { href: "/directory", labelKey: "nav.directory", fallbackLabel: "Dhaka Directory", icon: Users },
-      { href: "/ml-lab", labelKey: "nav.mllab", fallbackLabel: "ML & Data Science Lab", icon: FlaskConical },
       { href: "/emergency", labelKey: "emergency.help", fallbackLabel: "Emergency Hotline", icon: PhoneCall },
     ];
   }, [role]);
