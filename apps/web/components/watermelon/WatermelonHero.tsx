@@ -37,15 +37,15 @@ function TechnicalVisualRadar() {
           <rect width="360" height="360" fill="url(#watermelon-grid)" />
 
           {/* Vertical axis line on the left side of the visual */}
-          <line x1="60" y1="0" x2="60" y2="360" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+          <line x1="60" y1="0" x2="60" y2="360" stroke="var(--border)" strokeWidth="1" strokeOpacity="0.6" />
           {/* Horizontal axis line */}
-          <line x1="0" y1="180" x2="360" y2="180" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+          <line x1="0" y1="180" x2="360" y2="180" stroke="var(--border)" strokeWidth="1" strokeOpacity="0.4" />
 
           {/* Coordinate labels */}
           <text x="65" y="16" fill="var(--primary)" fontSize="10" fontFamily="monospace" fontWeight="bold">
             GATE.01
           </text>
-          <text x="300" y="174" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily="monospace">
+          <text x="280" y="174" fill="var(--text-muted)" fontSize="9" fontFamily="monospace">
             BMDC.VERIFIED
           </text>
 

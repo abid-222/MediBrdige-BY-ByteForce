@@ -1,14 +1,14 @@
-/* MediBridge Design Tokens: Sleek Cyber-Medical Aesthetic */
+/* MediBridge Design Tokens: Crisp Pure White Light (Default) & Deep Cyber Dark Mode */
 :root, :root[data-theme="light"] {
-  --bg: #F8FAFC;
+  --bg: #FFFFFF;
   --surface-1: #FFFFFF;
-  --surface-2: #F1F5F9;
-  --border: #CBD5E1;
+  --surface-2: #F8FAFC;
+  --border: #E2E8F0;
   --text: #0F172A;
-  --text-muted: #475569;
-  --accent: #059669;
+  --text-muted: #64748B;
+  --accent: #0F9D58;
   --accent-ink: #FFFFFF;
-  --accent-glow: rgba(5, 150, 105, 0.16);
+  --accent-glow: rgba(15, 157, 88, 0.12);
   --info: #0284C7;
   --warn: #D97706;
   --danger: #DC2626;
@@ -17,12 +17,12 @@
   --primary: var(--accent);
   --on-primary: var(--accent-ink);
   --primary-text: var(--accent);
-  --primary-soft: rgba(5, 150, 105, 0.10);
+  --primary-soft: rgba(15, 157, 88, 0.08);
   --warning: var(--warn);
 
-  --glow: 0 0 0 1px var(--accent), 0 0 16px var(--accent-glow);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-card-hover: 0 10px 25px -3px rgba(0, 0, 0, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.06);
+  --glow: 0 0 0 1px var(--accent), 0 0 14px var(--accent-glow);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
   --radius-card: 14px;
   --radius-input: 10px;
   --radius-pill: 999px;
