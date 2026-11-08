@@ -49,7 +49,6 @@ import {
   GlassCard,
   ProgressBar,
   StatTile,
-  StepIndicator,
   Table,
   useToast,
 } from "@/components/ui";
@@ -286,12 +285,6 @@ export default function OcrScannerPage() {
   const lowConfidenceRows = rows.filter((r: any) => r.low_confidence);
   const verifiedRows = rows.filter((r: any) => r.status === "doctor_verified");
 
-  const stepsList = [
-    isBn ? "রিপোর্ট আপলোড" : "Select Report",
-    isBn ? "নিউরাল ওসিআর বিশ্লেষণ" : "Neural OCR Engine",
-    isBn ? "পর্যবেক্ষণ ও এআই সামারি" : "Review & AI Insights",
-  ];
-
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-16 px-3 sm:px-6">
       {/* =========================================================
@@ -372,10 +365,222 @@ export default function OcrScannerPage() {
       </div>
 
       {/* =========================================================
-         STEP TRACKER
+         3-STEP PIPELINE PROGRESS BAR (Replaces 1, 2, 3 circles)
          ========================================================= */}
-      <div className="rounded-2xl border border-line bg-s1/60 p-4 shadow-sm">
-        <StepIndicator steps={stepsList} current={currentStep} />
+      <div className="rounded-3xl border border-primary/30 bg-gradient-to-b from-s1 via-s1 to-s2/40 p-5 sm:p-6 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5),0_0_15px_var(--accent-glow)] space-y-4">
+        {/* Header with Active Step Title & Total Progress */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/20 text-ptext font-mono font-bold text-sm shadow-xs border border-primary/30">
+              {currentStep === 2 ? <Check className="h-5 w-5 text-primary" /> : `${currentStep + 1}/3`}
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-ptext font-mono">
+                  {isBn ? "পাইপলাইন অগ্রগতি" : "Pipeline Progress"}
+                </span>
+                <span className="h-1 w-1 rounded-full bg-primary" />
+                <span className="text-[10px] font-mono text-muted">
+                  {currentStep === 0
+                    ? (isBn ? "ধাপ ১ এর ৩" : "Step 1 of 3")
+                    : currentStep === 1
+                    ? (isBn ? "ধাপ ২ এর ৩" : "Step 2 of 3")
+                    : (isBn ? "ধাপ ৩ এর ৩" : "Step 3 of 3")}
+                </span>
+              </div>
+              <h3 className="text-sm sm:text-base font-bold text-ink">
+                {currentStep === 0
+                  ? (isBn ? "১. রিপোর্ট নির্বাচন ও প্রি-ফ্লাইট ভ্যালিডেশন" : "1. Report Selection & Pre-flight Validation")
+                  : currentStep === 1
+                  ? (isBn ? "২. নিউরাল ওসিআর টেবিল ও মান নিষ্কাশন" : "2. Neural OCR Tabular Extraction")
+                  : (isBn ? "৩. ক্লিনিক্যাল পর্যালোচনা ও এআই ডাক্তার ম্যাচিং" : "3. Clinical Observations & AI Specialist Triage")}
+              </h3>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 self-end sm:self-auto">
+            <div className="text-right">
+              <span className="text-lg font-black font-mono text-ptext">
+                {currentStep === 0 ? "33%" : currentStep === 1 ? "66%" : "100%"}
+              </span>
+              <p className="text-[10px] text-muted font-mono">
+                {currentStep === 0
+                  ? (isBn ? "ফাইল বাছাই" : "Select Phase")
+                  : currentStep === 1
+                  ? (isBn ? "ওসিআর প্রসেসিং" : "OCR Engine")
+                  : (isBn ? "সম্পন্ন" : "Finalized")}
+              </p>
+            </div>
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+              currentStep === 2
+                ? "border border-primary/40 bg-psoft text-ptext shadow-[0_0_12px_var(--accent-glow)]"
+                : "border border-line bg-s2 text-muted"
+            }`}>
+              {currentStep === 2 ? (
+                <>
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                  <span>{isBn ? "সম্পূর্ণ প্রস্তুত" : "Ready"}</span>
+                </>
+              ) : (
+                <>
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+                  <span>{isBn ? "চলমান" : "In Progress"}</span>
+                </>
+              )}
+            </span>
+          </div>
+        </div>
+
+        {/* Continuous Multi-Segment Progress Bar Track */}
+        <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-s2 border border-line/80 shadow-inner">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-primary via-emerald-400 to-teal-300 shadow-[0_0_14px_var(--accent-glow)] transition-all duration-700 ease-out"
+            style={{
+              width: currentStep === 0 ? "33.33%" : currentStep === 1 ? "66.66%" : "100%",
+            }}
+          />
+        </div>
+
+        {/* 3 Step Interactive Progress Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          {/* Step 1 Card */}
+          <div
+            className={`rounded-2xl border p-3.5 transition-all duration-200 ${
+              currentStep === 0
+                ? "border-primary/60 bg-gradient-to-b from-primary/15 to-s1 shadow-[0_0_15px_var(--accent-glow)] ring-1 ring-primary/40"
+                : currentStep > 0
+                ? "border-primary/30 bg-s1/90"
+                : "border-line bg-s2/30 opacity-70"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
+                  currentStep > 0
+                    ? "bg-primary text-onprimary"
+                    : currentStep === 0
+                    ? "bg-primary/20 text-ptext"
+                    : "bg-s2 text-muted"
+                }`}>
+                  {currentStep > 0 ? <Check className="h-4 w-4" /> : <UploadCloud className="h-4 w-4" />}
+                </span>
+                <span className="text-xs font-bold text-ink">
+                  {isBn ? "ধাপ ১: রিপোর্ট আপলোড" : "Step 1: Upload"}
+                </span>
+              </div>
+              <span className={`text-[10px] font-mono font-bold uppercase ${
+                currentStep > 0 ? "text-primary" : currentStep === 0 ? "text-ptext" : "text-muted"
+              }`}>
+                {currentStep > 0 ? (isBn ? "সম্পন্ন" : "Done") : currentStep === 0 ? (isBn ? "সক্রিয়" : "Active") : (isBn ? "অপেক্ষমাণ" : "Pending")}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted leading-snug">
+              {isBn ? "পিডিএফ বা ক্যামেরা রিপোর্ট ফাইল বাছাই" : "Select PDF document or paper scan"}
+            </p>
+            {/* Step 1 Sub-progress bar */}
+            <div className="mt-2.5 h-1.5 w-full rounded-full bg-s2 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  currentStep >= 0 ? "bg-primary w-full shadow-[0_0_8px_var(--accent-glow)]" : "w-0"
+                }`}
+              />
+            </div>
+          </div>
+
+          {/* Step 2 Card */}
+          <div
+            className={`rounded-2xl border p-3.5 transition-all duration-200 ${
+              currentStep === 1
+                ? "border-primary/60 bg-gradient-to-b from-primary/15 to-s1 shadow-[0_0_15px_var(--accent-glow)] ring-1 ring-primary/40"
+                : currentStep > 1
+                ? "border-primary/30 bg-s1/90"
+                : "border-line bg-s2/30 opacity-70"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
+                  currentStep > 1
+                    ? "bg-primary text-onprimary"
+                    : currentStep === 1
+                    ? "bg-primary/20 text-ptext animate-pulse"
+                    : "bg-s2 text-muted"
+                }`}>
+                  {currentStep > 1 ? (
+                    <Check className="h-4 w-4" />
+                  ) : currentStep === 1 ? (
+                    <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                  ) : (
+                    <Layers className="h-4 w-4" />
+                  )}
+                </span>
+                <span className="text-xs font-bold text-ink">
+                  {isBn ? "ধাপ ২: নিউরাল ওসিআর" : "Step 2: Neural OCR"}
+                </span>
+              </div>
+              <span className={`text-[10px] font-mono font-bold uppercase ${
+                currentStep > 1 ? "text-primary" : currentStep === 1 ? "text-ptext" : "text-muted"
+              }`}>
+                {currentStep > 1 ? (isBn ? "সম্পন্ন" : "Done") : currentStep === 1 ? (isBn ? "চলমান..." : "Extracting") : (isBn ? "অপেক্ষমাণ" : "Pending")}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted leading-snug">
+              {isBn ? "PyMuPDF ও জেমিনি ভিশন এক্সট্রাকশন" : "PyMuPDF & Gemini Vision extraction"}
+            </p>
+            {/* Step 2 Sub-progress bar */}
+            <div className="mt-2.5 h-1.5 w-full rounded-full bg-s2 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  currentStep > 1
+                    ? "bg-primary w-full shadow-[0_0_8px_var(--accent-glow)]"
+                    : currentStep === 1
+                    ? "bg-primary w-2/3 animate-pulse"
+                    : "w-0"
+                }`}
+              />
+            </div>
+          </div>
+
+          {/* Step 3 Card */}
+          <div
+            className={`rounded-2xl border p-3.5 transition-all duration-200 ${
+              currentStep === 2
+                ? "border-primary/60 bg-gradient-to-b from-primary/15 to-s1 shadow-[0_0_15px_var(--accent-glow)] ring-1 ring-primary/40"
+                : "border-line bg-s2/30 opacity-70"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className={`flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
+                  currentStep === 2
+                    ? "bg-primary text-onprimary shadow-xs"
+                    : "bg-s2 text-muted"
+                }`}>
+                  {currentStep === 2 ? <Sparkles className="h-4 w-4" /> : <Stethoscope className="h-4 w-4" />}
+                </span>
+                <span className="text-xs font-bold text-ink">
+                  {isBn ? "ধাপ ৩: এআই ও স্পেশালিস্ট" : "Step 3: AI & Doctors"}
+                </span>
+              </div>
+              <span className={`text-[10px] font-mono font-bold uppercase ${
+                currentStep === 2 ? "text-primary" : "text-muted"
+              }`}>
+                {currentStep === 2 ? (isBn ? "প্রস্তুত" : "Ready") : (isBn ? "চূড়ান্ত ধাপ" : "Final")}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted leading-snug">
+              {isBn ? "ক্লিনিক্যাল সামারি ও ১-ক্লিক ডক্টর বুকিং" : "Clinical summary & 1-click booking"}
+            </p>
+            {/* Step 3 Sub-progress bar */}
+            <div className="mt-2.5 h-1.5 w-full rounded-full bg-s2 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  currentStep === 2 ? "bg-primary w-full shadow-[0_0_8px_var(--accent-glow)]" : "w-0"
+                }`}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* =========================================================
