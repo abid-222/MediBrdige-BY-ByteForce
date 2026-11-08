@@ -5,8 +5,10 @@ import {
   AlertTriangle,
   ArrowLeft,
   Bot,
+  CalendarClock,
   Check,
   CheckCircle2,
+  Download,
   FileCheck,
   FileSearch,
   FileText,
@@ -124,7 +126,24 @@ export default function MedicalReportDetailPage() {
           { label: doc.data?.doc_type?.toUpperCase() || "Report", href: `/reports/${id}` },
         ]}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={`/api/v1/documents/${id}/summary-pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button size="sm" variant="secondary" icon={Download}>
+                Download PDF
+              </Button>
+            </a>
+            <Button
+              size="sm"
+              variant="outline"
+              icon={CalendarClock}
+              onClick={() => router.push(`/appointments?book=true&shareDoc=${id}`)}
+            >
+              Request Doctor Review
+            </Button>
             <Button
               size="sm"
               icon={Sparkles}

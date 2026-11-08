@@ -74,6 +74,11 @@ export default function AppointmentsPage() {
       setBookModalOpen(true);
       const docId = params.get("doctorId");
       if (docId) setSelectedDoctorId(docId);
+      const shareDocId = params.get("shareDoc");
+      if (shareDocId) {
+        setSelectedDocIds([shareDocId]);
+        setShareOptIn(true);
+      }
     }
   }, []);
 

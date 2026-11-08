@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   Sparkles,
   Stethoscope,
+  UploadCloud,
   Users,
 } from "lucide-react";
 import { api, getRole, getToken, homeFor, setSession } from "@/lib/api";
@@ -103,6 +104,12 @@ export default function Home() {
             <Button className="btn-primary-neon h-12 px-6 text-base">
               <Compass className="mr-2 h-5 w-5" />
               {isBn ? "স্মার্টকেয়ার নেভিগেটর চালান" : "Start SmartCare Navigator"}
+            </Button>
+          </Link>
+          <Link href={currentRole === "patient" ? "/reports/scan" : "/login?next=%2Freports%2Fscan"}>
+            <Button variant="secondary" className="h-12 px-6 text-base border-primary/50 bg-psoft/30 hover:bg-primary hover:text-onprimary transition">
+              <UploadCloud className="mr-2 h-5 w-5 text-ptext" />
+              {isBn ? "মেডিকেল রিপোর্ট স্ক্যান (OCR)" : "Scan Medical Report (OCR)"}
             </Button>
           </Link>
           <Link href="/directory">

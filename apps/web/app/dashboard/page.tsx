@@ -104,7 +104,12 @@ function WelcomeBanner({
 
         {/* Quick Actions */}
         <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0">
-          <Button onClick={onUploadClick} size="sm" icon={UploadCloud}>
+          <Link href="/reports/scan">
+            <Button size="sm" variant="primary" icon={Sparkles} className="shadow-glow">
+              OCR Report Scan
+            </Button>
+          </Link>
+          <Button onClick={onUploadClick} size="sm" variant="secondary" icon={UploadCloud}>
             {t("dash.upload") || "Upload Report"}
           </Button>
           <Link href="/navigator">
@@ -252,7 +257,7 @@ export default function PatientDashboard() {
   // Local state for interactive filtering & tabs
   const [docSearch, setDocSearch] = useState("");
   const [docTypeFilter, setDocTypeFilter] = useState("all");
-  const [apptFilter, setApptFilter] = useState<"upcoming" | "previous" | "all">("upcoming");
+  const [apptFilter, setApptFilter] = useState<"upcoming" | "pending" | "completed" | "previous" | "all">("upcoming");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [explainDocId, setExplainDocId] = useState<string | null>(null);
   const [aiExplanation, setAiExplanation] = useState<any>(null);
@@ -293,24 +298,51 @@ export default function PatientDashboard() {
     });
   }, [docs.data, docSearch, docTypeFilter]);
 
-  // Categorized appointments
-  const { upcomingAppts, previousAppts } = useMemo(() => {
+  // Categorized appointments and doctors
+  const { upcomingAppts, pendingAppts, completedAppts, previousAppts, myDoctors } = useMemo(() => {
     const items = appts.data?.items || [];
     const now = new Date();
     const upcoming = items.filter((a: any) =>
-      ["requested", "confirmed", "rescheduled"].includes(a.status)
+      ["confirmed", "rescheduled", "checked_in"].includes(a.status) &&
+      new Date(a.slot_start) >= now
     );
+    const pending = items.filter((a: any) => a.status === "requested");
+    const completed = items.filter((a: any) => a.status === "completed");
     const previous = items.filter(
       (a: any) =>
         ["completed", "cancelled"].includes(a.status) ||
         new Date(a.slot_start) < now
     );
-    return { upcomingAppts: upcoming, previousAppts: previous };
+
+    // Extract unique doctors for "My Doctors"
+    const docsMap = new Map<string, any>();
+    items.forEach((a: any) => {
+      if (a.doctor_id && !docsMap.has(a.doctor_id)) {
+        docsMap.set(a.doctor_id, {
+          id: a.doctor_id,
+          name: a.doctor_name || "Doctor",
+          lastSlot: a.slot_start,
+          status: a.status,
+        });
+      }
+    });
+
+    return {
+      upcomingAppts: upcoming,
+      pendingAppts: pending,
+      completedAppts: completed,
+      previousAppts: previous,
+      myDoctors: Array.from(docsMap.values()),
+    };
   }, [appts.data]);
 
   const displayedAppts =
     apptFilter === "upcoming"
       ? upcomingAppts
+      : apptFilter === "pending"
+      ? pendingAppts
+      : apptFilter === "completed"
+      ? completedAppts
       : apptFilter === "previous"
       ? previousAppts
       : appts.data?.items || [];
@@ -616,11 +648,13 @@ export default function PatientDashboard() {
             </h2>
             <p className="text-xs text-muted">Consultation requests and confirmed schedules</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <TabGroup
               tabs={[
                 { key: "upcoming", label: "Upcoming", count: upcomingAppts.length },
-                { key: "previous", label: "Previous", count: previousAppts.length },
+                { key: "pending", label: "Requests", count: pendingAppts.length },
+                { key: "completed", label: "Completed", count: completedAppts.length },
+                { key: "previous", label: "History", count: previousAppts.length },
                 { key: "all", label: "All" },
               ]}
               active={apptFilter}
@@ -628,7 +662,7 @@ export default function PatientDashboard() {
             />
             <Link href="/directory">
               <Button size="sm" icon={Compass}>
-                Book Care
+                Find Doctor
               </Button>
             </Link>
           </div>
@@ -645,6 +679,10 @@ export default function PatientDashboard() {
               title={
                 apptFilter === "upcoming"
                   ? "No upcoming appointments"
+                  : apptFilter === "pending"
+                  ? "No pending doctor requests"
+                  : apptFilter === "completed"
+                  ? "No completed consultations"
                   : "No past appointments found"
               }
               body="Use the SmartCare Navigator to match with eligible doctors in Dhaka."
@@ -726,6 +764,75 @@ export default function PatientDashboard() {
             })}
           </div>
         </Async>
+      </Card>
+
+      {/* =========================================================
+         5b. MY DOCTORS DIRECTORY
+         ========================================================= */}
+      <Card className="space-y-4">
+        <div className="flex items-center justify-between border-b border-line pb-3">
+          <div>
+            <h2 className="text-lg font-bold text-ink flex items-center gap-2">
+              <Users className="h-5 w-5 text-ptext" />
+              <span>My Doctors</span>
+            </h2>
+            <p className="text-xs text-muted">Physicians you have consulted or requested appointments with</p>
+          </div>
+          <Link href="/directory">
+            <Button size="sm" variant="secondary" icon={Compass}>
+              Find More Doctors
+            </Button>
+          </Link>
+        </div>
+
+        {myDoctors.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="No Assigned Doctors Yet"
+            body="When you book consultations or share medical reports with doctors, they appear in your personal care team."
+            action={
+              <Link href="/directory">
+                <Button size="sm">Browse Verified Doctors</Button>
+              </Link>
+            }
+          />
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {myDoctors.map((doc: any) => (
+              <div
+                key={doc.id}
+                className="flex flex-col justify-between rounded-card border border-line bg-s1 p-4 space-y-3 hover:border-primary/50 transition shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs font-heading">
+                    {doc.name.replace(/^Dr\.\s*/i, "").slice(0, 2).toUpperCase() || "DR"}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm text-ink truncate">{doc.name}</p>
+                    <p className="text-xs text-muted">
+                      {doc.lastSlot ? `Consultation: ${fmtDate(doc.lastSlot)}` : "Care Relationship"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-line/60 pt-2.5">
+                  <Link
+                    href={`/directory/doctors/${doc.id}`}
+                    className="text-xs font-semibold text-muted hover:text-ink transition"
+                  >
+                    View Profile &rarr;
+                  </Link>
+                  <Link href={`/appointments?book=true&doctorId=${doc.id}`}>
+                    <Button size="xs" variant="primary">
+                      <CalendarClock className="h-3 w-3 mr-1" />
+                      Book Consultation
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* =========================================================

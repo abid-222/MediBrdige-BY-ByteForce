@@ -67,28 +67,43 @@ export default function DoctorWorkspacePage() {
   // Local state
   const [patientSearch, setPatientSearch] = useState("");
   const [patientAccessFilter, setPatientAccessFilter] = useState<"all" | "active" | "no_access">("all");
-  const [apptTab, setApptTab] = useState<"today" | "upcoming" | "all">("today");
+  const [apptTab, setApptTab] = useState<"today" | "requests" | "upcoming" | "completed" | "all">("today");
   const [busyActionId, setBusyActionId] = useState<string | null>(null);
 
   const today = todayDhaka();
   const isVerifiedDoctor = me.data?.verification === "verified" || me.data?.status === "active";
 
-  // Today's vs. Later appointments
-  const allAppts = useMemo(() => dashboard.data?.appointments || [], [dashboard.data]);
+  // Categorize doctor appointments (combines rich appointments list with dashboard)
+  const allAppts = useMemo(() => {
+    return appointments.data?.items || dashboard.data?.appointments || [];
+  }, [appointments.data, dashboard.data]);
+
+  const requestsAppts = useMemo(
+    () => allAppts.filter((a: any) => a.status === "requested"),
+    [allAppts]
+  );
   const todaysAppts = useMemo(
-    () => allAppts.filter((a: any) => dhakaDay(a.slot_start) === today),
+    () => allAppts.filter((a: any) => dhakaDay(a.slot_start) === today && a.status !== "requested"),
     [allAppts, today]
   );
   const laterAppts = useMemo(
-    () => allAppts.filter((a: any) => (dhakaDay(a.slot_start) ?? "") > today),
+    () => allAppts.filter((a: any) => (dhakaDay(a.slot_start) ?? "") > today && a.status !== "requested" && a.status !== "completed" && a.status !== "cancelled"),
     [allAppts, today]
+  );
+  const completedAppts = useMemo(
+    () => allAppts.filter((a: any) => a.status === "completed"),
+    [allAppts]
   );
 
   const displayedAppts =
     apptTab === "today"
       ? todaysAppts
+      : apptTab === "requests"
+      ? requestsAppts
       : apptTab === "upcoming"
       ? laterAppts
+      : apptTab === "completed"
+      ? completedAppts
       : allAppts;
 
   // Filtered Patients List
@@ -218,8 +233,10 @@ export default function DoctorWorkspacePage() {
           <TabGroup
             tabs={[
               { key: "today", label: "Today", count: todaysAppts.length },
-              { key: "upcoming", label: "Later", count: laterAppts.length },
-              { key: "all", label: "All Schedule", count: allAppts.length },
+              { key: "requests", label: "Requests", count: requestsAppts.length },
+              { key: "upcoming", label: "Upcoming", count: laterAppts.length },
+              { key: "completed", label: "History", count: completedAppts.length },
+              { key: "all", label: "All", count: allAppts.length },
             ]}
             active={apptTab}
             onChange={setApptTab}
@@ -227,15 +244,26 @@ export default function DoctorWorkspacePage() {
         </div>
 
         <Async
-          loading={dashboard.loading && !dashboard.data}
-          error={dashboard.error}
-          onRetry={dashboard.reload}
+          loading={dashboard.loading && !dashboard.data && appointments.loading}
+          error={dashboard.error || appointments.error}
+          onRetry={() => {
+            dashboard.reload();
+            appointments.reload();
+          }}
           empty={displayedAppts.length === 0}
           emptyNode={
             <EmptyState
               icon={CalendarClock}
-              title={apptTab === "today" ? "No appointments today" : "No appointments in this view"}
-              body="New appointment requests from patients will appear here automatically."
+              title={
+                apptTab === "today"
+                  ? "No appointments today"
+                  : apptTab === "requests"
+                  ? "No pending patient requests"
+                  : apptTab === "completed"
+                  ? "No completed consultation history"
+                  : "No appointments in this view"
+              }
+              body="Patient booking requests and scheduled consultations will appear here automatically."
             />
           }
         >
@@ -258,13 +286,13 @@ export default function DoctorWorkspacePage() {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-bold text-sm text-ink flex items-center gap-1.5">
-                        <User className="h-4 w-4 text-ptext" />
-                        <span>Patient Consultation</span>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm text-ink flex items-center gap-1.5 truncate">
+                        <User className="h-4 w-4 text-ptext shrink-0" />
+                        <span>{a.patient_name || "Patient Consultation"}</span>
                       </p>
                       <p className="text-xs text-muted flex items-center gap-1.5 mt-1">
-                        <Clock className="h-3 w-3" />
+                        <Clock className="h-3 w-3 shrink-0" />
                         <span className="num font-semibold">{fmtDateTime(a.slot_start)}</span>
                       </p>
                     </div>
@@ -282,49 +310,68 @@ export default function DoctorWorkspacePage() {
                     </Chip>
                   </div>
 
-                  {/* Doctor actions */}
-                  <div className="flex items-center justify-end gap-2 border-t border-line/60 pt-2.5">
-                    {isRequested && (
-                      <Button
-                        size="xs"
-                        variant="primary"
-                        busy={isBusy}
-                        onClick={() => handleApptAction(a.id, "confirmed", "Confirmed")}
+                  {a.reason && (
+                    <p className="text-xs text-muted bg-s2/40 p-2 rounded-input">
+                      <strong className="text-ink">Visit Reason:</strong> {a.reason}
+                    </p>
+                  )}
+
+                  {/* Doctor actions & chart access */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line/60 pt-2.5">
+                    {a.patient_id ? (
+                      <Link
+                        href={`/doctor/patients/${a.patient_id}`}
+                        className="text-xs font-semibold text-ptext hover:underline"
                       >
-                        Confirm Booking
-                      </Button>
+                        Open Patient Chart &rarr;
+                      </Link>
+                    ) : (
+                      <span className="text-[11px] text-muted">ID: {a.id.slice(0, 8)}</span>
                     )}
-                    {isConfirmed && (
-                      <Button
-                        size="xs"
-                        variant="primary"
-                        busy={isBusy}
-                        onClick={() => handleApptAction(a.id, "checked_in", "Checked In")}
-                      >
-                        Mark Checked In
-                      </Button>
-                    )}
-                    {isCheckedIn && (
-                      <Button
-                        size="xs"
-                        variant="primary"
-                        busy={isBusy}
-                        onClick={() => handleApptAction(a.id, "completed", "Completed")}
-                      >
-                        Complete Visit
-                      </Button>
-                    )}
-                    {a.status !== "cancelled" && a.status !== "completed" && (
-                      <Button
-                        size="xs"
-                        variant="ghost"
-                        className="text-danger hover:bg-danger/10"
-                        busy={isBusy}
-                        onClick={() => handleApptAction(a.id, "cancelled", "Cancelled")}
-                      >
-                        Cancel
-                      </Button>
-                    )}
+
+                    <div className="flex items-center gap-1.5 ml-auto">
+                      {isRequested && (
+                        <Button
+                          size="xs"
+                          variant="primary"
+                          busy={isBusy}
+                          onClick={() => handleApptAction(a.id, "confirmed", "Confirmed")}
+                        >
+                          Confirm
+                        </Button>
+                      )}
+                      {isConfirmed && (
+                        <Button
+                          size="xs"
+                          variant="primary"
+                          busy={isBusy}
+                          onClick={() => handleApptAction(a.id, "checked_in", "Checked In")}
+                        >
+                          Check In
+                        </Button>
+                      )}
+                      {isCheckedIn && (
+                        <Button
+                          size="xs"
+                          variant="primary"
+                          busy={isBusy}
+                          onClick={() => handleApptAction(a.id, "completed", "Completed")}
+                        >
+                          Complete Visit
+                        </Button>
+                      )}
+                      {a.status !== "cancelled" && a.status !== "completed" && (
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          className="text-danger hover:bg-danger/10"
+                          busy={isBusy}
+                          onClick={() => handleApptAction(a.id, "cancelled", "Cancelled")}
+                        >
+                          Decline
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

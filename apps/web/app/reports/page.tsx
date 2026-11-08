@@ -145,17 +145,24 @@ export default function MedicalReportsPage() {
           { label: "Medical Documents", href: "/reports" },
         ]}
         actions={
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={RefreshCw}
-            onClick={() => {
-              reload();
-              addToast("info", "Refreshed", "Documents updated.");
-            }}
-          >
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link href="/reports/scan">
+              <Button size="sm" variant="primary" icon={Sparkles}>
+                OCR Report Scan
+              </Button>
+            </Link>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={RefreshCw}
+              onClick={() => {
+                reload();
+                addToast("info", "Refreshed", "Documents updated.");
+              }}
+            >
+              Refresh
+            </Button>
+          </div>
         }
       />
 
