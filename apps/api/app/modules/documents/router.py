@@ -207,7 +207,7 @@ def file_url(doc_id: str, user: Profile = Depends(get_current_user), db: Session
     doc = _doc_or_404(db, doc_id)
     require_access(db, user, doc.patient_id, "documents", "file", doc.id)
     token = jwt.encode({"typ": "file", "doc": doc.id, "exp": int(time.time()) + SIGNED_URL_TTL_SECONDS}, settings.jwt_secret, algorithm="HS256")
-    return {"url": f"/api/v1/files/{token}", "expires_in": SIGNED_URL_TTL_SECONDS}
+    return {"url": f"/api/v1/files/{token}", "mime": doc.mime, "expires_in": SIGNED_URL_TTL_SECONDS}
 
 
 @router.get("/files/{token}")
@@ -219,7 +219,12 @@ def serve_file(token: str, db: Session = Depends(get_db)):
     if data.get("typ") != "file":
         raise AppError(403, "link_expired", "This link has expired")
     doc = _doc_or_404(db, data["doc"])
-    return Response(storage.read(doc.file_ref), media_type=doc.mime, headers={"Content-Disposition": "inline; filename=report"})
+    ext = ".pdf" if doc.mime == "application/pdf" else (".jpg" if doc.mime == "image/jpeg" else ".png")
+    return Response(
+        storage.read(doc.file_ref),
+        media_type=doc.mime,
+        headers={"Content-Disposition": f"inline; filename=original_report_{doc.id[:8]}{ext}"}
+    )
 
 
 class FieldPatch(BaseModel):

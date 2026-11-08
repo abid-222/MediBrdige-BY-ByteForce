@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Bot,
   Building2,
+  Calendar,
   CalendarClock,
   Camera,
   CheckCircle2,
@@ -182,6 +183,8 @@ export default function OcrScannerPage() {
           setUploading(false);
           setCurrentStep(2);
           addToast("success", "OCR Extraction Complete", `Successfully extracted ${ext.rows?.length || 0} clinical observations.`);
+          // Automatically trigger AI clinical explanation and doctor match
+          requestAiExplanation(docId);
         } else if (ext && ext.document_status === "failed") {
           clearInterval(interval);
           setOcrStatus("error");
@@ -194,6 +197,7 @@ export default function OcrScannerPage() {
           setOcrStatus("ready");
           setUploading(false);
           setCurrentStep(2);
+          requestAiExplanation(docId);
         }
       } catch (err: any) {
         if (attempts >= maxAttempts) {
@@ -225,24 +229,35 @@ export default function OcrScannerPage() {
     }
   };
 
-  // AI Explain handler
-  const requestAiExplanation = async () => {
-    if (!uploadedDocId) return;
+  // AI Explain handler (automatic on extraction or manual re-analysis)
+  const requestAiExplanation = async (targetId?: string) => {
+    const docIdToUse = targetId || uploadedDocId;
+    if (!docIdToUse) return;
     setAiBusy(true);
     setAiError("");
     try {
       const res = await api("/ai/report-explain", {
-        body: { document_id: uploadedDocId, lang: locale },
+        body: { document_id: docIdToUse, lang: locale },
       });
       setAiData(res);
-      addToast("success", "AI Analysis Generated", "Plain-language translation based strictly on verified test values.");
+      addToast(
+        "success",
+        isBn ? "এআই ক্লিনিক্যাল রিপোর্ট তৈরি সম্পন্ন" : "AI Analysis Generated",
+        isBn ? "স্বয়ংক্রিয় বিস্তারিত বিশ্লেষণ ও উপযুক্ত বিশেষজ্ঞ নির্ধারণ করা হয়েছে।" : "Plain-language summary & specialist match ready."
+      );
     } catch (e: any) {
       setAiError(e.message || "AI service temporarily unavailable.");
-      addToast("error", "Explanation Failed", e.message);
     } finally {
       setAiBusy(false);
     }
   };
+
+  // Auto-run AI explain if user lands on step 2 with an uploaded doc
+  useEffect(() => {
+    if (currentStep === 2 && uploadedDocId && !aiData && !aiBusy) {
+      requestAiExplanation(uploadedDocId);
+    }
+  }, [currentStep, uploadedDocId]);
 
   // Filtered raw text lines
   const filteredRawLines = useMemo(() => {
@@ -642,6 +657,188 @@ export default function OcrScannerPage() {
             </GlassCard>
           )}
 
+          {/* =========================================================
+             AUTOMATIC AI CLINICAL SUMMARY & DOCTOR RECOMMENDATION
+             ========================================================= */}
+          {aiBusy && !aiData && (
+            <Card className="p-5 border-primary/40 bg-gradient-to-r from-s1 via-psoft/10 to-s1 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-ptext">
+                  <Sparkles className="h-5 w-5 animate-spin" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold text-ink">
+                    {isBn ? "এআই বিস্তারিত বিশ্লেষণ ও বিশেষজ্ঞ ডাক্তার ম্যাচিং চলছে..." : "Generating AI Clinical Summary & Matching Specialists..."}
+                  </h3>
+                  <p className="text-xs text-muted">
+                    {isBn ? "ল্যাব টেস্টের ফলাফল বিশ্লেষণ করে স্বয়ংক্রিয় বিস্তারিত বিবরণী ও উপযুক্ত ডাক্তার নির্ধারণ করা হচ্ছে।" : "Cross-referencing verified observations against clinical specialty mappings and directory doctors."}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {aiError && (
+            <Card className="border-danger/40 bg-danger/10 p-4">
+              <p className="text-xs text-danger flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                {aiError}
+              </p>
+            </Card>
+          )}
+
+          {aiData?.emergency && (
+            <EmergencyBanner text={aiData.guidance} />
+          )}
+
+          {aiData && !aiData.emergency && (
+            <div className="space-y-4">
+              {/* 1. Plain-Language Summary Box */}
+              <div className="relative overflow-hidden rounded-2xl border border-primary/40 bg-gradient-to-br from-s1 via-s1 to-psoft/20 p-5 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.5),0_0_15px_var(--accent-glow)]">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line/60 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-onprimary shadow-sm font-bold">
+                      <Sparkles className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <h3 className="text-base font-bold text-ink">
+                        {isBn ? "এআই ক্লিনিক্যাল বিস্তারিত বিবরণী (AI Report Summary)" : "AI Clinical Intelligence Summary"}
+                      </h3>
+                      <p className="text-xs text-muted">
+                        {isBn ? "ল্যাব টেস্টের সকল মানের উপর ভিত্তি করে সহজ বাংলায় বিশ্লেষণ" : "Autonomous plain-language clinical correlation"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full border border-primary/40 bg-psoft px-3 py-1 text-[11px] font-bold text-ptext flex items-center gap-1.5 shadow-xs">
+                      <Bot className="h-3.5 w-3.5" />
+                      <span>{isBn ? "স্বয়ংক্রিয় এআই বিশ্লেষণ" : "Verified AI Analysis"}</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-line bg-s2/60 p-4 text-xs text-ink leading-relaxed font-sans sm:text-sm">
+                  <p>{aiData.summary || "No automated summary available."}</p>
+                </div>
+
+                {/* Facts Bullet List */}
+                {aiData.known_facts?.length > 0 && (
+                  <div className="mt-3.5 space-y-2">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted">
+                      {isBn ? "মূল পর্যবেক্ষণসমূহ:" : "Clinical Observations:"}
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {aiData.known_facts.map((fact: any, i: number) => (
+                        <div key={i} className="flex items-start gap-2 rounded-lg border border-line bg-s1/60 p-2.5 text-xs text-ink">
+                          <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                          <span>{fact.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Doctor Specialty Recommendation & 1-Click Match Cards */}
+              <div className="rounded-2xl border border-line bg-s1 p-5 space-y-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-line pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-info/20 text-info font-bold">
+                      <Stethoscope className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-bold text-ink">
+                        {isBn ? "কোন ডাক্তার দেখানো উচিত? (এআই বিশেষজ্ঞ সুপারিশ)" : "Which Doctor Should You Consult?"}
+                      </h4>
+                      <p className="text-xs text-muted">
+                        {isBn ? "ল্যাব টেস্টের ফলাফলের উপর ভিত্তি করে প্রস্তাবিত স্পেশালিস্ট" : "Specialist match calculated from laboratory findings"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                    aiData.urgency === "soon"
+                      ? "border border-warn/40 bg-warn/15 text-warn"
+                      : "border border-primary/40 bg-psoft text-ptext"
+                  }`}>
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>
+                      {aiData.urgency === "soon"
+                        ? (isBn ? "দ্রুত পরামর্শ জরুরি" : "Consultation Advised Soon")
+                        : (isBn ? "নিয়মিত স্বাস্থ্য পরামর্শ" : "Routine Consultation")}
+                    </span>
+                  </span>
+                </div>
+
+                {/* Recommendation Reason Box */}
+                <div className="rounded-xl border border-line bg-s2/40 p-3.5 flex items-start gap-3 text-xs text-ink">
+                  <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-sm text-ptext">{aiData.doctor_recommendation}</p>
+                    <p className="mt-1 text-muted leading-relaxed">{aiData.recommendation_reason}</p>
+                  </div>
+                </div>
+
+                {/* Matching Doctors Grid */}
+                {aiData.matching_doctors?.length > 0 && (
+                  <div className="space-y-2.5">
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted">
+                      {isBn ? "প্রস্তাবিত ভেরিফায়েড বিশেষজ্ঞ চিকিৎসকবৃন্দ:" : "Recommended Verified Doctors in Network:"}
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      {aiData.matching_doctors.map((doc: any, i: number) => (
+                        <div
+                          key={doc.id || i}
+                          className="flex flex-col justify-between rounded-xl border border-line bg-s2/40 p-3.5 hover:border-primary/50 transition shadow-xs"
+                        >
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/20 text-ptext font-bold text-xs">
+                                Dr
+                              </span>
+                              <div className="min-w-0">
+                                <p className="font-bold text-xs text-ink truncate">{doc.name}</p>
+                                <p className="text-[10px] text-muted truncate">{doc.specialty}</p>
+                              </div>
+                            </div>
+                            <p className="text-[11px] text-muted font-mono pt-1">{doc.qualifications}</p>
+                          </div>
+
+                          <div className="mt-3 pt-2 border-t border-line/60">
+                            <Button
+                              size="xs"
+                              variant="primary"
+                              className="w-full text-xs font-semibold"
+                              onClick={() => router.push(`/appointments?book=true&shareDoc=${uploadedDocId}&doctor=${doc.id}`)}
+                            >
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {isBn ? "অ্যাপয়েন্টমেন্ট নিন" : "Book Doctor"}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Find More Doctors Action Row */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-line/60">
+                  <p className="text-xs text-muted">
+                    {isBn ? "অন্যান্য হাসপাতাল বা নির্দিষ্ট লোকেশনে ডাক্তার খুঁজতে চান?" : "Looking for specific hospital chambers or doctors near you?"}
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => router.push(`/navigator?specialty=${aiData.recommended_specialty || "general_medicine"}&docId=${uploadedDocId}`)}
+                  >
+                    <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                    {isBn ? "এআই ডক্টর ফাইন্ডার (ML নেভিগেটর)" : "AI Doctor Finder (ML Triage)"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Side-by-Side: Original Document Preview vs Extracted Table */}
           <div className="grid gap-6 lg:grid-cols-12">
             {/* Left: Original Scan Preview */}
@@ -789,65 +986,6 @@ export default function OcrScannerPage() {
               </Card>
             </div>
           </div>
-
-          {/* AI Plain-Language Explanation Section */}
-          {aiError && (
-            <Card className="border-danger/40 bg-danger/10 p-4">
-              <p className="text-xs text-danger flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                {aiError}
-              </p>
-            </Card>
-          )}
-
-          {aiData?.emergency && (
-            <EmergencyBanner text={aiData.guidance} />
-          )}
-
-          {aiData && !aiData.emergency && (
-            <Card className="space-y-4 border-info/40 bg-gradient-to-br from-s1 to-info/5 p-5">
-              <div className="flex items-center justify-between border-b border-line pb-3">
-                <div className="flex items-center gap-2">
-                  <Bot className="h-5 w-5 text-info" />
-                  <h3 className="text-base font-bold text-ink">AI Plain-Language Clinical Explanation</h3>
-                  <Chip kind="ai" />
-                </div>
-                <span className="text-xs text-muted">Deterministic Fact Extraction</span>
-              </div>
-
-              <div className="space-y-2.5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted">Extracted Facts:</p>
-                {aiData.known_facts?.map((fact: any, i: number) => (
-                  <div key={i} className="rounded-input border border-line bg-s1 p-3 text-xs text-ink leading-relaxed">
-                    <span className="font-bold text-ptext">• </span>
-                    {fact.text}
-                  </div>
-                ))}
-              </div>
-
-              {aiData.unknown?.length > 0 && (
-                <div className="space-y-1 text-xs text-muted pt-2 border-t border-line/50">
-                  <p className="font-bold uppercase tracking-wider">Unverified or Ambiguous Fields:</p>
-                  <ul className="list-disc pl-4 space-y-0.5">
-                    {aiData.unknown.map((u: string, i: number) => (
-                      <li key={i}>{u}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {aiData.sources?.length > 0 && (
-                <div className="text-[11px] text-muted border-t border-line/50 pt-2">
-                  <strong>Sources: </strong>
-                  {aiData.sources.map((s: any) => `${s.title} (${s.date || "Recent"})`).join("; ")}
-                </div>
-              )}
-
-              <div className="rounded-input border border-line/60 bg-s2/50 p-2.5 text-[11px] text-muted leading-relaxed">
-                {aiData.disclaimer || "AI draft assistance only. No diagnosis or prescription provided. Always consult a licensed doctor."}
-              </div>
-            </Card>
-          )}
 
           {/* Action Center (Doctor Referral, Booking, PDF) */}
           <div className="rounded-2xl border border-line bg-s1 p-6 space-y-4 shadow-sm">

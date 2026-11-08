@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.access import require_access
 from app.core.db import get_db
 from app.core.errors import AppError
-from app.core.security import require_role
+from app.core.security import get_current_user, require_role
 from app.models import AiOutput, Document, Observation, Profile
 from app.modules.ai import service
 from app.modules.navigator.service import red_flag_check, EMERGENCY_MESSAGE
@@ -30,7 +30,7 @@ class FeedbackIn(BaseModel):
 
 
 @router.post("/report-explain")
-def explain(body: ExplainIn, user: Profile = Depends(require_role("patient")), db: Session = Depends(get_db)):
+def explain(body: ExplainIn, user: Profile = Depends(get_current_user), db: Session = Depends(get_db)):
     if body.question:
         rf = red_flag_check(body.question)
         if rf["emergency"]:
