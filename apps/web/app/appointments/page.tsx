@@ -2,8 +2,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Building2,
   Calendar,
   CalendarClock,
+  Check,
   Clock,
   Compass,
   FileCheck,
@@ -48,7 +50,7 @@ export default function AppointmentsPage() {
 
   // API Hooks
   const { data, loading, error, reload } = useApi("/appointments");
-  const doctorsList = useApi("/directory/doctors");
+  const doctorsList = useApi("/directory/doctors?page_size=100");
   const documentsList = useApi(role === "patient" ? "/documents" : null);
 
   // Filter & Search states
@@ -65,6 +67,8 @@ export default function AppointmentsPage() {
   const [shareOptIn, setShareOptIn] = useState(true);
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
   const [bookingBusy, setBookingBusy] = useState(false);
+  const [modalDoctorSearch, setModalDoctorSearch] = useState("");
+  const [modalSpecialtyFilter, setModalSpecialtyFilter] = useState("all");
 
   // Check URL query parameters to auto-open booking modal
   useEffect(() => {
@@ -73,7 +77,7 @@ export default function AppointmentsPage() {
     if (params.get("book") === "true") {
       setBookModalOpen(true);
       const docId = params.get("doctorId");
-      if (docId) setSelectedDoctorId(docId);
+      if (docId && docId !== "undefined" && docId !== "null") setSelectedDoctorId(docId);
       const shareDocId = params.get("shareDoc");
       if (shareDocId) {
         setSelectedDocIds([shareDocId]);
@@ -81,6 +85,34 @@ export default function AppointmentsPage() {
       }
     }
   }, []);
+
+  // Selected doctor lookup
+  const selectedDoctor = useMemo(() => {
+    if (!selectedDoctorId || !doctorsList.data?.items) return null;
+    return doctorsList.data.items.find(
+      (d: any) => d.id === selectedDoctorId || d.user_id === selectedDoctorId
+    );
+  }, [doctorsList.data, selectedDoctorId]);
+
+  // Modal filtered doctors
+  const filteredModalDoctors = useMemo(() => {
+    const list = doctorsList.data?.items || [];
+    return list.filter((doc: any) => {
+      if (modalSpecialtyFilter !== "all" && doc.specialty_code !== modalSpecialtyFilter) {
+        return false;
+      }
+      if (modalDoctorSearch.trim()) {
+        const q = modalDoctorSearch.toLowerCase();
+        const nameMatch = (doc.full_name || doc.name || "").toLowerCase().includes(q);
+        const specMatch = (doc.specialty || "").toLowerCase().includes(q);
+        const chamberMatch = doc.chambers?.some((c: any) =>
+          (c.facility_name || "").toLowerCase().includes(q) || (c.chamber || "").toLowerCase().includes(q)
+        );
+        if (!nameMatch && !specMatch && !chamberMatch) return false;
+      }
+      return true;
+    });
+  }, [doctorsList.data, modalSpecialtyFilter, modalDoctorSearch]);
 
   // Status transition state
   const [busyActionId, setBusyActionId] = useState<string | null>(null);
@@ -430,24 +462,173 @@ export default function AppointmentsPage() {
         onClose={() => setBookModalOpen(false)}
       >
         <form onSubmit={handleBookSubmit} className="space-y-4 text-sm">
-          <div>
-            <label className="mb-1 block font-medium text-xs uppercase tracking-wider text-muted">
-              Select Doctor *
-            </label>
-            <select
-              value={selectedDoctorId}
-              onChange={(e) => setSelectedDoctorId(e.target.value)}
-              required
-              className="w-full rounded-input border border-line bg-s1 px-3 py-2 text-ink text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-            >
-              <option value="">Choose a doctor...</option>
-              {doctorsList.data?.items?.map((d: any) => (
-                <option key={d.id} value={d.id}>
-                  {d.full_name || d.name} — {d.specialty} ({d.chambers?.[0]?.fee_label || (d.fee ? `BDT ${d.fee}` : "Confirmed Fee")})
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Doctor Selection Section */}
+          {selectedDoctor ? (
+            <div className="rounded-card border-2 border-primary/40 bg-psoft/15 p-3.5 space-y-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/20 text-ptext font-bold text-sm font-heading">
+                    {selectedDoctor.full_name?.replace(/^Dr\.\s*/i, "").slice(0, 2).toUpperCase() || "DR"}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="font-bold text-ink text-sm truncate">{selectedDoctor.full_name}</h4>
+                      <Chip kind="verified">BMDC Verified</Chip>
+                    </div>
+                    <p className="text-xs text-muted font-medium mt-0.5">
+                      {selectedDoctor.specialty} {selectedDoctor.experience_years ? `• ${selectedDoctor.experience_years}+ yrs exp` : ""}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="xs"
+                  onClick={() => setSelectedDoctorId("")}
+                >
+                  Change Doctor
+                </Button>
+              </div>
+
+              {selectedDoctor.chambers?.[0] && (
+                <div className="flex flex-wrap items-center justify-between text-xs text-muted border-t border-line/60 pt-2 gap-1">
+                  <span className="flex items-center gap-1 truncate">
+                    <Building2 className="h-3.5 w-3.5 text-muted shrink-0" />
+                    <span className="truncate">{selectedDoctor.chambers[0].facility_name}</span>
+                  </span>
+                  <span className="font-semibold text-ptext shrink-0">
+                    {selectedDoctor.chambers[0].fee_label || "Confirmed Fee"}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="block font-medium text-xs uppercase tracking-wider text-muted">
+                  Select Doctor *
+                </label>
+                <span className="text-[11px] text-muted">
+                  {filteredModalDoctors.length} available
+                </span>
+              </div>
+
+              {/* Quick Search & Filter */}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted pointer-events-none" />
+                  <input
+                    type="text"
+                    value={modalDoctorSearch}
+                    onChange={(e) => setModalDoctorSearch(e.target.value)}
+                    placeholder="Search doctor, specialty, hospital..."
+                    className="w-full rounded-input border border-line bg-s1 pl-8 pr-3 py-1.5 text-xs text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                  />
+                </div>
+                <select
+                  value={modalSpecialtyFilter}
+                  onChange={(e) => setModalSpecialtyFilter(e.target.value)}
+                  className="rounded-input border border-line bg-s1 px-2.5 py-1.5 text-xs text-ink focus-visible:outline-none"
+                >
+                  <option value="all">All Specialties</option>
+                  <option value="general-medicine">General Medicine</option>
+                  <option value="cardiology">Cardiology</option>
+                  <option value="pediatrics">Pediatrics</option>
+                  <option value="gastroenterology">Gastroenterology</option>
+                  <option value="neurology">Neurology</option>
+                  <option value="orthopedics">Orthopedics</option>
+                  <option value="gynecology">Gynecology</option>
+                  <option value="dermatology">Dermatology</option>
+                </select>
+              </div>
+
+              {/* Doctor Cards Selector */}
+              {doctorsList.loading ? (
+                <div className="py-6 text-center text-xs text-muted">Loading verified doctors...</div>
+              ) : filteredModalDoctors.length === 0 ? (
+                <div className="rounded-card border border-dashed border-line p-4 text-center space-y-1">
+                  <p className="text-xs text-muted">No doctors found matching "{modalDoctorSearch}".</p>
+                  <button
+                    type="button"
+                    onClick={() => { setModalDoctorSearch(""); setModalSpecialtyFilter("all"); }}
+                    className="text-xs text-ptext font-semibold hover:underline"
+                  >
+                    Reset Filters
+                  </button>
+                </div>
+              ) : (
+                <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1 border border-line/60 rounded-card p-2 bg-s2/30">
+                  {filteredModalDoctors.map((doc: any) => {
+                    const docId = doc.id || doc.user_id;
+                    const primaryChamber = doc.chambers?.[0];
+                    const isSelected = selectedDoctorId === docId;
+                    return (
+                      <div
+                        key={docId}
+                        onClick={() => setSelectedDoctorId(docId)}
+                        className={`p-2.5 rounded-lg border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                          isSelected
+                            ? "border-primary bg-psoft/25 shadow-xs"
+                            : "border-line bg-s1 hover:border-primary/50 hover:bg-s2/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs">
+                            {doc.full_name?.replace(/^Dr\.\s*/i, "").slice(0, 2).toUpperCase() || "DR"}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-semibold text-xs text-ink truncate">{doc.full_name}</span>
+                              {doc.verification === "verified" && (
+                                <ShieldCheck className="h-3 w-3 text-ptext shrink-0" />
+                              )}
+                            </div>
+                            <p className="text-[11px] text-muted truncate">
+                              {doc.specialty} • {primaryChamber?.facility_name || "Dhaka Chamber"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs font-semibold text-ptext">
+                            {primaryChamber?.fee_label || "BDT 1,200"}
+                          </span>
+                          <Button
+                            type="button"
+                            size="xs"
+                            variant={isSelected ? "primary" : "secondary"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDoctorId(docId);
+                            }}
+                          >
+                            {isSelected ? <Check className="h-3 w-3 mr-1" /> : null}
+                            {isSelected ? "Selected" : "Select"}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Standard fallback select */}
+              <div className="pt-1">
+                <select
+                  value={selectedDoctorId}
+                  onChange={(e) => setSelectedDoctorId(e.target.value)}
+                  className="w-full rounded-input border border-line bg-s1 px-2.5 py-1.5 text-ink text-xs focus-visible:outline-none"
+                >
+                  <option value="">Or choose directly from dropdown list...</option>
+                  {doctorsList.data?.items?.map((d: any) => (
+                    <option key={d.id || d.user_id} value={d.id || d.user_id}>
+                      {d.full_name || d.name} — {d.specialty} ({d.chambers?.[0]?.fee_label || "Confirmed Fee"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>

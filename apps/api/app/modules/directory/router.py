@@ -21,8 +21,8 @@ def meta(db: Session = Depends(get_db)):
 @router.get("/doctors")
 def doctors(db: Session = Depends(get_db), specialty: str | None = None, district: str | None = None,
             facility_type: str | None = None, fee_min: int | None = None, fee_max: int | None = None,
-            verified_only: bool = False, q: str | None = None, page: int = 1, page_size: int = 20):
-    page_size = min(page_size, 50)
+            verified_only: bool = False, q: str | None = None, page: int = 1, page_size: int = 100):
+    page_size = min(page_size, 200)
     docs = db.scalars(select(DoctorProfile).order_by(DoctorProfile.full_name)).all()
     items = []
     for d in docs:

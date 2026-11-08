@@ -839,9 +839,11 @@ export default function SmartCareNavigator() {
                     const primaryChamber = chambers[0];
                     const feeText = primaryChamber?.fee_bdt ? `BDT ${primaryChamber.fee_bdt}` : "Fee on request";
 
+                    const docId = doc.id || doc.user_id;
+
                     return (
                       <Card
-                        key={doc.user_id}
+                        key={docId}
                         className="flex flex-col justify-between space-y-4 p-5 hover:border-primary/50 transition shadow-sm"
                       >
                         <div className="space-y-3">
@@ -881,7 +883,7 @@ export default function SmartCareNavigator() {
 
                         <div className="flex items-center justify-between gap-2 border-t border-line/60 pt-3">
                           <Link
-                            href={`/directory/doctors/${doc.user_id}`}
+                            href={`/directory/doctors/${docId}`}
                             className="text-xs font-semibold text-muted hover:text-ink transition"
                           >
                             View Profile &rarr;
@@ -891,7 +893,7 @@ export default function SmartCareNavigator() {
                             variant="primary"
                             onClick={() =>
                               handleProtectedAction(
-                                `/appointments?book=true&doctorId=${doc.user_id}`,
+                                `/appointments?book=true&doctorId=${docId}`,
                                 `Appointment with ${doc.full_name}`
                               )
                             }

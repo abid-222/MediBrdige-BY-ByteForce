@@ -32,13 +32,13 @@ def doctor_view(db: Session, d: DoctorProfile, detail: bool = False):
                        .where(DoctorFacility.doctor_id == d.user_id)).all()
     chambers = []
     for df, f in links:
-        chambers.append({"facility_id": f.id, "facility_name": f.name, "district": f.district, "chamber": df.chamber,
+        chambers.append({"facility_id": f.id, "facility_name": f.name, "facility_type": f.type, "district": f.district, "chamber": df.chamber,
                          "schedule": df.schedule,
                          "fee_bdt": df.fee_bdt,
                          "fee_state": "confirmed" if df.fee_bdt is not None else "not_confirmed",
                          "fee_label": f"BDT {df.fee_bdt}" if df.fee_bdt is not None else "Not confirmed",
                          "fee_confirmed_at": df.fee_confirmed_at})
-    out = {"id": d.user_id, "full_name": d.full_name, "specialty": spec.name_en if spec else None,
+    out = {"id": d.user_id, "user_id": d.user_id, "full_name": d.full_name, "specialty": spec.name_en if spec else None,
            "specialty_code": spec.code if spec else None, "qualifications": d.qualifications,
            "experience_years": d.experience_years, "verification": badge(d.verification),
            "last_verified_at": d.last_verified_at, "stale": is_stale(d.last_verified_at),
