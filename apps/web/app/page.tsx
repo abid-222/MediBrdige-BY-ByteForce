@@ -360,7 +360,7 @@ export default function Home() {
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2.5 mb-6">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-              <span className="text-ink font-bold tracking-wider">MEDIBRIDGE.SYS</span>
+              <span className="text-ink font-bold tracking-wider">NIRAMOY.SYS</span>
               <span className="text-muted text-[10px]">v2.6.4-dhaka</span>
             </div>
             <span className="hidden sm:inline text-line">|</span>
@@ -386,12 +386,12 @@ export default function Home() {
 
           <p className="text-muted leading-relaxed text-[11px] max-w-2xl mx-auto">
             {isBn
-              ? "মেডিব্রিজ এআই একটি হ্যাকাথন প্রোটোটাইপ। সকল রোগীর তথ্য সিন্থেটিক। এটি কোনো স্বয়ংক্রিয় মেডিকেল ডিভাইস নয় এবং চিকিৎসকের সম্মতি ছাড়া প্রেসক্রিপশন প্রদান করে না।"
-              : "MediBridge AI is a clinical architecture prototype. All sample patient data and directory entries are synthetic. AI operates under human clinician supervision."}
+              ? "নিরাময় এআই (Niramoy AI) একটি সমন্বিত ডিজিটাল স্বাস্থ্যসেবা প্ল্যাটফর্ম। সকল রোগীর তথ্য সিন্থেটিক। এটি কোনো স্বয়ংক্রিয় মেডিকেল ডিভাইস নয় এবং চিকিৎসকের সম্মতি ছাড়া প্রেসক্রিপশন প্রদান করে না।"
+              : "Niramoy AI is a clinical architecture prototype. All sample patient data and directory entries are synthetic. AI operates under human clinician supervision."}
           </p>
 
           <div className="mt-6 text-[10px] text-muted/60 tracking-widest uppercase">
-            © 2026 MEDIBRIDGE AI · DHAKA RESEARCH CONSORTIUM · ALL RIGHTS RESERVED
+            © 2026 NIRAMOY AI · DHAKA RESEARCH CONSORTIUM · ALL RIGHTS RESERVED
           </div>
         </div>
       </footer>

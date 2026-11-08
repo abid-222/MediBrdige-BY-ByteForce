@@ -278,7 +278,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </span>
               {!collapsed && (
                 <span className="fade-in font-bold">
-                  MediBridge <span className="text-ptext">AI</span>
+                  Niramoy <span className="text-ptext">AI</span>
                 </span>
               )}
             </Link>

@@ -80,7 +80,7 @@ export function WatermelonNavbar() {
                   scrolled ? "text-white" : "text-slate-900 dark:text-white"
                 }`}
               >
-                MediBridge{" "}
+                {isBn ? "নিরাময়" : "Niramoy"}{" "}
                 <span className="text-emerald-500 dark:text-emerald-400 font-mono font-black ml-1">
                   AI
                 </span>
@@ -90,7 +90,7 @@ export function WatermelonNavbar() {
                   scrolled ? "text-slate-400" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
-                Dhaka Clinical Grid
+                Healthcare Intelligence
               </span>
             </div>
           </Link>

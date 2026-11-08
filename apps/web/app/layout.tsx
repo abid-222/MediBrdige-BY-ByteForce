@@ -6,7 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { ToastProvider } from "@/components/ui";
 
 export const metadata = {
-  title: "MediBridge AI — AI Assists. Doctors Decide. Patients Stay in Control.",
+  title: "Niramoy AI — AI Assists. Doctors Decide. Patients Stay in Control.",
   description: "Next-generation healthcare coordination and report intelligence prototype for Bangladesh.",
 };
 
