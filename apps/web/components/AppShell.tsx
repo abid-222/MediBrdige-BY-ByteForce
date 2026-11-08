@@ -251,7 +251,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-bg text-ink md:flex relative overflow-x-hidden">
+    <div className="min-h-screen bg-bg text-ink md:flex relative overflow-x-clip">
       <ArtisticAmbientCanvas />
       <a
         href="#main"

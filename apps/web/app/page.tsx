@@ -104,7 +104,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden bg-bg text-ink font-sans selection:bg-primary/20 selection:text-primary">
+    <div className="relative min-h-screen w-full overflow-x-clip bg-bg text-ink font-sans selection:bg-primary/20 selection:text-primary">
       {/* 0. High-Tech 3D Medical Hologram Opening Sequence */}
       <LandingPage3DBoot />
 
