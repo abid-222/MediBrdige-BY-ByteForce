@@ -27,9 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ThemeProvider>
           <I18nProvider>
             <ToastProvider>
-              <AppLoadingScreen minDurationMs={250}>
-                <AppShell>{children}</AppShell>
-              </AppLoadingScreen>
+              <AppShell>{children}</AppShell>
             </ToastProvider>
           </I18nProvider>
         </ThemeProvider>
