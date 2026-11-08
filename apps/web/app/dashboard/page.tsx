@@ -19,6 +19,7 @@ import {
   History,
   Info,
   Lock,
+  Pill,
   Plus,
   Search,
   ShieldAlert,
@@ -107,6 +108,11 @@ function WelcomeBanner({
           <Link href="/reports/scan">
             <Button size="sm" variant="primary" icon={Sparkles} className="shadow-glow">
               OCR Report Scan
+            </Button>
+          </Link>
+          <Link href="/prescriptions">
+            <Button variant="secondary" size="sm" icon={Pill}>
+              Prescriptions
             </Button>
           </Link>
           <Button onClick={onUploadClick} size="sm" variant="secondary" icon={UploadCloud}>

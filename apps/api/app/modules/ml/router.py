@@ -770,6 +770,129 @@ def get_pipeline():
     }
 
 
+@router.get("/ocr-pipeline")
+def get_ocr_pipeline():
+    """Detailed stages and specification of the Document OCR Scanning Pipeline."""
+    return {
+        "title": "OCR Document Scanning & Text Extraction Pipeline",
+        "description": "Verifiable end-to-end optical character recognition and clinical data extraction pipeline.",
+        "supported_formats": ["PDF (digital & scanned)", "JPEG / JPG", "PNG"],
+        "max_file_size_mb": 10,
+        "engine": "PyMuPDF (fitz) + PIL Image Processing + Tesseract OCR (LSTM Neural Net)",
+        "source_files": [
+            "apps/api/app/modules/documents/service.py",
+            "apps/api/app/modules/documents/router.py",
+        ],
+        "stages": [
+            {
+                "step": 1,
+                "name": "Binary Payload Ingestion & MIME Validation",
+                "engine": "Magic byte validation + hashlib SHA-256",
+                "details": "Ensures uploaded files conform strictly to PDF, PNG, or JPG formats up to 10MB.",
+                "status": "operational",
+            },
+            {
+                "step": 2,
+                "name": "Format Normalization & Digital Stream Extraction",
+                "engine": "PyMuPDF (fitz)",
+                "details": "Parses multi-page documents. If native digital vector text is detected (>=20 chars), extracts directly with zero OCR error.",
+                "status": "operational",
+            },
+            {
+                "step": 3,
+                "name": "Computer Vision Preprocessing (Scans & Photos)",
+                "engine": "PIL (Pillow) Autocontrast, EXIF transpose, 3x3 MedianFilter",
+                "details": "Automatically orients mobile photos, sharpens low-contrast lab prints, and removes salt-and-pepper sensor noise.",
+                "status": "operational",
+            },
+            {
+                "step": 4,
+                "name": "Neural LSTM Optical Character Recognition",
+                "engine": "Tesseract 5.x Neural OCR with eng+ben script models",
+                "details": "Extracts raw textual strings from preprocessed bitmap buffers.",
+                "status": "operational",
+            },
+            {
+                "step": 5,
+                "name": "Clinical Regex Parsing & Catalog Normalization",
+                "engine": "Deterministic Regex Extraction + Canonical Unit Converter",
+                "details": "Matches laboratory test names against test_catalog (e.g. HGB, WBC, PLT, GLU), parses observed values and reference intervals.",
+                "status": "operational",
+            },
+            {
+                "step": 6,
+                "name": "Human-in-the-Loop Verification & Flagging",
+                "engine": "Observation flagger (flagged_wrong, low_confidence, doctor_verified)",
+                "details": "Flags unreadable or out-of-range observations. Allows patient to flag errors and requires verified doctor approval before clinical reliance.",
+                "status": "operational",
+            },
+        ],
+        "limitations": [
+            "Handwritten doctor prescriptions cannot be guaranteed by standard printed OCR and require manual physician review.",
+            "Severely blurred or crumpled receipts trigger low-confidence warnings.",
+            "Multilingual table borders can cause occasional column misalignment.",
+        ],
+    }
+
+
+@router.get("/ai-pipeline")
+def get_ai_pipeline():
+    """Detailed stages and specification of the AI Analysis & Clinical Summarization Pipeline."""
+    return {
+        "title": "Generative AI Analysis & Clinical Summarization Pipeline",
+        "description": "Evidence-grounded medical text explanation and doctor note drafting architecture.",
+        "architecture_type": "Hybrid Grounded LLM + Deterministic Clinical Fallback",
+        "primary_model": "Google Gemini Pro / Flash API",
+        "offline_fallback": "Deterministic Clinical Rule-Based Explainer (zero downtime)",
+        "source_files": [
+            "apps/api/app/modules/ai/service.py",
+            "apps/api/app/modules/ai/router.py",
+        ],
+        "stages": [
+            {
+                "step": 1,
+                "name": "Context Serialization & Evidence Gathering",
+                "engine": "SQLAlchemy Observation Aggregator",
+                "details": "Collects only extracted lab observations, units, and reference ranges tied to authorized patient document.",
+                "status": "operational",
+            },
+            {
+                "step": 2,
+                "name": "System Safety Prompt & Non-Diagnostic Constraints",
+                "engine": "Prompt Sanitizer & Medical Safety Guardrail",
+                "details": "Injects strict negative constraints: NEVER invent diagnoses, NEVER prescribe drugs, ALWAYS state observations are educational.",
+                "status": "operational",
+            },
+            {
+                "step": 3,
+                "name": "LLM Synthesis with Fallback Resilience",
+                "engine": "Google Gemini API with auto-fallback to Rule Engine",
+                "details": "Translates complex clinical jargon into accessible English and Bengali summaries.",
+                "status": "operational",
+            },
+            {
+                "step": 4,
+                "name": "Grounding Validation & Hallucination Guard",
+                "engine": "Observation Reference Cross-Check",
+                "details": "Verifies every claimed abnormal value matches an actual recorded observation in database.",
+                "status": "operational",
+            },
+            {
+                "step": 5,
+                "name": "Doctor Verification & Clinical Lock",
+                "engine": "Clinical Note Signing & Consent Check",
+                "details": "AI drafts cannot be sent to patient as official prescriptions or confirmed notes without explicit verified doctor review and signature.",
+                "status": "operational",
+            },
+        ],
+        "safety_guarantees": [
+            "AI outputs are strictly advisory drafts; never presented as autonomous medical decisions.",
+            "Zero hallucinated reference ranges or patient diagnoses.",
+            "Audit trail logs all prompt hashes and model output versions.",
+        ],
+    }
+
+
 @router.get("/models")
 def get_model_registry(db: Session = Depends(get_db)):
     """

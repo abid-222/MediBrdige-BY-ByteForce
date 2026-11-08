@@ -416,6 +416,27 @@ class ClinicalNoteVersion(Base):
     created_at: Mapped[datetime] = ts()
 
 
+class Prescription(Base):
+    __tablename__ = "prescriptions"
+    id: Mapped[str] = pk()
+    patient_id: Mapped[str] = mapped_column(ForeignKey("patient_profiles.user_id"), index=True)
+    doctor_id: Mapped[str] = mapped_column(ForeignKey("profiles.id"), index=True)
+    appointment_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    diagnosis: Mapped[str | None] = mapped_column(Text, nullable=True)
+    clinical_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    medications: Mapped[list] = mapped_column(JSON, default=list)  # [{"name": "...", "dosage": "...", "frequency": "...", "duration": "...", "instructions": "..."}]
+    follow_up_recommendation: Mapped[str | None] = mapped_column(String, nullable=True)
+    status: Mapped[str] = mapped_column(String, default="draft")  # draft|issued|cancelled|amended
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    consultation_date: Mapped[datetime] = ts()
+    amendment_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cancellation_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    original_prescription_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = ts()
+    updated_at: Mapped[datetime] = ts()
+
+
 class Referral(Base):
     __tablename__ = "referrals"
     id: Mapped[str] = pk()

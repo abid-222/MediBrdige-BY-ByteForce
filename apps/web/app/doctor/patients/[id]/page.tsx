@@ -9,6 +9,7 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Download,
   ExternalLink,
   FileCheck,
   FileSearch,
@@ -25,7 +26,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, getToken } from "@/lib/api";
 import { useApi } from "@/lib/useApi";
 import { useGuard } from "@/lib/useGuard";
 import { useI18n } from "@/lib/i18n";
@@ -58,14 +59,27 @@ export default function PatientChartPage() {
   // API hooks
   const chart = useApi(`/doctor/patients/${id}`);
   const observations = useApi(`/patients/${id}/observations`);
+  const prescriptions = useApi(`/prescriptions/patient/${id}`);
   const doctorMe = useApi("/auth/me");
 
   // Local state
-  const [activeTab, setActiveTab] = useState<"observations" | "notes" | "documents">("observations");
+  const [activeTab, setActiveTab] = useState<"observations" | "notes" | "prescriptions" | "documents">("observations");
   const [confirmSignOpen, setConfirmSignOpen] = useState(false);
   const [addendumModalOpen, setAddendumModalOpen] = useState(false);
   const [addendumText, setAddendumText] = useState("");
   const [selectedNoteForAddendum, setSelectedNoteForAddendum] = useState<any | null>(null);
+
+  // Prescription Composer State
+  const [showRxComposer, setShowRxComposer] = useState(false);
+  const [activeRxDraftId, setActiveRxDraftId] = useState<string | null>(null);
+  const [rxDiagnosis, setRxDiagnosis] = useState("");
+  const [rxNotes, setRxNotes] = useState("");
+  const [rxFollowUp, setRxFollowUp] = useState("");
+  const [rxMeds, setRxMeds] = useState<Array<{ name: string; dosage: string; frequency: string; duration: string; instructions: string }>>([
+    { name: "", dosage: "", frequency: "", duration: "", instructions: "" },
+  ]);
+  const [rxSaving, setRxSaving] = useState(false);
+  const [confirmIssueRxOpen, setConfirmIssueRxOpen] = useState(false);
 
   // AI & Note draft states
   const [aiSummary, setAiSummary] = useState<any>(null);
@@ -211,6 +225,155 @@ export default function PatientChartPage() {
     }
   };
 
+  // Prescription Handlers
+  const handleAddMedRow = () => {
+    setRxMeds((prev) => [...prev, { name: "", dosage: "", frequency: "", duration: "", instructions: "" }]);
+  };
+
+  const handleRemoveMedRow = (index: number) => {
+    setRxMeds((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+  };
+
+  const handleMedChange = (index: number, field: string, value: string) => {
+    setRxMeds((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  };
+
+  const handleSaveRxDraft = async () => {
+    const validMeds = rxMeds.filter((m) => m.name.trim().length > 0);
+    setRxSaving(true);
+    try {
+      if (activeRxDraftId) {
+        // Update existing draft
+        await api(`/prescriptions/${activeRxDraftId}`, {
+          method: "PUT",
+          body: {
+            diagnosis: rxDiagnosis,
+            clinical_notes: rxNotes,
+            medications: validMeds,
+            follow_up_recommendation: rxFollowUp,
+          },
+        });
+        addToast("success", "Prescription Draft Updated", "Changes saved.");
+      } else {
+        // Create new draft
+        const res = await api("/prescriptions/draft", {
+          method: "POST",
+          body: {
+            patient_id: id,
+            diagnosis: rxDiagnosis,
+            clinical_notes: rxNotes,
+            medications: validMeds,
+            follow_up_recommendation: rxFollowUp,
+          },
+        });
+        setActiveRxDraftId(res.id);
+        addToast("success", "Prescription Draft Created", "Draft saved.");
+      }
+      prescriptions.reload();
+      chart.reload();
+    } catch (e: any) {
+      addToast("error", "Save Failed", e.message);
+    } finally {
+      setRxSaving(false);
+    }
+  };
+
+  const handleConfirmIssueRx = async () => {
+    const validMeds = rxMeds.filter((m) => m.name.trim().length > 0);
+    if (validMeds.length === 0 && !rxNotes.trim()) {
+      addToast("error", "Prescription Incomplete", "Please add at least one medication or clinical advice before issuing.");
+      return;
+    }
+
+    setRxSaving(true);
+    setConfirmIssueRxOpen(false);
+    try {
+      let rxId = activeRxDraftId;
+      if (!rxId) {
+        const draftRes = await api("/prescriptions/draft", {
+          method: "POST",
+          body: {
+            patient_id: id,
+            diagnosis: rxDiagnosis,
+            clinical_notes: rxNotes,
+            medications: validMeds,
+            follow_up_recommendation: rxFollowUp,
+          },
+        });
+        rxId = draftRes.id;
+      } else {
+        await api(`/prescriptions/${rxId}`, {
+          method: "PUT",
+          body: {
+            diagnosis: rxDiagnosis,
+            clinical_notes: rxNotes,
+            medications: validMeds,
+            follow_up_recommendation: rxFollowUp,
+          },
+        });
+      }
+
+      const issued = await api(`/prescriptions/${rxId}/issue`, {
+        method: "POST",
+      });
+
+      addToast("success", "Prescription Approved & Issued", "The digital prescription is now official and published to patient.");
+      setShowRxComposer(false);
+      setActiveRxDraftId(null);
+      setRxDiagnosis("");
+      setRxNotes("");
+      setRxFollowUp("");
+      setRxMeds([{ name: "", dosage: "", frequency: "", duration: "", instructions: "" }]);
+      prescriptions.reload();
+      chart.reload();
+    } catch (e: any) {
+      addToast("error", "Issuing Failed", e.message);
+    } finally {
+      setRxSaving(false);
+    }
+  };
+
+  const handleCancelPrescription = async (rxId: string) => {
+    const reason = window.prompt("Enter clinical cancellation reason:");
+    if (!reason || reason.trim().length < 3) return;
+    try {
+      await api(`/prescriptions/${rxId}/cancel`, {
+        method: "POST",
+        body: { reason: reason.trim() },
+      });
+      addToast("success", "Prescription Cancelled", "Cancellation logged and patient notified.");
+      prescriptions.reload();
+      chart.reload();
+    } catch (e: any) {
+      addToast("error", "Cancellation Failed", e.message);
+    }
+  };
+
+  const handleDownloadPrescriptionPdf = async (rxId: string) => {
+    try {
+      const token = getToken();
+      const res = await fetch(`http://localhost:8000/api/v1/prescriptions/${rxId}/pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error("Could not download prescription PDF");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Prescription-MB-${rxId.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e: any) {
+      addToast("error", "Download Failed", e.message);
+    }
+  };
+
   const obsItems = observations.data?.items || [];
   const unverifiedObs = obsItems.filter((o: any) => !o.doctor_verified);
   const flaggedObs = obsItems.filter((o: any) => o.low_confidence || o.flagged_wrong);
@@ -280,8 +443,8 @@ export default function PatientChartPage() {
         />
         <StatTile
           icon={Stethoscope}
-          label="Clinical Notes"
-          value={chart.data?.notes?.length ?? "—"}
+          label="Prescriptions"
+          value={prescriptions.data?.items?.length ?? chart.data?.prescriptions?.length ?? 0}
         />
       </div>
 
@@ -325,6 +488,7 @@ export default function PatientChartPage() {
         tabs={[
           { key: "observations", label: "Lab Observations & Verification", count: unverifiedObs.length },
           { key: "notes", label: "Clinical Notes & Consultation", count: chart.data?.notes?.length },
+          { key: "prescriptions", label: "Digital Prescriptions", count: prescriptions.data?.items?.length ?? chart.data?.prescriptions?.length },
           { key: "documents", label: "Patient Scans & Documents", count: chart.data?.documents?.length },
         ]}
         active={activeTab}
@@ -587,6 +751,329 @@ export default function PatientChartPage() {
             ) : (
               <p className="text-xs text-muted py-2">No historical notes on file for this patient.</p>
             )}
+          </Card>
+        </div>
+      )}
+
+      {/* TAB: DIGITAL PRESCRIPTIONS */}
+      {activeTab === "prescriptions" && (
+        <div className="space-y-6">
+          <Card className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
+              <div>
+                <h2 className="text-sm font-bold text-ink flex items-center gap-2">
+                  <Stethoscope className="h-4 w-4 text-ptext" />
+                  <span>Digital Prescription Management</span>
+                </h2>
+                <p className="text-[11px] text-muted">
+                  Compose, review, approve, and issue verifiable digital prescriptions under active clinical consent
+                </p>
+              </div>
+
+              {!showRxComposer && (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  icon={Plus}
+                  onClick={() => {
+                    setShowRxComposer(true);
+                    setActiveRxDraftId(null);
+                    setRxDiagnosis("");
+                    setRxNotes("");
+                    setRxFollowUp("");
+                    setRxMeds([{ name: "", dosage: "", frequency: "", duration: "", instructions: "" }]);
+                  }}
+                >
+                  Write Prescription
+                </Button>
+              )}
+            </div>
+
+            {/* Prescription Composer Form */}
+            {showRxComposer && (
+              <Card className="p-5 border-ptext/40 bg-ptext/5 space-y-4">
+                <div className="flex items-center justify-between border-b border-line pb-2">
+                  <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-ptext" />
+                    <span>{activeRxDraftId ? "Edit Prescription Draft" : "New Clinical Prescription Composer"}</span>
+                  </h3>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => setShowRxComposer(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+
+                {/* Diagnosis */}
+                <div>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-1">
+                    Primary Diagnosis / Clinical Indication *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={rxDiagnosis}
+                    onChange={(e) => setRxDiagnosis(e.target.value)}
+                    placeholder="e.g. Essential Hypertension Stage 1, Acute Pharyngitis, Type 2 Diabetes..."
+                    className="w-full rounded-md border border-line bg-s1 px-3 py-2 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-ptext/50"
+                  />
+                </div>
+
+                {/* Structured Medications Table */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                      Rx Prescribed Medications
+                    </label>
+                    <Button size="xs" variant="secondary" icon={Plus} onClick={handleAddMedRow}>
+                      Add Medicine
+                    </Button>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-lg border border-line">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-s2/60 text-muted border-b border-line">
+                        <tr>
+                          <th className="py-2 px-2.5">Medicine Name *</th>
+                          <th className="py-2 px-2.5">Dosage / Strength</th>
+                          <th className="py-2 px-2.5">Frequency</th>
+                          <th className="py-2 px-2.5">Duration</th>
+                          <th className="py-2 px-2.5">Instructions</th>
+                          <th className="py-2 px-2 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-line/60">
+                        {rxMeds.map((med, idx) => (
+                          <tr key={idx} className="bg-s1">
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                required
+                                value={med.name}
+                                onChange={(e) => handleMedChange(idx, "name", e.target.value)}
+                                placeholder="e.g. Amlodipine, Paracetamol"
+                                className="w-full rounded border border-line bg-s2 px-2 py-1 text-xs text-ink"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                value={med.dosage}
+                                onChange={(e) => handleMedChange(idx, "dosage", e.target.value)}
+                                placeholder="5 mg / 500 mg"
+                                className="w-full rounded border border-line bg-s2 px-2 py-1 text-xs text-ink"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                value={med.frequency}
+                                onChange={(e) => handleMedChange(idx, "frequency", e.target.value)}
+                                placeholder="1+0+0 / 1+0+1"
+                                className="w-full rounded border border-line bg-s2 px-2 py-1 text-xs text-ink"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                value={med.duration}
+                                onChange={(e) => handleMedChange(idx, "duration", e.target.value)}
+                                placeholder="14 days / 1 mo"
+                                className="w-full rounded border border-line bg-s2 px-2 py-1 text-xs text-ink"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                value={med.instructions}
+                                onChange={(e) => handleMedChange(idx, "instructions", e.target.value)}
+                                placeholder="After meals"
+                                className="w-full rounded border border-line bg-s2 px-2 py-1 text-xs text-ink"
+                              />
+                            </td>
+                            <td className="p-2 text-right">
+                              <Button
+                                size="xs"
+                                variant="ghost"
+                                disabled={rxMeds.length <= 1}
+                                onClick={() => handleRemoveMedRow(idx)}
+                              >
+                                &times;
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Clinical Notes & Lifestyle Advice */}
+                <div>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-1">
+                    Clinical Advice & Dietary Guidelines
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={rxNotes}
+                    onChange={(e) => setRxNotes(e.target.value)}
+                    placeholder="e.g. Restrict dietary sodium, adequate hydration, avoid heavy physical strain..."
+                    className="w-full rounded-md border border-line bg-s1 px-3 py-2 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-ptext/50"
+                  />
+                </div>
+
+                {/* Follow-up */}
+                <div>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-1">
+                    Follow-Up Recommendation
+                  </label>
+                  <input
+                    type="text"
+                    value={rxFollowUp}
+                    onChange={(e) => setRxFollowUp(e.target.value)}
+                    placeholder="e.g. Return in 4 weeks with lipid profile and blood pressure log..."
+                    className="w-full rounded-md border border-line bg-s1 px-3 py-2 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-ptext/50"
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-line">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    busy={rxSaving}
+                    onClick={handleSaveRxDraft}
+                  >
+                    Save as Draft
+                  </Button>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setShowRxComposer(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      busy={rxSaving}
+                      onClick={handleConfirmIssueRx}
+                    >
+                      Review &amp; Issue Prescription
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Historical Prescriptions List */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+                Issued &amp; Draft Prescriptions ({prescriptions.data?.items?.length || 0})
+              </h3>
+
+              {prescriptions.data?.items?.length > 0 ? (
+                prescriptions.data.items.map((p: any) => (
+                  <div
+                    key={p.id}
+                    className="p-4 rounded-xl border border-line bg-s1 space-y-3 hover:border-ptext/30 transition-all"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-line/60 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-ptext bg-ptext/10 px-2 py-0.5 rounded border border-ptext/20">
+                          MB-{p.id.slice(0, 8).toUpperCase()}
+                        </span>
+                        <span
+                          className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                            p.status === "issued"
+                              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
+                              : p.status === "amended"
+                              ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20"
+                              : p.status === "cancelled"
+                              ? "bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20"
+                              : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20"
+                          }`}
+                        >
+                          {p.status}
+                        </span>
+                        <span className="text-xs text-muted">
+                          {p.issued_at ? `Issued: ${fmtDate(p.issued_at)}` : `Created: ${fmtDate(p.created_at)}`}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="xs"
+                          variant="secondary"
+                          icon={Download}
+                          onClick={() => handleDownloadPrescriptionPdf(p.id)}
+                        >
+                          PDF
+                        </Button>
+                        {p.status === "draft" && (
+                          <Button
+                            size="xs"
+                            variant="primary"
+                            onClick={() => {
+                              setActiveRxDraftId(p.id);
+                              setRxDiagnosis(p.diagnosis || "");
+                              setRxNotes(p.clinical_notes || "");
+                              setRxFollowUp(p.follow_up_recommendation || "");
+                              setRxMeds(p.medications?.length > 0 ? p.medications : [{ name: "", dosage: "", frequency: "", duration: "", instructions: "" }]);
+                              setShowRxComposer(true);
+                            }}
+                          >
+                            Edit Draft
+                          </Button>
+                        )}
+                        {p.status === "issued" && (
+                          <Button
+                            size="xs"
+                            variant="ghost"
+                            className="text-red-500 hover:text-red-600"
+                            onClick={() => handleCancelPrescription(p.id)}
+                          >
+                            Cancel Rx
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {p.diagnosis && (
+                      <p className="text-xs text-ink font-medium">
+                        <span className="text-muted">Diagnosis: </span>
+                        {p.diagnosis}
+                      </p>
+                    )}
+
+                    {p.medications?.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {p.medications.map((m: any, idx: number) => (
+                          <span
+                            key={idx}
+                            className="text-xs bg-s2 border border-line text-ink px-2.5 py-1 rounded-md"
+                          >
+                            <strong>{m.name}</strong> {m.dosage && `(${m.dosage})`} · {m.frequency}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {p.clinical_notes && (
+                      <p className="text-xs text-muted italic leading-relaxed pt-1">
+                        Advice: {p.clinical_notes}
+                      </p>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-muted py-2">No historical prescriptions on file for this patient.</p>
+              )}
+            </div>
           </Card>
         </div>
       )}

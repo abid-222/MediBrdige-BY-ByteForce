@@ -16,6 +16,7 @@ from app.modules.observations.router import router as observations
 from app.modules.navigator.router import router as navigator
 from app.modules.appointments.router import router as appointments
 from app.modules.notes.router import router as notes
+from app.modules.prescriptions.router import router as prescriptions
 from app.modules.facility.router import router as facility
 from app.modules.admin.router import router as admin
 from app.modules.ai.router import router as ai
@@ -63,7 +64,7 @@ async def request_id(request: Request, call_next):
     return response
 
 
-for r in (auth, access, patients, directory, documents, observations, navigator, appointments, notes, facility, admin, ai, ml):
+for r in (auth, access, patients, directory, documents, observations, navigator, appointments, notes, prescriptions, facility, admin, ai, ml):
     app.include_router(r, prefix="/api/v1")
 
 

@@ -2,18 +2,20 @@
 import Link from "next/link";
 import { useMemo, useState, useRef } from "react";
 import {
+  AlertTriangle,
+  Calendar,
+  FileCheck,
+  FileSearch,
   FileText,
   Filter,
   Layers,
+  Pill,
   Plus,
   RefreshCw,
   Search,
   Sparkles,
   UploadCloud,
   X,
-  FileCheck,
-  AlertTriangle,
-  FileSearch,
 } from "lucide-react";
 import { uploadWithProgress } from "@/lib/api";
 import { useApi } from "@/lib/useApi";
@@ -165,6 +167,36 @@ export default function MedicalReportsPage() {
           </div>
         }
       />
+
+      {/* Patient Medical Record Hub Switcher */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-line pb-3 text-xs">
+        <span className="font-semibold text-muted mr-1">Medical Record Hub:</span>
+        <span className="rounded-lg bg-ptext/15 text-ptext font-bold px-3 py-1.5 border border-ptext/30 flex items-center gap-1.5">
+          <FileText className="h-3.5 w-3.5" />
+          Diagnostic Reports &amp; Scans
+        </span>
+        <Link
+          href="/prescriptions"
+          className="rounded-lg bg-s2/70 text-muted hover:text-ink hover:bg-s2 px-3 py-1.5 border border-line transition flex items-center gap-1.5"
+        >
+          <Pill className="h-3.5 w-3.5 text-ptext" />
+          Doctor Prescriptions
+        </Link>
+        <Link
+          href="/timeline"
+          className="rounded-lg bg-s2/70 text-muted hover:text-ink hover:bg-s2 px-3 py-1.5 border border-line transition flex items-center gap-1.5"
+        >
+          <Layers className="h-3.5 w-3.5 text-ptext" />
+          Marker Trends &amp; Labs
+        </Link>
+        <Link
+          href="/appointments"
+          className="rounded-lg bg-s2/70 text-muted hover:text-ink hover:bg-s2 px-3 py-1.5 border border-line transition flex items-center gap-1.5"
+        >
+          <Calendar className="h-3.5 w-3.5 text-ptext" />
+          Consultation History
+        </Link>
+      </div>
 
       {/* Overview Stat Tiles */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

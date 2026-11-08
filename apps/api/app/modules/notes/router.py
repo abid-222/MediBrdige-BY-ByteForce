@@ -9,7 +9,7 @@ from app.core.db import get_db
 from app.core.errors import AppError
 from app.core.security import require_role
 from app.models import (CareRelationship, ClinicalNote, ClinicalNoteVersion, Document, DoctorProfile, Observation,
-                        PatientProfile, Profile, Appointment)
+                        PatientProfile, Profile, Appointment, Prescription)
 
 router = APIRouter(tags=["clinical"])
 
@@ -147,6 +147,10 @@ def patient_chart(patient_id: str, user: Profile = Depends(require_role("doctor"
     docs = db.scalars(select(Document).where(Document.patient_id == patient_id)).all() \
         if decide(db, user, patient_id, "documents")[0] else []
     notes = db.scalars(select(ClinicalNote).where(ClinicalNote.patient_id == patient_id, ClinicalNote.doctor_id == user.id)).all()
+    rxs = db.scalars(select(Prescription).where(Prescription.patient_id == patient_id).order_by(Prescription.created_at.desc())).all()
     return {"patient_id": patient_id, "name": p.full_name, "sex": p.sex, "dob": p.dob,
             "documents": [{"id": d.id, "status": d.status, "doc_type": d.doc_type} for d in docs],
-            "notes": [_note(n, full=False) for n in notes]}
+            "notes": [_note(n, full=False) for n in notes],
+            "prescriptions": [{"id": r.id, "doctor_id": r.doctor_id, "status": r.status, "version": r.version,
+                               "diagnosis": r.diagnosis, "medications": r.medications, "issued_at": r.issued_at,
+                               "created_at": r.created_at} for r in rxs]}

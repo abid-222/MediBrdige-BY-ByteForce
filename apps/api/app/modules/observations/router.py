@@ -8,6 +8,7 @@ from app.core.db import get_db
 from app.core.errors import AppError
 from app.core.security import get_current_user, require_role
 from app.models import DoctorProfile, Observation, Profile, TestCatalog
+from app.modules.patients.router import notify
 
 router = APIRouter(tags=["observations"])
 
@@ -93,6 +94,7 @@ def verify(obs_id: str, user: Profile = Depends(require_role("doctor")), db: Ses
     o.verified_by = user.id
     o.verified_at = datetime.now(timezone.utc)
     db.commit()
+    notify(db, o.patient_id, "report_reviewed", {"observation_id": o.id, "test_code": o.test_code, "doctor_name": dp.full_name})
     audit.log(db, user, "observations.verify", resource_type="observation", resource_id=o.id,
               patient_id=o.patient_id, before=before, after={"status": o.status})
     return _obs(o)
