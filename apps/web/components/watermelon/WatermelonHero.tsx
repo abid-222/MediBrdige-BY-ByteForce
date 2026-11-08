@@ -102,7 +102,7 @@ export function WatermelonHero({
   currentRole: string;
 }) {
   return (
-    <section className="relative pt-20 pb-12 sm:pt-28 sm:pb-16 md:pt-32 md:pb-24 overflow-hidden font-mono select-none">
+    <section className="relative pt-8 pb-12 sm:pt-12 sm:pb-16 md:pt-14 md:pb-20 overflow-hidden font-mono select-none">
       {/* Visual Technical Radar on Right Side (Watermelon / Hyphen Signature) */}
       <TechnicalVisualRadar />
 

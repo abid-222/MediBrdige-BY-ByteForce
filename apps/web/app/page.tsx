@@ -109,7 +109,7 @@ export default function Home() {
 
       {/* Logged In Quick Return Workspace Banner (if active session) */}
       {currentRole !== "none" && (
-        <div className="container mx-auto px-4 pt-20">
+        <div className="container mx-auto px-4 pt-6">
           <div className="mx-auto max-w-5xl rounded-xl border border-primary/40 bg-psoft/70 p-3.5 sm:px-4 sm:py-3 shadow-[0_0_20px_var(--accent-glow)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 backdrop-blur-md">
             <div className="flex items-center gap-2.5">
               <span className="flex h-2.5 w-2.5 rounded-full bg-accent animate-pulse shrink-0" />
