@@ -546,10 +546,6 @@ export default function Home() {
             : "MediBridge AI is a research prototype. All patient records and directory listings are synthetic samples for Dhaka city."}
         </p>
         <div className="mt-3 flex items-center justify-center gap-4">
-          <Link href="/dev/ui" className="text-ptext hover:underline">
-            {isBn ? "ডিজাইন সিস্টেম শোকেস (/dev/ui)" : "Design System Kit (/dev/ui)"}
-          </Link>
-          <span>·</span>
           <Link href="/emergency" className="text-danger hover:underline">
             {isBn ? "জরুরি সহায়তা (৯৯৯)" : "Emergency Hotline (999)"}
           </Link>
