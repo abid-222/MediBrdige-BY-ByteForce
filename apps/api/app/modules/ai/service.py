@@ -47,6 +47,33 @@ def _deterministic(values, chunks, lang):
     return {"known_facts": facts, "extracted_values": values, "inference": inference, "unknown": unknown, "sources": sources}
 
 
+def _call_gemini(values, chunks, kind, lang):
+    payload = {"kind": kind, "language": lang, "values": values,
+               "sources": [{"id": c.id, "title": c.source_title, "date": c.source_date, "text": c.content} for c in chunks]}
+    prompt_text = (
+        f"{SYSTEM_PROMPT}\n"
+        f"Language requested: {'Bengali (বাংলা)' if lang == 'bn' else 'English'}.\n\n"
+        f"<document_data>{json.dumps(payload, ensure_ascii=False)}</document_data>"
+    )
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
+    req_body = {
+        "contents": [{"parts": [{"text": prompt_text}]}],
+        "generationConfig": {"responseMimeType": "application/json"}
+    }
+    r = httpx.post(url, json=req_body, timeout=30)
+    r.raise_for_status()
+    candidates = r.json().get("candidates", [])
+    if not candidates:
+        raise ValueError("No candidates returned from Gemini")
+    text = candidates[0]["content"]["parts"][0]["text"]
+    try:
+        return json.loads(text.replace("```json", "").replace("```", "").strip())
+    except Exception as je:
+        import logging
+        logging.error(f"JSON PARSE ERROR on text: {repr(text)[:200]}")
+        raise
+
+
 def _call_claude(values, chunks, kind, lang):
     payload = {"kind": kind, "language": lang, "values": values,
                "sources": [{"id": c.id, "title": c.source_title, "date": c.source_date, "text": c.content} for c in chunks]}
@@ -65,7 +92,13 @@ def generate(db: Session, user_id: str, kind: str, obs: list[Observation], lang=
     values = _values(obs)
     model_version = "deterministic-fallback"
     out = None
-    if settings.anthropic_api_key:
+    if settings.gemini_api_key:
+        try:
+            out = _call_gemini(values, chunks, kind, lang)
+            model_version = f"gemini/{settings.gemini_model}"
+        except Exception:
+            out = None
+    if out is None and settings.anthropic_api_key:
         try:
             out = _call_claude(values, chunks, kind, lang)
             model_version = settings.anthropic_model

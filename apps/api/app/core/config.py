@@ -13,7 +13,7 @@ SUPPORTED_REPORT_TYPES = {"cbc", "glucose"}
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=(".env", "apps/api/.env"), extra="ignore")
     app_env: str = "dev"
     database_url: str = "sqlite:///./medibridge.db"
     jwt_secret: str = "dev-secret-change-me"
@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     upload_dir: str = "./uploads"
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-4-6"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.5-flash-lite"
 
 
     # Email (OTP). provider: none | resend | smtp

@@ -138,3 +138,32 @@ def test_claude_garbage_or_outage_falls_back_safely(client, make, tmp_path, monk
     from app.modules.ai import service as ai
     monkeypatch.setattr(ai.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(ai.httpx.ConnectError("down")))
     assert client.post("/api/v1/ai/report-explain", headers=auth(p), json={"document_id": did}).status_code == 200
+
+
+def test_gemini_request_shape_and_generation(client, make, tmp_path, monkeypatch):
+    import json as _j
+    from app.modules.ai import service as ai
+    monkeypatch.setattr(config.settings, "gemini_api_key", "fake-gemini-key")
+    monkeypatch.setattr(config.settings, "gemini_model", "gemini-3.5-flash-lite")
+    captured = {}
+    def fake_post(url, json=None, headers=None, timeout=0):
+        captured.update(url=url, json=json)
+        class R:
+            status_code = 200
+            def raise_for_status(self): pass
+            def json(self):
+                real = captured["json"]["contents"][0]["parts"][0]["text"]
+                doc_start = real.rfind("<document_data>") + len("<document_data>")
+                doc_end = real.rfind("</document_data>")
+                sid = _j.loads(real[doc_start:doc_end])["sources"][0]["id"]
+                ans = {"known_facts": [{"text": "Gemini verified lab fact.", "source_ids": [sid]}], "inference": [], "unknown": []}
+                return {"candidates": [{"content": {"parts": [{"text": _j.dumps(ans)}]}}]}
+        return R()
+    monkeypatch.setattr(ai.httpx, "post", fake_post)
+    p, did = _doc_with_values(client, make, tmp_path)
+    out = client.post("/api/v1/ai/report-explain", headers=auth(p), json={"document_id": did}).json()
+    assert "generativelanguage.googleapis.com" in captured["url"]
+    assert "gemini-3.5-flash-lite" in captured["url"]
+    assert "fake-gemini-key" in captured["url"]
+    assert out["ai_draft"] is True
+    assert out["known_facts"][0]["text"] == "Gemini verified lab fact."

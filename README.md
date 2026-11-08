@@ -33,7 +33,7 @@ make check    # i18n parity, TypeScript, lint, 17 frontend unit tests
 Set `DATABASE_URL=postgresql+psycopg://…`, `pip install "psycopg[binary]"`, then either `alembic upgrade head` or run `supabase/migrations/0001…0003` in order. `docker compose up` starts Postgres + API + web.
 
 ## Optional
-- **Claude explanations:** set `ANTHROPIC_API_KEY` in `apps/api/.env` (server only). Without it, a deterministic source-only fallback is used.
+- **AI Clinical Explanations & Summaries:** set `GEMINI_API_KEY` (Google Gemini 3.5 Flash) and/or `ANTHROPIC_API_KEY` (Claude) in `.env` (server-side only). Without them, a deterministic source-only fallback is used.
 - **Scanned (image) reports:** `pip install pytesseract pillow` + Tesseract binary. Digital PDFs work out of the box.
 - **Retrain classifier:** `make train` (writes model, metrics, model card).
 

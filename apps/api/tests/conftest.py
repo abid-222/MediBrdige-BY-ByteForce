@@ -4,6 +4,7 @@ os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL") or f"sqlite:///
 os.environ["UPLOAD_DIR"] = f"{_tmp}/uploads"
 os.environ["APP_ENV"] = "dev"
 os.environ["ANTHROPIC_API_KEY"] = ""
+os.environ["GEMINI_API_KEY"] = ""
 
 import pytest
 from datetime import datetime, timedelta, timezone

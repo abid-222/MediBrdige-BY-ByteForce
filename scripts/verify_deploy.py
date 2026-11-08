@@ -49,14 +49,21 @@ if settings.storage_backend == "supabase":
 else:
     report("storage backend", True, f"{settings.storage_backend} (not Supabase)")
 
-# 4. Anthropic
+# 4. AI Providers (Gemini / Anthropic)
+if settings.gemini_api_key:
+    try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
+        r = httpx.post(url, timeout=30, json={"contents": [{"parts": [{"text": "Say OK"}]}]})
+        report("gemini api", r.status_code == 200, f"ok ({settings.gemini_model})" if r.status_code == 200 else str(r.status_code))
+    except Exception as e: report("gemini api", False, str(e)[:120])
 if settings.anthropic_api_key:
     try:
         r = httpx.post("https://api.anthropic.com/v1/messages", timeout=30, headers={"x-api-key": settings.anthropic_api_key, "anthropic-version": "2023-06-01"},
                        json={"model": settings.anthropic_model, "max_tokens": 10, "messages": [{"role": "user", "content": "Say OK"}]})
         report("anthropic api", r.status_code == 200, "ok" if r.status_code == 200 else r.json().get("error", {}).get("message", str(r.status_code))[:140])
     except Exception as e: report("anthropic api", False, str(e)[:120])
-else: report("anthropic api", True, "no key set: AI uses the source-only fallback")
+if not settings.gemini_api_key and not settings.anthropic_api_key:
+    report("ai layer", True, "no keys set: AI uses deterministic source-only fallback")
 
 # 5. email
 if "--send-email" in sys.argv:

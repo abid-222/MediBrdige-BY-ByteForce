@@ -270,7 +270,14 @@ def system(user: Profile = Depends(STAFF), db: Session = Depends(get_db)):
         db.execute(text("select 1")); dbok = True
     except Exception:
         dbok = False
-    return {"database": "ok" if dbok else "down", "env": settings.app_env, "ai_provider": "claude" if settings.anthropic_api_key else "fallback"}
+    ai_provider = "fallback"
+    if settings.gemini_api_key and settings.anthropic_api_key:
+        ai_provider = "gemini+claude"
+    elif settings.gemini_api_key:
+        ai_provider = "gemini"
+    elif settings.anthropic_api_key:
+        ai_provider = "claude"
+    return {"database": "ok" if dbok else "down", "env": settings.app_env, "ai_provider": ai_provider}
 
 
 @router.get("/directory-quality")
