@@ -131,12 +131,12 @@ export default function Home() {
       <TelemetryStats isBn={isBn} />
 
       {/* 4. Core Clinical Architecture Bento Grid */}
-      <section className="relative z-10 py-10 sm:py-16 md:py-20">
+      <section className="relative z-10 py-10 sm:py-16 md:py-20 font-sans">
         <div className="container mx-auto px-4 md:px-8 lg:px-12">
           <div className="mb-8 sm:mb-12 flex flex-col items-start md:items-center text-left md:text-center max-w-3xl mx-auto">
-            <div className="text-primary mb-2 sm:mb-3 inline-flex items-center text-xs font-bold tracking-widest uppercase font-mono">
-              <span className="mr-2 sm:mr-3 opacity-70">{"//"}</span>
-              CORE CLINICAL ARCHITECTURE
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-ptext mb-3">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{isBn ? "ক্লিনিক্যাল আর্কিটেকচার" : "Clinical Architecture"}</span>
             </div>
             <h2 className="font-heading text-2xl sm:text-4xl font-bold tracking-tight text-ink">
               {isBn ? (
@@ -149,7 +149,7 @@ export default function Home() {
                 </>
               )}
             </h2>
-            <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm text-muted font-mono tracking-wider uppercase">
+            <p className="mt-2.5 text-xs sm:text-sm text-muted leading-relaxed max-w-xl">
               {isBn
                 ? "ডুয়াল-গেট ট্রায়াজ, দ্বিভাষিক ওসিআর ভিশন এবং সম্পূর্ণ অনলাইন টেলিহেলথ কনসালট্যান্সি।"
                 : "Dual-gate triage, OCR lab parsing, online video teleconsultation, and tamper-proof audit trails."}
@@ -160,31 +160,25 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. Role-Based Portals Showcase (Technical 3D Spotlight Cards) */}
-      <section className="relative z-10 py-10 sm:py-16 md:py-20 font-mono">
+      {/* 5. Role-Based Portals Showcase */}
+      <section className="relative z-10 py-10 sm:py-16 md:py-20 font-sans">
         <div className="container mx-auto px-4 md:px-8 lg:px-12 max-w-6xl">
           <div className="rounded-3xl border border-line bg-s1/80 p-5 sm:p-7 md:p-9 shadow-2xl backdrop-blur-md relative overflow-hidden">
-            {/* Corner Accents */}
-            <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary" />
-            <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-primary" />
-            <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-primary" />
-            <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary" />
-
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4 sm:pb-5">
               <div>
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-primary tracking-wider uppercase">
-                  <HeartPulse className="h-4 w-4" />
-                  <span>{isBn ? "ভূমিকাভিত্তিক স্বাস্থ্য পোর্টালসমূহ" : "[ ROLE-BASED HEALTHCARE PORTALS ]"}</span>
+                <div className="flex items-center gap-2 text-sm sm:text-base font-bold text-ink">
+                  <HeartPulse className="h-5 w-5 text-primary" />
+                  <span>{isBn ? "ভূমিকাভিত্তিক স্বাস্থ্য পোর্টালসমূহ" : "Role-Based Healthcare Portals"}</span>
                 </div>
-                <p className="mt-1 text-[11px] sm:text-xs text-muted font-mono">
+                <p className="mt-1 text-xs text-muted">
                   {isBn
                     ? "নিরাপদ ভূমিকাভিত্তিক অথরাইজেশন (RBAC) ও নিয়ন্ত্রিত ক্লিনিক্যাল অ্যাক্সেস ব্যবস্থা"
                     : "Cryptographically verified RBAC engineered for zero-trust clinical workflows."}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-mono text-primary font-bold">
-                  <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> RBAC ENFORCED
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs text-primary font-bold">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> RBAC Enforced
                 </span>
               </div>
             </div>
@@ -199,8 +193,8 @@ export default function Home() {
                     <span className="rounded-xl bg-primary/10 p-2.5 text-primary">
                       <HeartPulse className="h-5 w-5" />
                     </span>
-                    <span className="text-[10px] text-muted font-mono group-hover:text-primary transition uppercase tracking-widest font-bold">
-                      ENTER // 01 →
+                    <span className="text-[11px] text-muted group-hover:text-primary transition uppercase tracking-wider font-bold">
+                      Enter →
                     </span>
                   </div>
                   <span className="mt-4 block text-sm font-bold text-ink tracking-tight font-sans group-hover:text-ptext transition">
@@ -223,8 +217,8 @@ export default function Home() {
                     <span className="rounded-xl bg-info/10 p-2.5 text-info">
                       <Stethoscope className="h-5 w-5" />
                     </span>
-                    <span className="text-[10px] text-muted font-mono group-hover:text-info transition uppercase tracking-widest font-bold">
-                      ENTER // 02 →
+                    <span className="text-[11px] text-muted group-hover:text-info transition uppercase tracking-wider font-bold">
+                      Enter →
                     </span>
                   </div>
                   <span className="mt-4 block text-sm font-bold text-ink tracking-tight font-sans group-hover:text-info transition">
@@ -247,8 +241,8 @@ export default function Home() {
                     <span className="rounded-xl bg-warn/10 p-2.5 text-warn">
                       <Building2 className="h-5 w-5" />
                     </span>
-                    <span className="text-[10px] text-muted font-mono group-hover:text-warn transition uppercase tracking-widest font-bold">
-                      ENTER // 03 →
+                    <span className="text-[11px] text-muted group-hover:text-warn transition uppercase tracking-wider font-bold">
+                      Enter →
                     </span>
                   </div>
                   <span className="mt-4 block text-sm font-bold text-ink tracking-tight font-sans group-hover:text-warn transition">
@@ -271,8 +265,8 @@ export default function Home() {
                     <span className="rounded-xl bg-danger/10 p-2.5 text-danger">
                       <ShieldCheck className="h-5 w-5" />
                     </span>
-                    <span className="text-[10px] text-muted font-mono group-hover:text-danger transition uppercase tracking-widest font-bold">
-                      ENTER // 04 →
+                    <span className="text-[11px] text-muted group-hover:text-danger transition uppercase tracking-wider font-bold">
+                      Enter →
                     </span>
                   </div>
                   <span className="mt-4 block text-sm font-bold text-ink tracking-tight font-sans group-hover:text-danger transition">
@@ -290,13 +284,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. Clinical Protocols & FAQ (Clean Split Accordion) */}
-      <section className="relative z-10 py-12 sm:py-16 md:py-20 font-mono">
+      {/* 6. Clinical Protocols & FAQ */}
+      <section className="relative z-10 py-12 sm:py-16 md:py-20 font-sans">
         <div className="container mx-auto px-4 md:px-8 lg:px-12 max-w-4xl">
           <div className="mb-10 flex flex-col items-start md:items-center text-left md:text-center">
-            <div className="text-primary mb-3 inline-flex items-center text-xs font-bold tracking-widest uppercase">
-              <span className="mr-3 opacity-70">{"//"}</span>
-              CLINICAL FAQ & ARCHITECTURE
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-ptext mb-3">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{isBn ? "প্রশ্নোত্তর ও সহায়তা" : "Frequently Asked Questions"}</span>
             </div>
             <h2 className="font-heading text-2xl sm:text-4xl font-bold tracking-tight text-ink font-sans">
               {isBn ? (
@@ -309,7 +303,7 @@ export default function Home() {
                 </>
               )}
             </h2>
-            <p className="mt-3 text-xs sm:text-sm text-muted font-mono tracking-wider uppercase max-w-xl">
+            <p className="mt-2.5 text-xs sm:text-sm text-muted leading-relaxed max-w-xl">
               {isBn
                 ? "সিস্টেম মেকানিক্স ও ক্লিনিক্যাল সুরক্ষা বিধি সম্পর্কে বিস্তারিত জানুন।"
                 : "Directly explore the core algorithmic safeguards and patient privacy standards."}

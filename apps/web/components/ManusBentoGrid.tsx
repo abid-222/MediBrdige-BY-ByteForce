@@ -30,9 +30,9 @@ export function ManusBentoGrid({ isBn }: { isBn: boolean }) {
     <div className="relative mx-auto max-w-6xl space-y-6">
       {/* Section Header */}
       <div className="text-center space-y-2.5 max-w-2xl mx-auto">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-ptext">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-ptext">
           <Sparkles className="h-3.5 w-3.5" />
-          <span>{isBn ? "আধুনিক ৩ডি সিস্টেম আর্কিটেকচার" : "Artistic 3D Clinical Architecture"}</span>
+          <span>{isBn ? "ক্লিনিক্যাল সুরক্ষা ও সেবাসমূহ" : "Clinical Capabilities & Safeguards"}</span>
         </div>
         <h2 className="font-heading text-2xl sm:text-4xl font-bold tracking-tight text-ink">
           {isBn

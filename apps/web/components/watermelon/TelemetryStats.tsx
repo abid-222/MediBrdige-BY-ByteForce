@@ -94,12 +94,12 @@ export function TelemetryStats({ isBn }: { isBn: boolean }) {
       <Crosshair position="bottom-right" />
 
       <div className="container relative z-10 mx-auto px-4 md:px-8 lg:px-12">
-        <div className="mb-12 flex flex-col items-start text-left md:items-center md:text-center max-w-3xl mx-auto">
-          <div className="text-primary mb-4 inline-flex items-center text-xs font-bold tracking-widest uppercase">
-            <span className="mr-3 opacity-70">{"//"}</span>
-            CLINICAL TELEMETRY DATA
+        <div className="mb-10 flex flex-col items-start text-left md:items-center md:text-center max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-ptext mb-3">
+            <span className="flex h-2 w-2 rounded-full bg-accent animate-ping" />
+            <span>{isBn ? "লাইভ ক্লিনিক্যাল মেট্রিক্স" : "Live Clinical Reliability Metrics"}</span>
           </div>
-          <h2 className="font-heading text-2xl sm:text-4xl font-bold tracking-tight text-ink">
+          <h2 className="font-heading text-2xl sm:text-4xl font-bold tracking-tight text-ink font-sans">
             {isBn ? (
               <>
                 ক্লিনিক্যাল নির্ভুলতার জন্য <span className="text-primary">বাস্তব পরিসংখ্যান</span>
@@ -110,7 +110,7 @@ export function TelemetryStats({ isBn }: { isBn: boolean }) {
               </>
             )}
           </h2>
-          <p className="mt-3 text-xs sm:text-sm text-muted font-mono tracking-wider uppercase">
+          <p className="mt-2.5 text-xs sm:text-sm text-muted font-sans leading-relaxed">
             {isBn
               ? "কাগজে আটকে থাকা বিভ্রান্তি দূর করে সরাসরি যাচাইকৃত স্বাস্থ্য সমন্বয়।"
               : "Verifiable metrics powering trusted diagnosis coordination across Dhaka."}

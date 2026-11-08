@@ -20,6 +20,7 @@ import {
   Video,
 } from "lucide-react";
 import { Button } from "@/components/ui";
+import { InteractiveTelemetry3D } from "@/components/InteractiveTelemetry3D";
 
 export function WatermelonHero({
   isBn,
@@ -29,23 +30,23 @@ export function WatermelonHero({
   currentRole: string;
 }) {
   return (
-    <section className="relative pt-10 pb-12 sm:pt-16 sm:pb-16 md:pt-18 md:pb-20 overflow-hidden font-mono select-none">
+    <section className="relative pt-8 pb-12 sm:pt-14 sm:pb-16 md:pt-16 md:pb-20 overflow-hidden font-sans select-none">
       {/* Background radial glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-primary/10 blur-[120px] pointer-events-none rounded-full" />
 
       <div className="container relative z-10 mx-auto px-4 md:px-8 lg:px-12 text-center max-w-4xl">
-        {/* Technical Sub-Tag */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-bold text-ptext shadow-[0_0_15px_var(--accent-glow)]">
+        {/* Sub-Tag */}
+        <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-ptext shadow-[0_0_15px_var(--accent-glow)]">
           <span className="flex h-2 w-2 rounded-full bg-accent animate-ping" />
           <span className="truncate max-w-[300px] sm:max-w-none">
             {isBn
-              ? "🇧🇩 বাংলাদেশের জন্য স্বাস্থ্য সমন্বয় আর্কিটেকচার · ঢাকা ২০২৬"
+              ? "🇧🇩 বাংলাদেশের জন্য সমন্বিত ডিজিটাল স্বাস্থ্যসেবা · ঢাকা ২০২৬"
               : "🇧🇩 HEALTHCARE COORDINATION ARCHITECTURE · DHAKA 2026"}
           </span>
         </div>
 
-        {/* Hero Title with High-Contrast Focus */}
-        <h1 className="mt-5 sm:mt-7 font-heading text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-ink break-words">
+        {/* Hero Title */}
+        <h1 className="mt-5 sm:mt-6 font-heading text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-ink break-words">
           Healthcare that <br className="hidden sm:block" />
           is <span className="text-primary drop-shadow-[0_0_24px_var(--accent-glow)]">engineered for trust</span>
         </h1>
@@ -58,21 +59,18 @@ export function WatermelonHero({
         </p>
 
         {/* Action Buttons - DIRECTLY VISIBLE ON SCREEN ABOVE THE FOLD */}
-        <div className="mt-7 sm:mt-9 flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-3xl mx-auto">
+        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-3xl mx-auto">
           <Link href="/navigator" className="w-full sm:w-auto">
-            <Button className="btn-primary-neon w-full sm:w-auto min-h-[48px] px-6 text-xs sm:text-sm uppercase tracking-widest font-bold shadow-[0_0_20px_var(--accent-glow)] group">
+            <Button className="btn-primary-neon w-full sm:w-auto min-h-[48px] px-6 text-xs sm:text-sm uppercase tracking-wider font-bold shadow-[0_0_20px_var(--accent-glow)] group">
               <Compass className="mr-2 h-4 w-4 group-hover:rotate-45 transition-transform" />
               <span>{isBn ? "স্মার্টকেয়ার নেভিগেটর চালান" : "Start SmartCare Navigator"}</span>
             </Button>
           </Link>
 
-          <Link
-            href={currentRole === "patient" ? "/reports/scan" : "/reports/scan"}
-            className="w-full sm:w-auto"
-          >
+          <Link href="/reports/scan" className="w-full sm:w-auto">
             <Button
               variant="secondary"
-              className="w-full sm:w-auto min-h-[48px] px-6 text-xs sm:text-sm uppercase tracking-widest font-bold border-primary/40 bg-s1 hover:bg-s2 hover:border-primary transition group shadow-xs"
+              className="w-full sm:w-auto min-h-[48px] px-6 text-xs sm:text-sm uppercase tracking-wider font-bold border-primary/40 bg-s1 hover:bg-s2 hover:border-primary transition group shadow-xs"
             >
               <UploadCloud className="mr-2 h-4 w-4 text-ptext group-hover:-translate-y-0.5 transition-transform" />
               <span>{isBn ? "মেডিকেল রিপোর্ট ওসিআর" : "Scan Medical Report"}</span>
@@ -82,7 +80,7 @@ export function WatermelonHero({
           <Link href="/directory" className="w-full sm:w-auto">
             <Button
               variant="secondary"
-              className="w-full sm:w-auto min-h-[48px] px-5 text-xs sm:text-sm uppercase tracking-widest font-bold border-line bg-s1 hover:bg-s2 transition shadow-xs"
+              className="w-full sm:w-auto min-h-[48px] px-5 text-xs sm:text-sm uppercase tracking-wider font-bold border-line bg-s1 hover:bg-s2 transition shadow-xs"
             >
               <Stethoscope className="mr-1.5 h-4 w-4 text-muted" />
               <span>{isBn ? "ডাক্তার ডিরেক্টরি" : "Browse Doctors"}</span>
@@ -93,13 +91,18 @@ export function WatermelonHero({
             <Link href="/ml-lab" className="w-full sm:w-auto">
               <Button
                 variant="ghost"
-                className="w-full sm:w-auto min-h-[48px] px-4 text-xs uppercase tracking-widest font-bold border border-primary/20 text-ptext hover:bg-primary/10 transition"
+                className="w-full sm:w-auto min-h-[48px] px-4 text-xs uppercase tracking-wider font-bold border border-primary/20 text-ptext hover:bg-primary/10 transition"
               >
                 <FlaskConical className="mr-1.5 h-3.5 w-3.5" />
                 <span>{isBn ? "এমএল স্টুডিও" : "ML Studio"}</span>
               </Button>
             </Link>
           )}
+        </div>
+
+        {/* 3D Medical Telemetry Spotlight Visualizer */}
+        <div className="mt-8 px-1">
+          <InteractiveTelemetry3D />
         </div>
 
         {/* 4 Core Pillars Strip - High Trust & Fully Responsive */}
