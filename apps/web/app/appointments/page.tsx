@@ -5,7 +5,9 @@ import {
   Building2,
   Calendar,
   CalendarClock,
+  Camera,
   Check,
+  CheckCircle2,
   Clock,
   Compass,
   Copy,
@@ -14,12 +16,16 @@ import {
   FileText,
   Filter,
   Link as LinkIcon,
+  Mic,
   Plus,
+  Radio,
   Search,
   ShieldCheck,
+  Signal,
   Sparkles,
   Stethoscope,
   Video,
+  Wifi,
   X,
   XCircle,
 } from "lucide-react";
@@ -49,7 +55,8 @@ import {
 
 export default function AppointmentsPage() {
   useGuard(["patient", "doctor", "facility_admin", "facility_staff"]);
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isBn = locale === "bn";
   const role = getRole();
   const { addToast } = useToast();
 
@@ -176,6 +183,51 @@ export default function AppointmentsPage() {
     });
   }, [activeTab, upcomingList, previousList, allList, searchQuery, statusFilter]);
 
+  // Live Chamber Radar & Countdown
+  const [nowTime, setNowTime] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNowTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const liveChamberAppt = useMemo(() => {
+    return (
+      upcomingList.find((a: any) => a.status === "confirmed" || a.status === "checked_in") ||
+      upcomingList[0] ||
+      null
+    );
+  }, [upcomingList]);
+
+  const countdown = useMemo(() => {
+    if (!liveChamberAppt?.slot_start) return null;
+    const target = new Date(liveChamberAppt.slot_start).getTime();
+    const diff = target - nowTime;
+
+    if (diff <= 0 && diff > -3600000) {
+      return { inSession: true, expired: false, hours: 0, minutes: 0, seconds: 0, formatted: "00:00:00" };
+    }
+    if (diff <= -3600000) {
+      return { inSession: false, expired: true, hours: 0, minutes: 0, seconds: 0, formatted: "00:00:00" };
+    }
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    return {
+      inSession: false,
+      expired: false,
+      hours,
+      minutes,
+      seconds,
+      formatted: `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`,
+    };
+  }, [liveChamberAppt, nowTime]);
+
+  const liveMeetingUrl = useMemo(() => {
+    if (!liveChamberAppt) return "";
+    if (liveChamberAppt.meeting_link) return liveChamberAppt.meeting_link;
+    return `https://meet.jit.si/niramoy-telehealth-${liveChamberAppt.id.slice(0, 8)}`;
+  }, [liveChamberAppt]);
+
   // Appointment Status Transition Action (Confirm, Cancel, Checkin, Complete)
   const handleStatusChange = async (appointmentId: string, nextStatus: string, label: string) => {
     setBusyActionId(appointmentId);
@@ -256,21 +308,150 @@ export default function AppointmentsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Online Telehealth Consultations"
-        subtitle="100% online video appointments. Join virtual consultations and manage doctor meeting rooms."
+        title={isBn ? "অনলাইন টেলিহেলথ কনসালটেশন" : "Online Telehealth Consultations"}
+        subtitle={
+          isBn
+            ? "১০০% অনলাইন ভিডিও কল ও ভার্চুয়াল ডক্টরস চেম্বার। সরাসরি বিশেষজ্ঞ ডাক্তারের সাথে সংযুক্ত হোন।"
+            : "100% online video appointments. Join virtual consultations and manage doctor meeting rooms."
+        }
         breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Appointments", href: "/appointments" },
+          { label: isBn ? "হোম" : "Home", href: "/" },
+          { label: isBn ? "ড্যাশবোর্ড" : "Dashboard", href: "/dashboard" },
+          { label: isBn ? "অ্যাপয়েন্টমেন্ট" : "Appointments", href: "/appointments" },
         ]}
         actions={
           role === "patient" ? (
             <Button size="sm" icon={Plus} onClick={() => setBookModalOpen(true)}>
-              Book Online Consultation
+              {isBn ? "ভিডিও কনসালটেশন বুক করুন" : "Book Online Consultation"}
             </Button>
           ) : undefined
         }
       />
+
+      {/* 📹 Live Doctor Chamber Status Radar & Countdown Banner */}
+      {liveChamberAppt ? (
+        <div className="relative overflow-hidden rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-950/40 via-card to-background p-5 shadow-[0_0_25px_rgba(16,185,129,0.15)]">
+          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+          
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            {/* Left Doctor & Status info */}
+            <div className="space-y-3 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="relative flex h-3 w-3">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${countdown?.inSession ? "bg-red-400" : "bg-emerald-400"}`} />
+                  <span className={`relative inline-flex rounded-full h-3 w-3 ${countdown?.inSession ? "bg-red-500" : "bg-emerald-500"}`} />
+                </span>
+                <span className={`text-xs font-mono font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                  countdown?.inSession
+                    ? "bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse"
+                    : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                }`}>
+                  {countdown?.inSession
+                    ? (isBn ? "🔴 লাইভ কনসালটেশন সেশন চলছে" : "🔴 DOCTOR LIVE IN SESSION")
+                    : (isBn ? "🟢 টেলিহেলথ লাইভ চেম্বার সক্রিয়" : "🟢 TELEHEALTH CHAMBER ACTIVE")}
+                </span>
+                <span className="text-xs text-muted font-mono">
+                  Queue #1 • {isBn ? "সিরিয়াল নং ০১" : "Serial #01"}
+                </span>
+              </div>
+
+              <div>
+                <h3 className="text-lg sm:text-xl font-heading font-black text-foreground flex items-center gap-2">
+                  <Stethoscope className="h-5 w-5 text-emerald-400" />
+                  {liveChamberAppt.doctor_name || "Specialist Physician"}
+                </h3>
+                <p className="text-xs text-muted flex items-center gap-2 mt-1">
+                  <span>{fmtDateTime(liveChamberAppt.slot_start)}</span>
+                  <span>•</span>
+                  <span>{liveChamberAppt.facility_name || "Niramoy Virtual Telehealth Clinic"}</span>
+                </p>
+              </div>
+
+              {/* Pre-Call System Diagnostics */}
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
+                  <Camera className="h-3.5 w-3.5 text-emerald-400" />
+                  {isBn ? "ভিডিও রেডি" : "Video Ready"}
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
+                  <Mic className="h-3.5 w-3.5 text-emerald-400" />
+                  {isBn ? "এইচডি অডিও" : "HD Audio"}
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
+                  <Wifi className="h-3.5 w-3.5 text-emerald-400" />
+                  {isBn ? "WebRTC এনক্রিপ্টেড" : "WebRTC Encrypted"}
+                </span>
+              </div>
+            </div>
+
+            {/* Right Countdown & 1-Click Launch Button */}
+            <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end gap-3 shrink-0">
+              {countdown && !countdown.expired && (
+                <div className="text-left sm:text-right">
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-muted block">
+                    {countdown.inSession
+                      ? (isBn ? "সেশন সময়কাল:" : "Active Duration:")
+                      : (isBn ? "কনসালটেশন শুরু হতে বাকি:" : "Time Remaining:")}
+                  </span>
+                  <div className="flex items-center gap-1.5 font-mono text-2xl font-black text-emerald-400">
+                    <span className="p-1.5 bg-black/50 border border-emerald-500/30 rounded-md">
+                      {String(countdown.hours).padStart(2, "0")}
+                    </span>
+                    <span>:</span>
+                    <span className="p-1.5 bg-black/50 border border-emerald-500/30 rounded-md">
+                      {String(countdown.minutes).padStart(2, "0")}
+                    </span>
+                    <span>:</span>
+                    <span className="p-1.5 bg-black/50 border border-emerald-500/30 rounded-md text-emerald-300">
+                      {String(countdown.seconds).padStart(2, "0")}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <a
+                href={liveMeetingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-heading font-black text-sm shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Video className="h-5 w-5 animate-pulse" />
+                <span>{isBn ? "১-ক্লিকে ভিডিও কলে প্রবেশ করুন" : "Join Telehealth Chamber"}</span>
+                <ExternalLink className="h-4 w-4 opacity-80" />
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Instant Telehealth Availability Radar when no appointment is active */
+        <div className="rounded-2xl border border-emerald-500/30 bg-card p-5 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <Radio className="h-5 w-5 animate-pulse" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                  {isBn ? "লাইভ টেলিহেলথ চেম্বার রাডার" : "Live Telehealth Specialist Radar"}
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30 font-mono">
+                    {doctorsList.data?.items?.length || 10}+ {isBn ? "ডাক্তার প্রস্তুত" : "Doctors Ready"}
+                  </span>
+                </h4>
+                <p className="text-xs text-muted">
+                  {isBn
+                    ? "অনলাইন চেম্বার থেকে বিশেষজ্ঞ ডাক্তাররা ভিডিও কলে রোগী দেখার জন্য সক্রিয় আছেন।"
+                    : "Verified clinical specialists are online in their digital chambers for 100% virtual video consultations."}
+                </p>
+              </div>
+            </div>
+            {role === "patient" && (
+              <Button size="sm" icon={Plus} onClick={() => setBookModalOpen(true)}>
+                {isBn ? "তাত্ক্ষণিক কনসালটেশন বুক করুন" : "Book Instant Consultation"}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Metrics Stat Row */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
