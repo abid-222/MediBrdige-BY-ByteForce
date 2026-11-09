@@ -88,3 +88,5 @@ export function Spotlight3DCard({
     </div>
   );
 }
+
+export default Spotlight3DCard;

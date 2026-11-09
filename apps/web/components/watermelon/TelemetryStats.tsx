@@ -148,3 +148,5 @@ export function TelemetryStats({ isBn }: { isBn: boolean }) {
     </section>
   );
 }
+
+export default TelemetryStats;

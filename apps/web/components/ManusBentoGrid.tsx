@@ -274,3 +274,5 @@ export function ManusBentoGrid({ isBn }: { isBn: boolean }) {
     </div>
   );
 }
+
+export default ManusBentoGrid;

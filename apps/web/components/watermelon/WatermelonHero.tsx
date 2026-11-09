@@ -199,3 +199,5 @@ export function WatermelonHero({
     </section>
   );
 }
+
+export default WatermelonHero;

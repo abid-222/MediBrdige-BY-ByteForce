@@ -132,3 +132,5 @@ export function InteractiveTelemetry3D() {
     </div>
   );
 }
+
+export default InteractiveTelemetry3D;
