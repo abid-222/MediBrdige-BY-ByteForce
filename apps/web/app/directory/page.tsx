@@ -148,6 +148,19 @@ export default function DoctorDirectoryPage() {
   const filteredFacilities = useMemo(() => {
     const list = facilitiesApi.data?.items || [];
     return list.filter((fac: any) => {
+      // Selected facility filter
+      if (selectedFacilityId && fac.id !== selectedFacilityId) {
+        return false;
+      }
+      // Selected specialty filter
+      if (selectedSpecialty) {
+        const hasSpecialty = fac.doctors?.some((d: any) =>
+          d.specialty_code === selectedSpecialty ||
+          (d.specialty || "").toLowerCase().includes(selectedSpecialty.toLowerCase())
+        );
+        if (!hasSpecialty) return false;
+      }
+      // Text search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const nameMatch = (fac.name || "").toLowerCase().includes(q);
@@ -160,7 +173,7 @@ export default function DoctorDirectoryPage() {
       }
       return true;
     });
-  }, [facilitiesApi.data, searchQuery]);
+  }, [facilitiesApi.data, searchQuery, selectedFacilityId, selectedSpecialty]);
 
   const handleBook = (doctorId: string, doctorName: string) => {
     const targetUrl = `/appointments?book=true&doctorId=${doctorId}&doctorName=${encodeURIComponent(doctorName)}`;
@@ -558,7 +571,12 @@ export default function DoctorDirectoryPage() {
                           >
                             <div className="space-y-1">
                               <div className="flex items-center justify-between gap-1">
-                                <h4 className="font-bold text-xs text-ink truncate">{d.full_name}</h4>
+                                <Link
+                                  href={`/directory/doctors/${d.doctor_id || d.id}`}
+                                  className="font-bold text-xs text-ink hover:text-ptext hover:underline truncate"
+                                >
+                                  {d.full_name}
+                                </Link>
                                 {d.verification === "verified" && (
                                   <ShieldCheck className="h-3 w-3 text-ptext shrink-0" />
                                 )}

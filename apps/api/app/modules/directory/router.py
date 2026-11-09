@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.config import STALE_AFTER_DAYS
 from app.core.db import get_db
 from app.core.errors import AppError
-from app.models import DirectoryReport, DoctorFacility, DoctorProfile, Facility, Specialty
+from app.models import DirectoryReport, DoctorFacility, DoctorProfile, Facility, FacilityService, Specialty
 from app.modules.directory.service import doctor_view, facility_view, is_stale, badge
 
 router = APIRouter(prefix="/directory", tags=["directory"])
@@ -81,16 +81,27 @@ def _get_all_facilities_bulk(db: Session) -> list[dict]:
     ).all()
     specialties = {s.id: s for s in db.scalars(select(Specialty)).all()}
 
+    # Query facility services safely
+    service_rows = db.scalars(select(FacilityService)).all()
+    services_by_facility: dict[str, list] = {}
+    for fs in service_rows:
+        if fs.available is not False:
+            services_by_facility.setdefault(fs.facility_id, []).append(fs.service_code)
+
     docs_by_facility: dict[str, list] = {}
     for df, dp in doctor_rows:
         spec = specialties.get(dp.specialty_id)
         docs_by_facility.setdefault(df.facility_id, []).append({
             "doctor_id": dp.user_id,
+            "id": dp.user_id,
             "full_name": dp.full_name,
-            "specialty": spec.name_en if spec else None,
+            "specialty": spec.name_en if spec else "General Medicine",
+            "qualifications": dp.qualifications,
             "chamber": df.chamber,
             "schedule": df.schedule,
             "fee_bdt": df.fee_bdt,
+            "fee_label": f"BDT {df.fee_bdt}" if df.fee_bdt else "Confirmed Fee",
+            "verification": badge(dp.verification),
         })
 
     all_facs = []
@@ -103,11 +114,13 @@ def _get_all_facilities_bulk(db: Session) -> list[dict]:
             "district": f.district,
             "address": f.address,
             "phone": f.phone,
-            "services": f.services or [],
+            "has_emergency": f.has_emergency,
+            "services": services_by_facility.get(f.id, []),
             "verification": badge(f.verification),
             "last_verified_at": f.last_verified_at,
             "stale": is_stale(f.last_verified_at),
             "is_sample": f.is_sample,
+            "doctor_count": len(aff),
             "doctors": aff,
         })
 
